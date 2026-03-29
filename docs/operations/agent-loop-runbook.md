@@ -50,4 +50,5 @@ Each iteration follows:
 - Runner timeouts and runner logs under `.agent/runtime/runner-logs/` should make stalled model calls diagnosable instead of silent.
 - Codex runs are launched through `scripts/codex_harness.py`, which builds an isolated local Codex home for project runs, strips inherited plugin and MCP configuration, and pins Codex to `gpt-5.4` with high reasoning via harness config overrides.
 - Codex currently runs in best-effort mode for production work on unstable networks: long stage timeouts, automatic retries, backoff, and explicit runner logs are enabled by default.
+- For Codex on unstable provider paths, prefer fewer but longer attempts over many short retries. The default profile uses long single-stage windows before giving up.
 - Prefer `smoke-runner` and `step` before multi-iteration Codex runs. For Codex, `run --max-iterations 1` is the safe default until the provider proves stable.

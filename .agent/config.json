@@ -54,9 +54,9 @@
     "codex": {
       "bin": "python3",
       "model": "gpt-5.4",
-      "timeout_seconds": 600,
-      "retry_attempts": 3,
-      "retry_backoff_seconds": 15,
+      "timeout_seconds": 900,
+      "retry_attempts": 2,
+      "retry_backoff_seconds": 30,
       "retry_on_timeout": true,
       "best_effort": true,
       "retryable_stderr_patterns": [
