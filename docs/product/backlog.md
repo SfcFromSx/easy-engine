@@ -19,6 +19,7 @@ This file merges the durable backlog signals from the previous root `todo.md` an
 - `BENCH-UX-001`: make prepared-statement authoring more explicit in the benchmark UI.
 - Improve datasource query tooling for prepared execution parity.
 - `STYLE-04`: benchmark migration coverage still depends on a Testcontainers-compatible Docker environment, so local `mvn test` is not yet a full migration guarantee.
+- `LIST-FILTER-001`: add practical list-page filters and search controls across manager and benchmark operator tables.
 
 ### Query
 
@@ -28,6 +29,7 @@ This file merges the durable backlog signals from the previous root `todo.md` an
 ## Medium Priority
 
 - `STYLE-01`: fix the invalid `border-bottom: 1px border #f1f5f9;` CSS in `manager/frontend/src/views/Dashboard.vue`.
+- `MGR-CSS-001`: audit and fix remaining manager frontend CSS inconsistencies, spacing defects, and table/filter-bar styling drift.
 - `STYLE-02`: split `benchmark/src/main/java/com/smartbi/benchmark/run/BenchmarkAsyncRunner.java` into smaller responsibilities.
 - `STYLE-03`: reduce multiple SLF4J bindings introduced by the fat JDBC jar to cut runtime log noise.
 - Reduce duplicated routing and cache semantics between `query` and `kylin-jdbc-cache`.

@@ -134,6 +134,70 @@
       "updated_at": "2026-03-29T00:00:00Z"
     },
     {
+      "id": "LIST-FILTER-001",
+      "title": "Add practical search and filter controls to manager and benchmark list views",
+      "module": "frontend",
+      "type": "frontend",
+      "priority": 45,
+      "status": "todo",
+      "depends_on": [],
+      "context_files": [
+        "manager/frontend/src/views/Traces.vue",
+        "manager/frontend/src/views/Patterns.vue",
+        "manager/frontend/src/views/Acceleration.vue",
+        "benchmark/frontend/src/views/DataSources.vue",
+        "benchmark/frontend/src/views/Jobs.vue",
+        "benchmark/frontend/src/views/Templates.vue",
+        "benchmark/frontend/src/views/TestSets.vue",
+        "benchmark/frontend/src/views/Runs.vue",
+        "docs/modules/manager.md",
+        "docs/modules/benchmark.md"
+      ],
+      "acceptance_criteria": [
+        "Manager and benchmark list pages expose practical query inputs for common operator workflows such as keyword search, status filtering, or datasource/job selection where the underlying data already supports it",
+        "Filter state updates table content predictably without breaking existing navigation or pagination",
+        "The resulting UX is discoverable on desktop and still usable on narrower screens",
+        "Local validation covers the touched frontend apps with successful builds"
+      ],
+      "validation_commands": [
+        "npm --prefix manager/frontend run build",
+        "npm --prefix benchmark/frontend run build"
+      ],
+      "attempts": 0,
+      "last_result": null,
+      "updated_at": "2026-03-30T00:00:00Z"
+    },
+    {
+      "id": "MGR-CSS-001",
+      "title": "Audit and fix manager frontend CSS issues and visual inconsistencies",
+      "module": "manager",
+      "type": "frontend",
+      "priority": 46,
+      "status": "todo",
+      "depends_on": [],
+      "context_files": [
+        "manager/frontend/src/App.vue",
+        "manager/frontend/src/style.css",
+        "manager/frontend/src/views/Dashboard.vue",
+        "manager/frontend/src/views/Traces.vue",
+        "manager/frontend/src/views/Patterns.vue",
+        "manager/frontend/src/views/Acceleration.vue",
+        "docs/modules/manager.md"
+      ],
+      "acceptance_criteria": [
+        "Obvious CSS defects, broken spacing, or inconsistent visual rules on manager pages are identified and fixed",
+        "Dashboard and major manager views share a coherent visual system for headers, cards, tables, and filter bars",
+        "The fixes do not regress readability on smaller screens",
+        "Local manager frontend build succeeds after the CSS cleanup"
+      ],
+      "validation_commands": [
+        "npm --prefix manager/frontend run build"
+      ],
+      "attempts": 0,
+      "last_result": null,
+      "updated_at": "2026-03-30T00:00:00Z"
+    },
+    {
       "id": "QUERY-DOC-001",
       "title": "Expand query routing documentation for preserved metadata flows",
       "module": "query",
