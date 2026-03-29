@@ -16,7 +16,7 @@
       "module": "docs",
       "type": "documentation",
       "priority": 10,
-      "status": "verified",
+      "status": "done",
       "depends_on": [],
       "context_files": [
         "docs/README.md",
@@ -42,7 +42,7 @@
         "task_id": "DOC-LOOP-001",
         "validation_status": "approved"
       },
-      "updated_at": "2026-03-29T15:36:04Z"
+      "updated_at": "2026-03-29T15:39:55Z"
     },
     {
       "id": "DOC-CN-001",
@@ -103,8 +103,11 @@
         "npm --prefix manager/frontend run build"
       ],
       "attempts": 0,
-      "last_result": null,
-      "updated_at": "2026-03-29T00:00:00Z"
+      "last_result": {
+        "stage": "orchestrator",
+        "error": "codex orchestrator failed with code 1 on attempt 2/2; see .agent/runtime/runner-logs/20260329T154806Z-codex-orchestrator.json"
+      },
+      "updated_at": "2026-03-29T15:48:06Z"
     },
     {
       "id": "BENCH-UX-001",
