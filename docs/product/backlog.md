@@ -16,7 +16,6 @@ This file merges the durable backlog signals from the previous root `todo.md` an
 
 ### Benchmark
 
-- `BENCH-UX-001`: make prepared-statement authoring more explicit in the benchmark UI.
 - Improve datasource query tooling for prepared execution parity.
 - `STYLE-04`: benchmark migration coverage still depends on a Testcontainers-compatible Docker environment, so local `mvn test` is not yet a full migration guarantee.
 - `LIST-FILTER-001`: add practical list-page filters and search controls across manager and benchmark operator tables.

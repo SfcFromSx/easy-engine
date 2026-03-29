@@ -18,8 +18,12 @@ benchmark -> kylin-jdbc-cache -> query -> Kylin or Presto
 
 ## Prepared Execution Notes
 
+- Jobs without a linked test set execute from the global template pool.
+- Jobs with a linked test set execute the test-set rows instead of the global templates.
 - `execution_mode` supports `STATEMENT` and `PREPARED_STATEMENT`.
-- `param_json` carries prepared parameter arrays.
+- `STATEMENT` executes raw SQL text.
+- `PREPARED_STATEMENT` expects ordered `param_json` arrays for parameter binding.
+- Template authoring and test-set import both expose `execution_mode` and `param_json` for prepared workflows.
 - Benchmark runs support prepared execution more fully than the datasource debug endpoint.
 
 ## Run

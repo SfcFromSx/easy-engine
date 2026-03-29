@@ -123,7 +123,7 @@
       "module": "benchmark",
       "type": "frontend",
       "priority": 40,
-      "status": "todo",
+      "status": "verified",
       "depends_on": [],
       "context_files": [
         "docs/modules/benchmark.md",
@@ -138,8 +138,21 @@
         "npm --prefix benchmark/frontend run build"
       ],
       "attempts": 0,
-      "last_result": null,
-      "updated_at": "2026-03-29T00:00:00Z"
+      "last_result": {
+        "evidence": [
+          "`git diff` and `git status --short` show the implementation is scoped to `benchmark/frontend` source files plus refreshed `benchmark/frontend/dist` assets; no backend/API contract files were modified.",
+          "`benchmark/frontend/src/views/Templates.vue` now adds an execution-flow callout, explicit execution-mode labeling, inline prepared-parameter guidance, and a prepared example, which makes `PREPARED_STATEMENT` authoring first-class and explains global-template vs linked-test-set behavior.",
+          "`benchmark/frontend/src/views/TestSets.vue` now explains linked test set override behavior, documents optional import columns `execution_mode` and `param_json`, and makes prepared rows clearer in the drawer with mode-specific hints and formatted parameter JSON.",
+          "`benchmark/frontend/src/i18n.js` contains matching new `en` and `zh` keys for the template and test-set guidance, so both locales stay in sync.",
+          "Validation was re-run locally: `npm --prefix benchmark/frontend run build` exited 0 on 2026-03-30 with only a non-failing chunk-size warning, and `mvn -q -f benchmark/pom.xml test` exited 0 on 2026-03-30 with existing SLF4J/Testcontainers noise but no test failure."
+        ],
+        "next_action": "Mark `BENCH-UX-001` verified and continue with the normal review/commit flow.",
+        "severity": "low",
+        "summary": "Approved. The benchmark frontend now explains execution precedence and prepared-statement requirements on both template and test-set screens, keeps English and Chinese copy aligned, stays frontend-scoped, and passes the required validation commands.",
+        "task_id": "BENCH-UX-001",
+        "validation_status": "approved"
+      },
+      "updated_at": "2026-03-29T23:42:22Z"
     },
     {
       "id": "LIST-FILTER-001",
