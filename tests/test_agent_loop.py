@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -34,14 +35,35 @@ ROOT_FIXTURE_FILES = {
             "max_iterations": 8,
             "max_task_attempts": 3,
             "doc_gardening_interval": 2,
+            "runner_timeout_seconds": 30,
             "architecture_trigger_paths": ["docs/architecture/overview.md"],
             "mirror_docs": [
                 {"source": "README.md", "target": "doc-CN/README.md", "title": "README"}
             ],
             "validation_commands": {"docs": []},
             "runners": {
-                "codex": {"bin": "codex", "model": "gpt-5", "args": ["exec"]},
-                "claude": {"bin": "claude", "model": "sonnet", "args": ["-p", "--output-format", "json"]},
+                "codex": {
+                    "bin": "codex",
+                    "model": "gpt-5.4",
+                    "timeout_seconds": 30,
+                    "retry_attempts": 2,
+                    "retry_backoff_seconds": 0,
+                    "retry_on_timeout": True,
+                    "best_effort": True,
+                    "retryable_stderr_patterns": ["stream disconnected", "timeout"],
+                    "config_overrides": ["model_reasoning_effort=\"high\""],
+                    "args": ["exec"],
+                },
+                "claude": {
+                    "bin": "claude",
+                    "model": "sonnet",
+                    "timeout_seconds": 30,
+                    "retry_attempts": 1,
+                    "retry_backoff_seconds": 0,
+                    "retry_on_timeout": False,
+                    "best_effort": False,
+                    "args": ["-p", "--output-format", "json"]
+                },
             },
         },
         indent=2,
@@ -292,7 +314,7 @@ class AgentLoopTests(unittest.TestCase):
             self.assertEqual("done", task["status"])
 
     def test_invoke_runner_builds_codex_command_with_schema(self) -> None:
-        def fake_run_command(cmd, cwd, check=False, capture_output=True):
+        def fake_run_command(cmd, cwd, check=False, capture_output=True, timeout=None):
             output_index = cmd.index("-o") + 1
             Path(cmd[output_index]).write_text(
                 json.dumps(
@@ -316,7 +338,7 @@ class AgentLoopTests(unittest.TestCase):
         self.assertEqual("C", payload["task_id"])
 
     def test_invoke_runner_builds_claude_command_with_schema(self) -> None:
-        def fake_run_command(cmd, cwd, check=False, capture_output=True):
+        def fake_run_command(cmd, cwd, check=False, capture_output=True, timeout=None):
             self.assertIn("--json-schema", cmd)
             self.assertIn("-p", cmd)
             return mock.Mock(
@@ -337,6 +359,45 @@ class AgentLoopTests(unittest.TestCase):
         with mock.patch("scripts.agent_loop.run_command", side_effect=fake_run_command):
             payload = self.harness.invoke_runner("claude", "verifier", {"task": {"id": "C"}})
         self.assertEqual("approved", payload["validation_status"])
+
+    def test_handle_stage_failure_resets_task_to_todo(self) -> None:
+        tasks = self.harness.load_tasks()
+        self.harness.update_task(tasks, "C", status="in_progress", last_result=None)
+        result = self.harness.handle_stage_failure(tasks, "C", "orchestrator", RuntimeError("boom"))
+        self.assertEqual("halted", result["status"])
+        updated = self.harness.load_tasks()
+        task = next(task for task in updated["tasks"] if task["id"] == "C")
+        self.assertEqual("todo", task["status"])
+        self.assertEqual("orchestrator", task["last_result"]["stage"])
+
+    def test_codex_timeout_retries_then_succeeds(self) -> None:
+        state = {"calls": 0}
+
+        def fake_run_command(cmd, cwd, check=False, capture_output=True, timeout=None):
+            state["calls"] += 1
+            output_index = cmd.index("-o") + 1
+            output_path = Path(cmd[output_index])
+            if state["calls"] == 1:
+                raise subprocess.TimeoutExpired(cmd=cmd, timeout=timeout, output="", stderr=b"stream disconnected")
+            output_path.write_text(
+                json.dumps(
+                    {
+                        "task_id": "C",
+                        "rationale": "why",
+                        "instructions": "do it",
+                        "context_files": [],
+                        "acceptance_criteria": [],
+                        "halt_reason": None,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            return mock.Mock(returncode=0, stdout="", stderr="")
+
+        with mock.patch("scripts.agent_loop.run_command", side_effect=fake_run_command):
+            payload = self.harness.invoke_runner("codex", "orchestrator", {"task": {"id": "C"}})
+        self.assertEqual("C", payload["task_id"])
+        self.assertEqual(2, state["calls"])
 
 
 if __name__ == "__main__":

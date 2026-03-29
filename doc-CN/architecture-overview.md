@@ -1,4 +1,4 @@
-<!-- MIRROR: docs/architecture/overview.md | SOURCE_SHA256: 10b937d347a5 | SYNCED_AT: 2026-03-29T13:56:09Z -->
+<!-- MIRROR: docs/architecture/overview.md | SOURCE_SHA256: 10b937d347a5 | SYNCED_AT: 2026-03-29T15:02:11Z -->
 
 # 架构概览
 

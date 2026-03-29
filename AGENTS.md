@@ -59,6 +59,12 @@ Default validation commands are defined in `.agent/config.json`:
 - `benchmark`: Maven tests and frontend build.
 - optional smoke: `scripts/benchmark-smoke.sh`
 
+Codex-specific operation:
+
+- Codex runs are best-effort by default under unstable networks.
+- Expect retries, backoff, and runner logs before a task is marked as failed.
+- Prefer `smoke-runner` and single-step execution before longer Codex loops.
+
 ## Git Contract
 
 - Root repository is the intended canonical Git boundary.

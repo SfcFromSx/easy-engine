@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import os
+import time
 import shutil
 import subprocess
 import sys
@@ -67,6 +68,7 @@ def run_command(
     *,
     check: bool = False,
     capture_output: bool = True,
+    timeout: Optional[int] = None,
 ) -> subprocess.CompletedProcess[str]:
     completed = subprocess.run(
         list(cmd),
@@ -74,10 +76,23 @@ def run_command(
         text=True,
         capture_output=capture_output,
         check=False,
+        timeout=timeout,
     )
     if check and completed.returncode != 0:
         raise HarnessError(f"command failed ({completed.returncode}): {' '.join(cmd)}\n{completed.stderr}")
     return completed
+
+
+def truncate_text(value: Any, limit: int = 4000) -> str:
+    if isinstance(value, bytes):
+        value = value.decode("utf-8", errors="replace")
+    if value is None:
+        value = ""
+    if not isinstance(value, str):
+        value = str(value)
+    if len(value) <= limit:
+        return value
+    return value[:limit] + "\n...[truncated]..."
 
 
 class Harness:
@@ -88,6 +103,8 @@ class Harness:
         self.prompts_dir = self.docs_dir / "agent" / "prompts"
         self.schemas_dir = self.docs_dir / "agent" / "schemas"
         self.history_dir = self.agent_dir / "history"
+        self.runtime_dir = self.agent_dir / "runtime"
+        self.runner_logs_dir = self.runtime_dir / "runner-logs"
         self.lock_path = self.agent_dir / "lock.json"
         self.config_path = self.agent_dir / "config.json"
         self.pause_path = self.agent_dir / "PAUSE"
@@ -175,6 +192,11 @@ class Harness:
         for candidate in self.root.rglob(".git"):
             if candidate.parent == self.root:
                 continue
+            try:
+                candidate.relative_to(self.runtime_dir)
+                continue
+            except ValueError:
+                pass
             nested.append(candidate)
         return sorted(nested)
 
@@ -186,6 +208,49 @@ class Harness:
         if not isinstance(binary, str):
             raise HarnessError(f"runner {runner} bin is invalid")
         return binary
+
+    def runner_timeout_seconds(self, runner: str) -> int:
+        runner_cfg = self.config["runners"].get(runner, {})
+        value = runner_cfg.get("timeout_seconds", self.config.get("runner_timeout_seconds", 180))
+        if not isinstance(value, int) or value <= 0:
+            raise HarnessError(f"runner timeout must be a positive integer for {runner}")
+        return value
+
+    def runner_retry_attempts(self, runner: str) -> int:
+        runner_cfg = self.config["runners"].get(runner, {})
+        value = runner_cfg.get("retry_attempts", 1)
+        if not isinstance(value, int) or value <= 0:
+            raise HarnessError(f"runner retry_attempts must be a positive integer for {runner}")
+        return value
+
+    def runner_retry_backoff_seconds(self, runner: str) -> int:
+        runner_cfg = self.config["runners"].get(runner, {})
+        value = runner_cfg.get("retry_backoff_seconds", 5)
+        if not isinstance(value, int) or value < 0:
+            raise HarnessError(f"runner retry_backoff_seconds must be a non-negative integer for {runner}")
+        return value
+
+    def should_retry_on_timeout(self, runner: str) -> bool:
+        runner_cfg = self.config["runners"].get(runner, {})
+        return bool(runner_cfg.get("retry_on_timeout", True))
+
+    def retryable_stderr_patterns(self, runner: str) -> List[str]:
+        runner_cfg = self.config["runners"].get(runner, {})
+        patterns = runner_cfg.get("retryable_stderr_patterns", [])
+        if not isinstance(patterns, list):
+            raise HarnessError(f"runner retryable_stderr_patterns must be a list for {runner}")
+        return [str(pattern).lower() for pattern in patterns]
+
+    def write_runner_log(self, runner: str, role: str, payload: Dict[str, Any]) -> Path:
+        self.runner_logs_dir.mkdir(parents=True, exist_ok=True)
+        filename = f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{runner}-{role}.json"
+        path = self.runner_logs_dir / filename
+        write_json(path, payload)
+        return path
+
+    def is_retryable_runner_error(self, runner: str, stderr: str) -> bool:
+        haystack = stderr.lower()
+        return any(pattern in haystack for pattern in self.retryable_stderr_patterns(runner))
 
     def doctor(self, *, live_runner_check: bool = False) -> DoctorReport:
         issues: List[str] = []
@@ -352,40 +417,219 @@ class Harness:
             return
         raise HarnessError(f"unknown role for validation: {role}")
 
-    def invoke_runner(self, runner: str, role: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def invoke_runner(
+        self,
+        runner: str,
+        role: str,
+        payload: Dict[str, Any],
+        *,
+        timeout_override: Optional[int] = None,
+    ) -> Dict[str, Any]:
         runner_cfg = self.config["runners"][runner]
         prompt = self.build_prompt(role, payload)
         schema_path = self.schema_path(role)
         binary = self.runner_bin(runner)
         model = runner_cfg.get("model")
         args = list(runner_cfg.get("args", []))
-        if runner == "codex":
-            with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8") as handle:
-                output_path = Path(handle.name)
-            cmd = [binary] + args + ["--cd", str(self.root), "--output-schema", str(schema_path), "-o", str(output_path)]
-            if model:
-                cmd.extend(["--model", str(model)])
-            cmd.append(prompt)
-            completed = run_command(cmd, self.root)
-            if completed.returncode != 0:
-                raise HarnessError(completed.stderr or "codex invocation failed")
-            raw = output_path.read_text(encoding="utf-8")
-            output_path.unlink(missing_ok=True)
-        elif runner == "claude":
-            schema_text = schema_path.read_text(encoding="utf-8")
-            cmd = [binary] + args + ["--json-schema", schema_text]
-            if model:
-                cmd.extend(["--model", str(model)])
-            cmd.append(prompt)
-            completed = run_command(cmd, self.root)
-            if completed.returncode != 0:
-                raise HarnessError(completed.stderr or "claude invocation failed")
-            raw = completed.stdout
+        config_overrides = runner_cfg.get("config_overrides", [])
+        timeout_seconds = timeout_override or self.runner_timeout_seconds(runner)
+        retry_attempts = self.runner_retry_attempts(runner)
+        retry_backoff_seconds = self.runner_retry_backoff_seconds(runner)
+        retry_on_timeout = self.should_retry_on_timeout(runner)
+        started_at = utc_now()
+        last_error_message = f"{runner} {role} failed"
+        for attempt in range(1, retry_attempts + 1):
+            if runner == "codex":
+                with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8") as handle:
+                    output_path = Path(handle.name)
+                cmd = [binary] + args + ["--cd", str(self.root), "--output-schema", str(schema_path), "-o", str(output_path)]
+                for override in config_overrides:
+                    cmd.extend(["-c", str(override)])
+                if model:
+                    cmd.extend(["--model", str(model)])
+                cmd.append(prompt)
+                try:
+                    started = time.monotonic()
+                    completed = run_command(cmd, self.root, timeout=timeout_seconds)
+                    elapsed = round(time.monotonic() - started, 3)
+                except subprocess.TimeoutExpired as exc:
+                    raw_outfile = output_path.read_text(encoding="utf-8") if output_path.exists() else ""
+                    log_path = self.write_runner_log(
+                        runner,
+                        role,
+                        {
+                            "runner": runner,
+                            "role": role,
+                            "started_at": started_at,
+                            "attempt": attempt,
+                            "retry_attempts": retry_attempts,
+                            "timeout_seconds": timeout_seconds,
+                            "timed_out": True,
+                            "command": cmd,
+                            "stdout": truncate_text(exc.stdout or ""),
+                            "stderr": truncate_text(exc.stderr or ""),
+                            "outfile": truncate_text(raw_outfile),
+                        },
+                    )
+                    output_path.unlink(missing_ok=True)
+                    last_error_message = (
+                        f"{runner} {role} timed out after {timeout_seconds}s on attempt {attempt}/{retry_attempts}; "
+                        f"see {log_path.relative_to(self.root)}"
+                    )
+                    if attempt < retry_attempts and retry_on_timeout:
+                        time.sleep(retry_backoff_seconds * attempt)
+                        continue
+                    raise HarnessError(last_error_message) from exc
+                if completed.returncode != 0:
+                    stderr_text = truncate_text(completed.stderr or "")
+                    log_path = self.write_runner_log(
+                        runner,
+                        role,
+                        {
+                            "runner": runner,
+                            "role": role,
+                            "started_at": started_at,
+                            "attempt": attempt,
+                            "retry_attempts": retry_attempts,
+                            "elapsed_seconds": elapsed,
+                            "returncode": completed.returncode,
+                            "command": cmd,
+                            "stdout": truncate_text(completed.stdout or ""),
+                            "stderr": stderr_text,
+                            "outfile": truncate_text(output_path.read_text(encoding="utf-8") if output_path.exists() else ""),
+                        },
+                    )
+                    output_path.unlink(missing_ok=True)
+                    last_error_message = (
+                        f"{runner} {role} failed with code {completed.returncode} on attempt {attempt}/{retry_attempts}; "
+                        f"see {log_path.relative_to(self.root)}"
+                    )
+                    if attempt < retry_attempts and self.is_retryable_runner_error(runner, stderr_text):
+                        time.sleep(retry_backoff_seconds * attempt)
+                        continue
+                    raise HarnessError(last_error_message)
+                raw = output_path.read_text(encoding="utf-8")
+                self.write_runner_log(
+                    runner,
+                    role,
+                    {
+                        "runner": runner,
+                        "role": role,
+                        "started_at": started_at,
+                        "attempt": attempt,
+                        "retry_attempts": retry_attempts,
+                        "elapsed_seconds": elapsed,
+                        "returncode": completed.returncode,
+                        "command": cmd,
+                        "stdout": truncate_text(completed.stdout or ""),
+                        "stderr": truncate_text(completed.stderr or ""),
+                        "outfile": truncate_text(raw),
+                    },
+                )
+                output_path.unlink(missing_ok=True)
+                break
+            elif runner == "claude":
+                schema_text = schema_path.read_text(encoding="utf-8")
+                cmd = [binary] + args + ["--json-schema", schema_text]
+                if model:
+                    cmd.extend(["--model", str(model)])
+                cmd.append(prompt)
+                try:
+                    started = time.monotonic()
+                    completed = run_command(cmd, self.root, timeout=timeout_seconds)
+                    elapsed = round(time.monotonic() - started, 3)
+                except subprocess.TimeoutExpired as exc:
+                    log_path = self.write_runner_log(
+                        runner,
+                        role,
+                        {
+                            "runner": runner,
+                            "role": role,
+                            "started_at": started_at,
+                            "attempt": attempt,
+                            "retry_attempts": retry_attempts,
+                            "timeout_seconds": timeout_seconds,
+                            "timed_out": True,
+                            "command": cmd,
+                            "stdout": truncate_text(exc.stdout or ""),
+                            "stderr": truncate_text(exc.stderr or ""),
+                        },
+                    )
+                    last_error_message = (
+                        f"{runner} {role} timed out after {timeout_seconds}s on attempt {attempt}/{retry_attempts}; "
+                        f"see {log_path.relative_to(self.root)}"
+                    )
+                    if attempt < retry_attempts and retry_on_timeout:
+                        time.sleep(retry_backoff_seconds * attempt)
+                        continue
+                    raise HarnessError(last_error_message) from exc
+                if completed.returncode != 0:
+                    stderr_text = truncate_text(completed.stderr or "")
+                    log_path = self.write_runner_log(
+                        runner,
+                        role,
+                        {
+                            "runner": runner,
+                            "role": role,
+                            "started_at": started_at,
+                            "attempt": attempt,
+                            "retry_attempts": retry_attempts,
+                            "elapsed_seconds": elapsed,
+                            "returncode": completed.returncode,
+                            "command": cmd,
+                            "stdout": truncate_text(completed.stdout or ""),
+                            "stderr": stderr_text,
+                        },
+                    )
+                    last_error_message = (
+                        f"{runner} {role} failed with code {completed.returncode} on attempt {attempt}/{retry_attempts}; "
+                        f"see {log_path.relative_to(self.root)}"
+                    )
+                    if attempt < retry_attempts and self.is_retryable_runner_error(runner, stderr_text):
+                        time.sleep(retry_backoff_seconds * attempt)
+                        continue
+                    raise HarnessError(last_error_message)
+                raw = completed.stdout
+                self.write_runner_log(
+                    runner,
+                    role,
+                    {
+                        "runner": runner,
+                        "role": role,
+                        "started_at": started_at,
+                        "attempt": attempt,
+                        "retry_attempts": retry_attempts,
+                        "elapsed_seconds": elapsed,
+                        "returncode": completed.returncode,
+                        "command": cmd,
+                        "stdout": truncate_text(completed.stdout or ""),
+                        "stderr": truncate_text(completed.stderr or ""),
+                    },
+                )
+                break
+            else:
+                raise HarnessError(f"unsupported runner: {runner}")
         else:
-            raise HarnessError(f"unsupported runner: {runner}")
+            raise HarnessError(last_error_message)
         parsed = self.parse_runner_json(raw)
         self.validate_runner_payload(role, parsed)
         return parsed
+
+    def handle_stage_failure(
+        self,
+        tasks_payload: Dict[str, Any],
+        task_id: str,
+        stage: str,
+        error: Exception,
+    ) -> Dict[str, Any]:
+        self.update_task(
+            tasks_payload,
+            task_id,
+            status="todo",
+            last_result={"stage": stage, "error": str(error)},
+        )
+        self.save_tasks(tasks_payload)
+        return {"status": "halted", "reason": "runner_failed", "task_id": task_id, "stage": stage, "error": str(error)}
 
     def current_done_count(self, tasks_payload: Dict[str, Any]) -> int:
         return sum(1 for task in tasks_payload["tasks"] if task["status"] in {"done", "verified"})
@@ -446,14 +690,20 @@ class Harness:
             self.ensure_loop_branch()
             task = self.update_task(tasks_payload, task["id"], status="in_progress", last_result=None)
             self.save_tasks(tasks_payload)
-            orchestrator_output = self.invoke_runner(runner, "orchestrator", self.task_context_payload(task))
+            try:
+                orchestrator_output = self.invoke_runner(runner, "orchestrator", self.task_context_payload(task))
+            except HarnessError as exc:
+                return self.handle_stage_failure(tasks_payload, task["id"], "orchestrator", exc)
             self.log_event({"role": "orchestrator", "task_id": task["id"], "payload": orchestrator_output})
 
             implementer_input = self.task_context_payload(
                 task,
                 {"orchestrator_output": orchestrator_output},
             )
-            implementer_output = self.invoke_runner(runner, "implementer", implementer_input)
+            try:
+                implementer_output = self.invoke_runner(runner, "implementer", implementer_input)
+            except HarnessError as exc:
+                return self.handle_stage_failure(tasks_payload, task["id"], "implementer", exc)
             self.log_event({"role": "implementer", "task_id": task["id"], "payload": implementer_output})
             task = self.update_task(
                 tasks_payload,
@@ -472,7 +722,10 @@ class Harness:
                     "implementer_output": implementer_output,
                 },
             )
-            verifier_output = self.invoke_runner(runner, "verifier", verifier_input)
+            try:
+                verifier_output = self.invoke_runner(runner, "verifier", verifier_input)
+            except HarnessError as exc:
+                return self.handle_stage_failure(tasks_payload, task["id"], "verifier", exc)
             self.log_event({"role": "verifier", "task_id": task["id"], "payload": verifier_output})
             if verifier_output["validation_status"] != "approved":
                 attempts = int(task.get("attempts", 0)) + 1
@@ -510,7 +763,10 @@ class Harness:
                         "verifier_output": verifier_output,
                     },
                 )
-                doc_output = self.invoke_runner(runner, "doc-gardener", doc_gardener_input)
+                try:
+                    doc_output = self.invoke_runner(runner, "doc-gardener", doc_gardener_input)
+                except HarnessError as exc:
+                    return self.handle_stage_failure(tasks_payload, task["id"], "doc-gardener", exc)
                 self.log_event({"role": "doc-gardener", "task_id": task["id"], "payload": doc_output})
             commit_message = self.commit_verified_task(task)
             self.update_task(
@@ -575,6 +831,31 @@ class Harness:
             target.write_text(new_text, encoding="utf-8")
         return failures
 
+    def smoke_runner(self, runner: str, timeout_seconds: Optional[int] = None) -> int:
+        payload = {
+            "task": {
+                "id": "SMOKE",
+                "title": "Runner smoke check",
+                "module": "docs",
+                "type": "documentation",
+                "priority": 0,
+                "status": "todo",
+                "depends_on": [],
+                "context_files": [],
+                "acceptance_criteria": [],
+                "validation_commands": [],
+                "attempts": 0,
+                "last_result": None,
+                "updated_at": utc_now(),
+            },
+            "agents_md": str(self.root / "AGENTS.md"),
+            "docs_index": str(self.docs_dir / "README.md"),
+            "runbook": str(self.docs_dir / "operations" / "agent-loop-runbook.md"),
+        }
+        result = self.invoke_runner(runner, "orchestrator", payload, timeout_override=timeout_seconds)
+        print(json.dumps(result, indent=2, ensure_ascii=True))
+        return 0
+
 
 def print_doctor(report: DoctorReport) -> int:
     payload = {"ok": report.ok, "issues": report.issues, "warnings": report.warnings}
@@ -600,6 +881,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     sync_doc_cn = subparsers.add_parser("sync-doc-cn", help="refresh Chinese mirror metadata")
     sync_doc_cn.add_argument("--check", action="store_true", help="fail if mirror metadata is stale")
+
+    smoke_runner = subparsers.add_parser("smoke-runner", help="run a minimal orchestrator smoke test")
+    smoke_runner.add_argument("--runner", choices=("codex", "claude"), required=True)
+    smoke_runner.add_argument("--timeout-seconds", type=int, default=None)
     return parser
 
 
@@ -617,6 +902,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         return harness.run(args.runner, args.max_iterations, live_runner_check=args.live_runner_check)
     if args.command == "sync-doc-cn":
         return harness.sync_doc_cn(check=args.check)
+    if args.command == "smoke-runner":
+        return harness.smoke_runner(args.runner, timeout_seconds=args.timeout_seconds)
     return 1
 
 

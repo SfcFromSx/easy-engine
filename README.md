@@ -26,8 +26,9 @@ Common commands:
 
 ```bash
 python3 scripts/agent_loop.py doctor
+python3 scripts/agent_loop.py smoke-runner --runner codex
 python3 scripts/agent_loop.py step --runner codex
-python3 scripts/agent_loop.py run --runner codex --max-iterations 8
+python3 scripts/agent_loop.py run --runner codex --max-iterations 1
 python3 scripts/agent_loop.py run --runner claude --max-iterations 8
 python3 scripts/agent_loop.py sync-doc-cn
 ```
@@ -38,6 +39,8 @@ The loop refuses to enter full autonomous mode until:
 - any nested repository metadata is resolved or explicitly archived outside active module paths,
 - the required CLI runners are available,
 - machine-state files validate successfully.
+
+Codex is configured as a best-effort production runner in this repository: it is pinned to `gpt-5.4` with high reasoning, and the harness applies retries and backoff for transient provider or network failures.
 
 ## Chinese Mirrors
 

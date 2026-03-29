@@ -6,8 +6,9 @@ The autonomous loop is driven by [scripts/agent_loop.py](/Users/sfc/Documents/pr
 
 ```bash
 python3 scripts/agent_loop.py doctor
+python3 scripts/agent_loop.py smoke-runner --runner codex
 python3 scripts/agent_loop.py step --runner codex
-python3 scripts/agent_loop.py run --runner codex --max-iterations 8
+python3 scripts/agent_loop.py run --runner codex --max-iterations 1
 python3 scripts/agent_loop.py run --runner claude --max-iterations 8
 python3 scripts/agent_loop.py sync-doc-cn
 ```
@@ -46,3 +47,7 @@ Each iteration follows:
 - The harness must never mutate `tasks.json` without recording timestamps and last results.
 - The harness must never continue when root Git is invalid.
 - The harness should prefer deterministic task selection over free-form prioritization.
+- Runner timeouts and runner logs under `.agent/runtime/runner-logs/` should make stalled model calls diagnosable instead of silent.
+- Codex runs are launched through `scripts/codex_harness.py`, which builds an isolated local Codex home for project runs, strips inherited plugin and MCP configuration, and pins Codex to `gpt-5.4` with high reasoning via harness config overrides.
+- Codex currently runs in best-effort mode for production work on unstable networks: long stage timeouts, automatic retries, backoff, and explicit runner logs are enabled by default.
+- Prefer `smoke-runner` and `step` before multi-iteration Codex runs. For Codex, `run --max-iterations 1` is the safe default until the provider proves stable.

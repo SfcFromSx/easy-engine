@@ -5,6 +5,7 @@
   "max_iterations": 8,
   "max_task_attempts": 3,
   "doc_gardening_interval": 2,
+  "runner_timeout_seconds": 300,
   "architecture_trigger_paths": [
     "docs/architecture/overview.md",
     "docs/architecture/service-capabilities.md",
@@ -51,9 +52,31 @@
   },
   "runners": {
     "codex": {
-      "bin": "codex",
-      "model": "gpt-5",
+      "bin": "python3",
+      "model": "gpt-5.4",
+      "timeout_seconds": 600,
+      "retry_attempts": 3,
+      "retry_backoff_seconds": 15,
+      "retry_on_timeout": true,
+      "best_effort": true,
+      "retryable_stderr_patterns": [
+        "stream disconnected",
+        "Reconnecting",
+        "Transport channel closed",
+        "temporarily unavailable",
+        "timeout",
+        "timed out",
+        "connection reset",
+        "connection closed",
+        "broken pipe",
+        "startup remote plugin sync failed",
+        "failed to warm featured plugin ids cache"
+      ],
+      "config_overrides": [
+        "model_reasoning_effort=\"high\""
+      ],
       "args": [
+        "scripts/codex_harness.py",
         "exec",
         "--sandbox",
         "danger-full-access"
@@ -62,6 +85,11 @@
     "claude": {
       "bin": "claude",
       "model": "sonnet",
+      "timeout_seconds": 180,
+      "retry_attempts": 1,
+      "retry_backoff_seconds": 5,
+      "retry_on_timeout": false,
+      "best_effort": false,
       "args": [
         "-p",
         "--output-format",
