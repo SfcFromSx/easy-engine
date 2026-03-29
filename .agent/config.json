@@ -55,6 +55,9 @@
       "bin": "python3",
       "model": "gpt-5.4",
       "timeout_seconds": 900,
+      "role_timeout_seconds": {
+        "verifier": 1800
+      },
       "retry_attempts": 2,
       "retry_backoff_seconds": 30,
       "retry_on_timeout": true,

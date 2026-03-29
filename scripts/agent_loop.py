@@ -209,8 +209,15 @@ class Harness:
             raise HarnessError(f"runner {runner} bin is invalid")
         return binary
 
-    def runner_timeout_seconds(self, runner: str) -> int:
+    def runner_timeout_seconds(self, runner: str, role: Optional[str] = None) -> int:
         runner_cfg = self.config["runners"].get(runner, {})
+        if role:
+            role_timeouts = runner_cfg.get("role_timeout_seconds", {})
+            if isinstance(role_timeouts, dict) and role in role_timeouts:
+                role_value = role_timeouts[role]
+                if not isinstance(role_value, int) or role_value <= 0:
+                    raise HarnessError(f"runner role timeout must be a positive integer for {runner}:{role}")
+                return role_value
         value = runner_cfg.get("timeout_seconds", self.config.get("runner_timeout_seconds", 180))
         if not isinstance(value, int) or value <= 0:
             raise HarnessError(f"runner timeout must be a positive integer for {runner}")
@@ -432,7 +439,7 @@ class Harness:
         model = runner_cfg.get("model")
         args = list(runner_cfg.get("args", []))
         config_overrides = runner_cfg.get("config_overrides", [])
-        timeout_seconds = timeout_override or self.runner_timeout_seconds(runner)
+        timeout_seconds = timeout_override or self.runner_timeout_seconds(runner, role)
         retry_attempts = self.runner_retry_attempts(runner)
         retry_backoff_seconds = self.runner_retry_backoff_seconds(runner)
         retry_on_timeout = self.should_retry_on_timeout(runner)

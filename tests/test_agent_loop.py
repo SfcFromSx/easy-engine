@@ -46,6 +46,7 @@ ROOT_FIXTURE_FILES = {
                     "bin": "codex",
                     "model": "gpt-5.4",
                     "timeout_seconds": 30,
+                    "role_timeout_seconds": {"verifier": 45},
                     "retry_attempts": 2,
                     "retry_backoff_seconds": 0,
                     "retry_on_timeout": True,
@@ -402,6 +403,10 @@ class AgentLoopTests(unittest.TestCase):
         with mock.patch("scripts.agent_loop.run_command", side_effect=fake_run_command):
             payload = self.harness.invoke_runner("claude", "verifier", {"task": {"id": "C"}})
         self.assertEqual("approved", payload["validation_status"])
+
+    def test_role_specific_timeout_overrides_runner_default(self) -> None:
+        self.assertEqual(45, self.harness.runner_timeout_seconds("codex", "verifier"))
+        self.assertEqual(30, self.harness.runner_timeout_seconds("codex", "implementer"))
 
     def test_handle_stage_failure_resets_task_to_todo(self) -> None:
         tasks = self.harness.load_tasks()
