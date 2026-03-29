@@ -87,7 +87,7 @@
       "module": "manager",
       "type": "frontend",
       "priority": 30,
-      "status": "verified",
+      "status": "done",
       "depends_on": [],
       "context_files": [
         "manager/README.md",
