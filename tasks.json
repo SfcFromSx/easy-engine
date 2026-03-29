@@ -87,7 +87,7 @@
       "module": "manager",
       "type": "frontend",
       "priority": 30,
-      "status": "todo",
+      "status": "verified",
       "depends_on": [],
       "context_files": [
         "manager/README.md",
@@ -104,21 +104,18 @@
       ],
       "attempts": 0,
       "last_result": {
-        "commands_run": [
-          "pwd && rg -n '\"id\":\\s*\"MGR-DASH-001\"|\"status\":\\s*\"in_progress\"|\"status\":\\s*\"todo\"' tasks.json",
-          "sed -n '1,220p' AGENTS.md",
-          "sed -n '1,220p' docs/operations/agent-loop-runbook.md",
-          "nl -ba tasks.json | sed -n '70,105p'"
+        "evidence": [
+          "`manager/src/main/java/com/smartbi/engine/web/dto/StatsSummaryDto.java:7-14` and `manager/src/main/java/com/smartbi/engine/web/StatsController.java:30-42` define the summary contract as `totalTraces`, `parseOk`, `parseError`, `patternCount`, `activeAccelerationCount`, `draftAccelerationCount`, `cacheHitCount`, and `lastTraceAt`; `manager/frontend/src/views/Dashboard.vue:191-256` now maps only those fields and derives display percentages locally.",
+          "`manager/frontend/src/views/Dashboard.vue:76-145` and `manager/frontend/src/views/Dashboard.vue:173-319` separate `summaryState`, `tracesState`, and `patternsState`, render per-section loading/error/empty UI, and use `Promise.allSettled(...)` so one failed fetch no longer clears the other dashboard sections.",
+          "`manager/frontend/src/i18n.js:55-60` and `manager/frontend/src/i18n.js:184-189` add the dashboard-specific loading/unavailable copy, and both required validation commands were re-run successfully on 2026-03-30: `mvn -q -f manager/pom.xml test` exited 0 (with the existing non-failing H2 shutdown warning) and `npm --prefix manager/frontend run build` exited 0 (with the existing Vite large-chunk warning)."
         ],
-        "error_log": "Implementation blocked by task-state mismatch. `tasks.json` shows `MGR-DASH-001` at lines 85-90 with `\"status\": \"in_progress\"`, while `AGENTS.md` Task Selection Contract allows only `todo` tasks for autonomous selection. `docs/operations/agent-loop-runbook.md` also requires the loop to select the next eligible task from `tasks.json` before orchestrator/implementer execution. No code changes were made.",
-        "files_modified": [],
-        "status": "failed",
-        "summary": "Did not implement `MGR-DASH-001` because the selected task is not eligible for execution under the repository contract. Evidence: `tasks.json` lists `MGR-DASH-001` as `in_progress`, and the canonical rules require `todo` status for selection. The correct next step is to re-run task selection against eligible `todo` items or reset this task's status before generating a new implementation brief.",
+        "next_action": "Proceed with normal review/commit for MGR-DASH-001.",
+        "severity": "low",
+        "summary": "Approved. The dashboard now stays within the existing backend summary contract and presents independent loading, empty, and error states for summary metrics, recent traces, and hot patterns without cross-blanking successful sections.",
         "task_id": "MGR-DASH-001",
-        "test_results": "No validation commands were run because implementation was correctly halted before code changes due to the task eligibility failure.",
-        "tests_executed": []
+        "validation_status": "approved"
       },
-      "updated_at": "2026-03-29T16:04:52Z"
+      "updated_at": "2026-03-29T23:29:28Z"
     },
     {
       "id": "BENCH-UX-001",
