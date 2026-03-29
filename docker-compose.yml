@@ -1,0 +1,79 @@
+# Easy Engine 平台 — 本地联调基础设施
+# 用法: docker compose up -d postgres redis
+# Kylin/Presto 资源较大，可按需启动: docker compose --profile olap up -d
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: engine-db
+    environment:
+      POSTGRES_USER: engine
+      POSTGRES_PASSWORD: engine123
+      POSTGRES_DB: engine_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - engine_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U engine -d engine_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: engine-redis
+    ports:
+      # Host 6379 is often occupied (e.g. SSH tunnel); use 6380 for local dev.
+      - "6380:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  presto:
+    profiles: ["olap"]
+    image: prestodb/presto:latest
+    container_name: presto-server
+    ports:
+      # 8081 常被本机其它服务占用；与 Kylin 17070 类似使用非常用端口
+      - "18081:8080"
+
+  kylin:
+    profiles: ["olap"]
+    build:
+      context: ./docker/kylin
+      dockerfile: Dockerfile
+    image: engine-kylin-standalone:4.0.0
+    platform: linux/amd64
+    container_name: kylin-standalone
+    # Standalone：HDFS + YARN + MySQL + Kylin；官方文档建议 ≥8G，本地建议 ≥16G 并给 Docker Desktop 足额内存。
+    mem_limit: 20g
+    cpus: 6
+    shm_size: "1gb"
+    init: true
+    volumes:
+      # 与 docker/kylin/Dockerfile 配合：避免每次新容器 format HDFS、重复 put spark2_jars。
+      - kylin_olap_data:/data
+      - kylin_olap_mysql:/var/lib/mysql
+    ports:
+      # 容器内 Kylin 为 7070。主机 17070 可避免本机其它进程占用 7070（如 SSH 转发）。
+      - "17070:7070"
+      - "8088:8088"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -sf -m 10 -u ADMIN:KYLIN http://127.0.0.1:7070/kylin/api/user/authentication >/dev/null",
+        ]
+      interval: 30s
+      timeout: 15s
+      retries: 40
+      start_period: 600s
+
+volumes:
+  engine_pg_data:
+  kylin_olap_data:
+  kylin_olap_mysql:

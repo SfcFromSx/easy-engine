@@ -1,0 +1,25 @@
+{
+  "name": "benchmark-console",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5174",
+    "build": "vite build",
+    "preview": "vite preview --port 5174"
+  },
+  "dependencies": {
+    "axios": "^1.6.8",
+    "echarts": "^6.0.0",
+    "element-plus": "^2.6.3",
+    "lucide-vue-next": "^1.0.0",
+    "vue": "^3.4.21",
+    "vue-echarts": "^8.0.1",
+    "vue-i18n": "^9.14.5",
+    "vue-router": "^4.3.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "vite": "^5.2.8"
+  }
+}

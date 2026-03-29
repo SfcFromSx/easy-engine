@@ -1,0 +1,120 @@
+/* Global Modern Dark Styles for Easy Engine Benchmark */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+
+:root {
+  --primary-color: #3b82f6;
+  --bg-color: #f8fafc;
+  --sidebar-bg: #1e293b;
+  --sidebar-text: #94a3b8;
+  --sidebar-active: #ffffff;
+  --card-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.3);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-color);
+  color: #1e293b;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* Glassmorphism Card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+/* Sidebar Styling */
+.el-aside {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+  color: var(--sidebar-text);
+  border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.el-menu-item.is-active {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0) 100%) !important;
+  color: var(--sidebar-active) !important;
+  border-left: 3px solid #3b82f6;
+  font-weight: 600;
+}
+
+/* Connectivity Dots */
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 8px;
+  position: relative;
+}
+
+.dot-online { 
+  background-color: #10b981; 
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+}
+.dot-offline { 
+  background-color: #ef4444; 
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+}
+.dot-checking { 
+  background-color: #f59e0b; 
+  animation: pulse 1.2s infinite; 
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); opacity: 0.6; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.6; }
+}
+
+/* Table Card Spacing */
+.table-card {
+  padding: 8px;
+  margin-top: 12px;
+}
+
+.el-table {
+  background: transparent !important;
+}
+
+.el-table th.el-table__cell {
+  background: rgba(248, 250, 252, 0.5) !important;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+
+.page-header {
+  margin-bottom: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.subtitle {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 14px;
+}

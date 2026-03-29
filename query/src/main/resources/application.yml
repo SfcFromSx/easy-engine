@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: query
+  redis:
+    host: ${REDIS_HOST:127.0.0.1}
+    port: ${REDIS_PORT:6380}
+    password: ${REDIS_PASSWORD:}
+
+server:
+  port: ${SERVER_PORT:8092}
+
+engine:
+  query:
+    auth:
+      username: ${ENGINE_QUERY_USER:ADMIN}
+      password: ${ENGINE_QUERY_PASSWORD:KYLIN}
+    cache:
+      default-ttl-seconds: ${ENGINE_QUERY_CACHE_TTL:300}
+      key-prefix: ${ENGINE_QUERY_CACHE_PREFIX:kylin_cache:}
+      max-cache-size-bytes: ${ENGINE_QUERY_CACHE_MAX_SIZE:2097152}
+      safe-mode-enabled: ${ENGINE_QUERY_CACHE_SAFE_MODE:false}
+      prepared-sql-enabled: ${ENGINE_QUERY_PREPARED_CACHE:true}
+      datasource-isolation-enabled: ${ENGINE_QUERY_CACHE_DS_ISOLATION:true}
+    trace:
+      enabled: ${ENGINE_QUERY_TRACE_ENABLED:true}
+      list-key: ${ENGINE_QUERY_TRACE_LIST:kylin_audit_trace}
+      max-list-length: ${ENGINE_QUERY_TRACE_MAX_LIST:50000}
+    datasource:
+      default:
+        name: default
+        type: kylin
+        driver-class: org.apache.kylin.jdbc.Driver
+        jdbc-url: jdbc:kylin://localhost:17070/learn_kylin
+        username: ADMIN
+        password: KYLIN
+        max-pool-size: 4
+        min-idle: 1
+        connection-timeout-ms: 10000
+      named:
+        presto_local:
+          name: presto_local
+          type: presto
+          driver-class: com.facebook.presto.jdbc.PrestoDriver
+          jdbc-url: jdbc:presto://localhost:18081/tpch/tiny
+          username: admin
+          password:
+          max-pool-size: 4
+          min-idle: 1
+          connection-timeout-ms: 10000
+
+logging:
+  level:
+    com.smartbi.query: INFO

@@ -1,0 +1,131 @@
+{
+  "version": 1,
+  "repo": {
+    "name": "easy-engine",
+    "root": "/Users/sfc/Documents/projects/engine"
+  },
+  "defaults": {
+    "status": "todo",
+    "max_attempts": 3,
+    "doc_gardening_interval": 2
+  },
+  "tasks": [
+    {
+      "id": "DOC-LOOP-001",
+      "title": "Convert legacy doc redirects into concise canonical pointers",
+      "module": "docs",
+      "type": "documentation",
+      "priority": 10,
+      "status": "todo",
+      "depends_on": [],
+      "context_files": [
+        "docs/README.md",
+        "docs/operations/doc-gardening.md",
+        "README.md"
+      ],
+      "acceptance_criteria": [
+        "No live documentation content exists outside root docs, docs/, and selective doc-CN/",
+        "No supported repository references depend on a legacy doc/ tree"
+      ],
+      "validation_commands": [],
+      "attempts": 0,
+      "last_result": null,
+      "updated_at": "2026-03-29T00:00:00Z"
+    },
+    {
+      "id": "DOC-CN-001",
+      "title": "Keep selected human-facing Chinese mirrors aligned with English source docs",
+      "module": "docs",
+      "type": "documentation",
+      "priority": 20,
+      "status": "todo",
+      "depends_on": [],
+      "context_files": [
+        ".agent/config.json",
+        "doc-CN/README.md",
+        "docs/operations/local-development.md"
+      ],
+      "acceptance_criteria": [
+        "Chinese mirrors exist for all configured source documents",
+        "Mirror metadata is refreshed by sync-doc-cn"
+      ],
+      "validation_commands": [
+        "python3 scripts/agent_loop.py sync-doc-cn --check"
+      ],
+      "attempts": 0,
+      "last_result": null,
+      "updated_at": "2026-03-29T00:00:00Z"
+    },
+    {
+      "id": "MGR-DASH-001",
+      "title": "Audit manager dashboard metrics and loading-state consistency",
+      "module": "manager",
+      "type": "frontend",
+      "priority": 30,
+      "status": "todo",
+      "depends_on": [],
+      "context_files": [
+        "manager/README.md",
+        "docs/modules/manager.md",
+        "docs/product/backlog.md"
+      ],
+      "acceptance_criteria": [
+        "Dashboard metrics match the backend summary contract",
+        "Loading, empty, and error states are consistent on dashboard views"
+      ],
+      "validation_commands": [
+        "mvn -q -f manager/pom.xml test",
+        "npm --prefix manager/frontend run build"
+      ],
+      "attempts": 0,
+      "last_result": null,
+      "updated_at": "2026-03-29T00:00:00Z"
+    },
+    {
+      "id": "BENCH-UX-001",
+      "title": "Improve prepared-statement authoring clarity in benchmark UI",
+      "module": "benchmark",
+      "type": "frontend",
+      "priority": 40,
+      "status": "todo",
+      "depends_on": [],
+      "context_files": [
+        "docs/modules/benchmark.md",
+        "docs/product/backlog.md"
+      ],
+      "acceptance_criteria": [
+        "Template and test-set screens explain execution mode and parameter requirements",
+        "Prepared-statement workflows are first-class in the UI"
+      ],
+      "validation_commands": [
+        "mvn -q -f benchmark/pom.xml test",
+        "npm --prefix benchmark/frontend run build"
+      ],
+      "attempts": 0,
+      "last_result": null,
+      "updated_at": "2026-03-29T00:00:00Z"
+    },
+    {
+      "id": "QUERY-DOC-001",
+      "title": "Expand query routing documentation for preserved metadata flows",
+      "module": "query",
+      "type": "documentation",
+      "priority": 50,
+      "status": "todo",
+      "depends_on": [],
+      "context_files": [
+        "query/README.md",
+        "docs/modules/query.md",
+        "docs/architecture/overview.md"
+      ],
+      "acceptance_criteria": [
+        "YH_TARGET_ENGINE precedence is documented clearly",
+        "Benchmark cached-JDBC routing caveats are explained"
+      ],
+      "validation_commands": [],
+      "attempts": 0,
+      "last_result": null,
+      "updated_at": "2026-03-29T00:00:00Z"
+    }
+  ]
+}

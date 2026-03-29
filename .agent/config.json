@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "branch_prefix": "codex/autoloop",
+  "commit_message_template": "autoloop: {task_id} {title}",
+  "max_iterations": 8,
+  "max_task_attempts": 3,
+  "doc_gardening_interval": 2,
+  "architecture_trigger_paths": [
+    "docs/architecture/overview.md",
+    "docs/architecture/service-capabilities.md",
+    "docs/architecture/http-interfaces.md",
+    "docs/architecture/runtime-topology.md"
+  ],
+  "mirror_docs": [
+    {
+      "source": "README.md",
+      "target": "doc-CN/README.md",
+      "title": "README"
+    },
+    {
+      "source": "HUMAN.MD",
+      "target": "doc-CN/HUMAN.md",
+      "title": "HUMAN"
+    },
+    {
+      "source": "docs/operations/local-development.md",
+      "target": "doc-CN/local-development.md",
+      "title": "Local Development"
+    },
+    {
+      "source": "docs/architecture/overview.md",
+      "target": "doc-CN/architecture-overview.md",
+      "title": "Architecture Overview"
+    }
+  ],
+  "validation_commands": {
+    "manager": [
+      "mvn -q -f manager/pom.xml test",
+      "npm --prefix manager/frontend run build"
+    ],
+    "query": [
+      "mvn -q -f query/pom.xml test"
+    ],
+    "benchmark": [
+      "mvn -q -f benchmark/pom.xml test",
+      "npm --prefix benchmark/frontend run build"
+    ],
+    "smoke": [
+      "bash scripts/benchmark-smoke.sh"
+    ]
+  },
+  "runners": {
+    "codex": {
+      "bin": "codex",
+      "model": "gpt-5",
+      "args": [
+        "exec",
+        "--sandbox",
+        "danger-full-access"
+      ]
+    },
+    "claude": {
+      "bin": "claude",
+      "model": "sonnet",
+      "args": [
+        "-p",
+        "--output-format",
+        "json"
+      ]
+    }
+  }
+}

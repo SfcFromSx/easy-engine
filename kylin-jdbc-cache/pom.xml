@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.kylin</groupId>
+    <artifactId>kylin-jdbc-cache</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+    <name>BI JDBC Enhanced Driver</name>
+    <description>Enhanced JDBC driver for BI with routing, caching and data source registry</description>
+
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        
+        <!-- 组件版本管理 (本地测试使用公开版 4.0.1，入内网后请切回企业版 4.0.16.1017) -->
+        <kylin.version>4.0.1</kylin.version> 
+        <jedis.version>3.10.0</jedis.version>       <!-- Redis 客户端 (Jedis) -->
+        <jackson.version>2.13.5</jackson.version>   <!-- JSON 序列化工具 (已降级以匹配图片) -->
+        <slf4j.version>1.7.36</slf4j.version>       <!-- 日志门面接口 -->
+        <logback.version>1.2.12</logback.version>   <!-- 日志实现 (Logback) -->
+        <hikaricp.version>3.4.5</hikaricp.version> <!-- 数据库连接池 (已降级以匹配图片 Java 8 环境) -->
+        <presto.jdbc.version>0.276.2</presto.jdbc.version> <!-- PrestoDB JDBC，与路由配置 driverClass 一致 -->
+        <junit.version>4.13.2</junit.version>       <!-- 单元测试框架 -->
+        <mockito.version>2.28.2</mockito.version>   <!-- 测试 Mock 框架 (已降级以匹配图片 Java 8 环境) -->
+    </properties>
+
+    <dependencies>
+        <!-- Apache Kylin JDBC 驱动: 负责底层与 Kylin 的通信 -->
+        <dependency>
+            <groupId>org.apache.kylin</groupId>
+            <artifactId>kylin-jdbc</artifactId>
+            <version>${kylin.version}</version>
+        </dependency>
+
+        <!-- Redis 客户端: 用于缓存查询结果 (注: 图片中显示的是 Lettuce，此处暂保留工程原有的 Jedis) -->
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>${jedis.version}</version>
+        </dependency>
+
+        <!-- Jackson: 用于 ResultSet 的 JSON 序列化与反序列化 -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+
+        <!-- SLF4J API: 标准日志库接口 -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+
+        <!-- HikariCP: 高性能数据库连接池，用于管理多数据源连接 -->
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>${hikaricp.version}</version>
+        </dependency>
+
+        <!-- PrestoDB JDBC：多数据源路由至 Presto 时加载 com.facebook.presto.jdbc.PrestoDriver -->
+        <dependency>
+            <groupId>com.facebook.presto</groupId>
+            <artifactId>presto-jdbc</artifactId>
+            <version>${presto.jdbc.version}</version>
+        </dependency>
+
+        <!-- 测试相关依赖 -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Logback: 强大的日志实现框架，支持文件滚动、异步日志等 -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+
+        <!-- Java 11+ 兼容性补丁 (如果在 Java 8 环境运行，可以删除以下依赖) -->
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>2.3.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>2.3.1</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Compile plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+
+            <!-- Shade plugin: produces a fat-jar with all dependencies bundled -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>fat</shadedClassifierName>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"/>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.22.2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <!-- 企业内部部署建议：
+         1. 如果您在企业内部环境运行，通常需要配置私有仓库（如 Nexus 或 Artifactory）来获取 Kyligence 或其他私有依赖。
+         2. 取消以下注释并替换 URL 即可。
+    -->
+    <!--
+    <repositories>
+        <repository>
+            <id>corporate-nexus</id>
+            <name>Corporate Internal Repository</name>
+            <url>https://nexus.yourcompany.com/repository/maven-public/</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+    </repositories>
+    -->
+
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>https://repo1.maven.org/maven2</url>
+        </repository>
+    </repositories>
+</project>

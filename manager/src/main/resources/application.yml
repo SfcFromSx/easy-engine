@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: manager
+  datasource:
+    url: jdbc:postgresql://${PG_HOST:localhost}:${PG_PORT:5433}/${PG_DB:engine_db}
+    username: ${PG_USER:engine}
+    password: ${PG_PASSWORD:engine123}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          lob:
+            non_contextual_creation: true
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
+  redis:
+    host: ${REDIS_HOST:127.0.0.1}
+    # Default 6380: see docker-compose (avoid host :6379 conflicts with SSH tunnels)
+    port: ${REDIS_PORT:6380}
+    password: ${REDIS_PASSWORD:}
+
+server:
+  port: ${SERVER_PORT:8090}
+
+engine:
+  redis:
+    trace-list-key: kylin_audit_trace
+    brpop-timeout-seconds: 5
+    poll-interval-ms: 500
+  consumer:
+    enabled: true
+
+logging:
+  level:
+    com.smartbi.engine: INFO

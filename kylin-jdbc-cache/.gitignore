@@ -1,0 +1,15 @@
+# MacOS 产生的元数据文件（在此工程中隐藏）
+._*
+.DS_Store
+
+# Maven 构建输出
+target/
+*.class
+
+# IDE 相关
+.idea/
+*.iml
+.project
+.classpath
+.settings/
+.env
