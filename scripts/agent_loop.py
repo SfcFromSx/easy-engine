@@ -688,8 +688,6 @@ class Harness:
         self.acquire_lock(runner, task["id"])
         try:
             self.ensure_loop_branch()
-            task = self.update_task(tasks_payload, task["id"], status="in_progress", last_result=None)
-            self.save_tasks(tasks_payload)
             try:
                 orchestrator_output = self.invoke_runner(runner, "orchestrator", self.task_context_payload(task))
             except HarnessError as exc:

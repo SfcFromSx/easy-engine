@@ -258,6 +258,49 @@ class AgentLoopTests(unittest.TestCase):
         self.assertEqual("blocked", task["status"])
         self.assertEqual(3, task["attempts"])
 
+    def test_step_keeps_selected_task_todo_until_implementer_result(self) -> None:
+        tasks = self.harness.load_tasks()
+        selected = self.harness.select_next_task(tasks)
+        self.assertEqual("C", selected["id"])
+
+        responses = [
+            {
+                "task_id": "C",
+                "rationale": "work on C",
+                "instructions": "do it",
+                "context_files": [],
+                "acceptance_criteria": [],
+                "halt_reason": None,
+            },
+            {
+                "task_id": "C",
+                "status": "failed",
+                "summary": "blocked",
+                "files_modified": [],
+                "commands_run": [],
+                "tests_executed": [],
+                "test_results": "none",
+                "error_log": "blocked",
+            },
+        ]
+
+        def fake_invoke_runner(runner_name, role, payload, timeout_override=None):
+            if role == "orchestrator":
+                fresh = self.harness.load_tasks()
+                task = next(item for item in fresh["tasks"] if item["id"] == "C")
+                self.assertEqual("todo", task["status"])
+            return responses.pop(0)
+
+        with mock.patch.object(self.harness, "doctor", return_value=mock.Mock(ok=True, issues=[], warnings=[])), \
+            mock.patch.object(self.harness, "ensure_loop_branch", return_value="codex/autoloop/test"), \
+            mock.patch.object(self.harness, "invoke_runner", side_effect=fake_invoke_runner):
+            outcome = self.harness.step("codex")
+
+        self.assertEqual("halted", outcome["status"])
+        refreshed = self.harness.load_tasks()
+        task = next(item for item in refreshed["tasks"] if item["id"] == "C")
+        self.assertEqual("todo", task["status"])
+
     def test_step_state_transition_is_runner_agnostic(self) -> None:
         for runner_name in ("codex", "claude"):
             tasks = self.harness.load_tasks()

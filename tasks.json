@@ -104,10 +104,21 @@
       ],
       "attempts": 0,
       "last_result": {
-        "stage": "orchestrator",
-        "error": "codex orchestrator failed with code 1 on attempt 2/2; see .agent/runtime/runner-logs/20260329T154806Z-codex-orchestrator.json"
+        "commands_run": [
+          "pwd && rg -n '\"id\":\\s*\"MGR-DASH-001\"|\"status\":\\s*\"in_progress\"|\"status\":\\s*\"todo\"' tasks.json",
+          "sed -n '1,220p' AGENTS.md",
+          "sed -n '1,220p' docs/operations/agent-loop-runbook.md",
+          "nl -ba tasks.json | sed -n '70,105p'"
+        ],
+        "error_log": "Implementation blocked by task-state mismatch. `tasks.json` shows `MGR-DASH-001` at lines 85-90 with `\"status\": \"in_progress\"`, while `AGENTS.md` Task Selection Contract allows only `todo` tasks for autonomous selection. `docs/operations/agent-loop-runbook.md` also requires the loop to select the next eligible task from `tasks.json` before orchestrator/implementer execution. No code changes were made.",
+        "files_modified": [],
+        "status": "failed",
+        "summary": "Did not implement `MGR-DASH-001` because the selected task is not eligible for execution under the repository contract. Evidence: `tasks.json` lists `MGR-DASH-001` as `in_progress`, and the canonical rules require `todo` status for selection. The correct next step is to re-run task selection against eligible `todo` items or reset this task's status before generating a new implementation brief.",
+        "task_id": "MGR-DASH-001",
+        "test_results": "No validation commands were run because implementation was correctly halted before code changes due to the task eligibility failure.",
+        "tests_executed": []
       },
-      "updated_at": "2026-03-29T15:48:06Z"
+      "updated_at": "2026-03-29T16:04:52Z"
     },
     {
       "id": "BENCH-UX-001",
