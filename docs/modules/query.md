@@ -37,4 +37,4 @@ mvn -q -f query/pom.xml test
 
 - [docs/architecture/overview.md](/Users/sfc/Documents/projects/engine/docs/architecture/overview.md)
 - [docs/architecture/service-capabilities.md](/Users/sfc/Documents/projects/engine/docs/architecture/service-capabilities.md)
-- [query/README.md](/Users/sfc/Documents/projects/engine/query/README.md)
+- [docs/operations/local-development.md](/Users/sfc/Documents/projects/engine/docs/operations/local-development.md)

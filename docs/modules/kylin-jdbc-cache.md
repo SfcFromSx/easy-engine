@@ -25,4 +25,4 @@ mvn clean package
 ## Related Docs
 
 - [docs/modules/query.md](/Users/sfc/Documents/projects/engine/docs/modules/query.md)
-- [kylin-jdbc-cache/README.md](/Users/sfc/Documents/projects/engine/kylin-jdbc-cache/README.md)
+- [docs/operations/validation-matrix.md](/Users/sfc/Documents/projects/engine/docs/operations/validation-matrix.md)

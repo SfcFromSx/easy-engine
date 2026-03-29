@@ -43,4 +43,4 @@ npm --prefix benchmark/frontend run build
 
 - [docs/architecture/overview.md](/Users/sfc/Documents/projects/engine/docs/architecture/overview.md)
 - [docs/operations/local-development.md](/Users/sfc/Documents/projects/engine/docs/operations/local-development.md)
-- [benchmark/README.md](/Users/sfc/Documents/projects/engine/benchmark/README.md)
+- [docs/operations/validation-matrix.md](/Users/sfc/Documents/projects/engine/docs/operations/validation-matrix.md)

@@ -31,4 +31,4 @@ npm --prefix manager/frontend run build
 
 - [docs/architecture/overview.md](/Users/sfc/Documents/projects/engine/docs/architecture/overview.md)
 - [docs/architecture/http-interfaces.md](/Users/sfc/Documents/projects/engine/docs/architecture/http-interfaces.md)
-- [manager/README.md](/Users/sfc/Documents/projects/engine/manager/README.md)
+- [docs/operations/local-development.md](/Users/sfc/Documents/projects/engine/docs/operations/local-development.md)

@@ -29,7 +29,7 @@ This file is intentionally short. It is the fast-start contract for autonomous a
 
 ## Hard Rules
 
-- Do not recreate a legacy `doc/` tree. Canonical English docs live in `docs/`.
+- Do not recreate a parallel legacy English documentation tree. Canonical English docs live in `docs/`.
 - Do not change `.agent/` files manually during an active loop unless the loop is paused.
 - Do not bypass `tasks.json` when selecting work for autonomous runs.
 - Do not make broad multi-module changes in one task unless the task explicitly says to do so.

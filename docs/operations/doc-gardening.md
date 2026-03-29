@@ -6,6 +6,7 @@ Doc gardening keeps the canonical docs current without turning `AGENTS.md` into 
 
 - Keep `AGENTS.md` short and operational.
 - Move durable detail into `docs/`.
+- Keep repo-root and module `README.md` files outside `docs/` as concise pointers into canonical docs.
 - Update architecture and interface docs whenever public behavior changes.
 - Refresh generated context files when layout or module boundaries change.
 - Refresh selected Chinese mirrors only after English source docs stabilize.

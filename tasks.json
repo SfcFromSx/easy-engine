@@ -16,7 +16,7 @@
       "module": "docs",
       "type": "documentation",
       "priority": 10,
-      "status": "in_progress",
+      "status": "verified",
       "depends_on": [],
       "context_files": [
         "docs/README.md",
@@ -29,8 +29,20 @@
       ],
       "validation_commands": [],
       "attempts": 0,
-      "last_result": null,
-      "updated_at": "2026-03-29T15:18:51Z"
+      "last_result": {
+        "evidence": [
+          "`find . -type d -name doc` returned no live legacy English `doc` tree.",
+          "`rg -n '\\bdoc/' README.md AGENTS.md docs query/README.md manager/README.md benchmark/README.md kylin-jdbc-cache/README.md` now returns only `docs/product/backlog.md:3`, where `doc/todo.md` is clearly labeled as legacy history.",
+          "`git diff -- AGENTS.md README.md benchmark/README.md docs/modules/benchmark.md docs/modules/kylin-jdbc-cache.md docs/modules/manager.md docs/modules/query.md docs/operations/doc-gardening.md kylin-jdbc-cache/README.md manager/README.md query/README.md` shows the non-canonical README files were reduced to short pointers and the canonical module docs no longer depend on those README pages.",
+          "`rg -n '\\[.*README\\.md\\]' docs/modules` returned no matches, and `wc -l README.md query/README.md manager/README.md benchmark/README.md kylin-jdbc-cache/README.md` shows the touched shims are concise (14 lines for the root README, 5 lines for each module README)."
+        ],
+        "next_action": "Proceed to human review and commit the documentation-only change set.",
+        "severity": "low",
+        "summary": "The implementation satisfies the task scope: legacy `doc/` navigation was removed from supported entrypoints, canonical docs under `docs/` now stand alone, and the remaining non-canonical README files are concise pointers only.",
+        "task_id": "DOC-LOOP-001",
+        "validation_status": "approved"
+      },
+      "updated_at": "2026-03-29T15:36:04Z"
     },
     {
       "id": "DOC-CN-001",
