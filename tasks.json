@@ -324,6 +324,37 @@
       "updated_at": "2026-03-29T23:44:22Z"
     },
     {
+      "id": "BENCH-ACTIVE-001",
+      "title": "Recover and prevent stale RUNNING benchmark runs from blocking the active-run surface",
+      "module": "benchmark",
+      "type": "backend",
+      "priority": 41,
+      "status": "todo",
+      "depends_on": [],
+      "context_files": [
+        "benchmark/src/main/java/com/smartbi/benchmark/run/BenchmarkExecutionService.java",
+        "benchmark/src/main/java/com/smartbi/benchmark/run/BenchmarkAsyncRunner.java",
+        "benchmark/src/main/java/com/smartbi/benchmark/web/RunController.java",
+        "benchmark/src/main/java/com/smartbi/benchmark/repo/BenchmarkRunRepository.java",
+        "benchmark/frontend/src/views/Dashboard.vue",
+        "benchmark/frontend/src/views/JobDetail.vue",
+        "docs/modules/benchmark.md"
+      ],
+      "acceptance_criteria": [
+        "A stale benchmark run that remains in RUNNING state after its worker has died no longer keeps `/api/v1/runs/active` non-empty forever",
+        "The benchmark dashboard stops showing a phantom long-running job once the backend has determined that no live benchmark execution remains",
+        "Stale RUNNING recovery works without requiring a manual service restart or starting a new benchmark job just to trigger reconciliation",
+        "The fix is covered by benchmark-side tests for stale RUNNING recovery and active-run selection behavior"
+      ],
+      "validation_commands": [
+        "mvn -q -f benchmark/pom.xml test",
+        "npm --prefix benchmark/frontend run build"
+      ],
+      "attempts": 0,
+      "last_result": null,
+      "updated_at": "2026-03-30T07:36:30Z"
+    },
+    {
       "id": "LIST-FILTER-001",
       "title": "Add practical search and filter controls to manager and benchmark list views",
       "module": "frontend",
