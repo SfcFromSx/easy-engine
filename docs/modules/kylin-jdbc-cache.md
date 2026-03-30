@@ -1,6 +1,6 @@
 # Kylin JDBC Cache Module
 
-`kylin-jdbc-cache` is a JDBC adapter that wraps the Apache Kylin JDBC driver with Redis-backed caching, routing hints, and asynchronous trace reporting.
+`kylin-jdbc-cache` is a JDBC compatibility adapter that wraps the Apache Kylin JDBC driver with Redis-backed caching, routing hints, and asynchronous trace reporting. It can front `query`, but it does not own the long-term execution semantics documented in the query module.
 
 ## Responsibilities
 
@@ -14,6 +14,7 @@
 - The adapter parses its own hints before forwarding SQL.
 - Driver-level route hints may not survive into `query`.
 - Use preserved metadata comments when query-side routing must remain visible beyond the adapter.
+- `query` remains the source of truth for routing precedence, cache semantics, preserved metadata behavior, and trace contract details.
 
 ## Build
 

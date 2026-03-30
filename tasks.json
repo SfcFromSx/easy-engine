@@ -453,7 +453,7 @@
       "module": "query",
       "type": "architecture",
       "priority": 55,
-      "status": "todo",
+      "status": "done",
       "depends_on": [],
       "context_files": [
         "docs/architecture/overview.md",
@@ -469,8 +469,19 @@
       ],
       "validation_commands": [],
       "attempts": 0,
-      "last_result": null,
-      "updated_at": "2026-03-30T08:45:00Z"
+      "last_result": {
+        "evidence": [
+          "`docs/architecture/overview.md:5-38` now explicitly names `query` as the long-term source of truth for execution semantics, describes `kylin-jdbc-cache` as a JDBC compatibility adapter, and adds a dedicated Query/JDBC migration-boundary section with concrete ownership examples.",
+          "`docs/modules/query.md:3-29,39-47` reinforces the same ownership split in the module doc: `query` owns routing precedence, cache semantics, preserved metadata handling, and trace/execution metadata, while JDBC-side hint consumption, request/response behavior, and fallback remain adapter concerns.",
+          "`docs/modules/kylin-jdbc-cache.md:3,14-17` was updated to stay consistent with the canonical boundary, and the inspected diff only touched documentation files under `docs/`; no code changes were made under `query/` or `kylin-jdbc-cache`. No automated tests were required because the task's `validation_commands` list is empty."
+        ],
+        "next_action": "Approve this task and use `QUERY-ARCH-002` for any future inventory or extraction of remaining JDBC-owned execution semantics.",
+        "severity": "low",
+        "summary": "The documentation change satisfies the task: canonical docs now clearly make `query` the execution authority, define the migration boundary against JDBC compatibility responsibilities, and keep the implementation docs-only with no JDBC code changes.",
+        "task_id": "QUERY-ARCH-001",
+        "validation_status": "approved"
+      },
+      "updated_at": "2026-03-30T07:34:17Z"
     },
     {
       "id": "QUERY-FUNC-001",
