@@ -19,9 +19,15 @@
 
 ## Routing Notes
 
+Query-side routing precedence is:
+
+1. preserved metadata comments such as `YH_TARGET_ENGINE`
+2. driver-style engine hints that still reach `query`
+3. the default datasource fallback
+
 - The standard benchmark path is `benchmark -> kylin-jdbc-cache -> query`.
-- In that path, driver hints such as `-- engine:presto_local` may be consumed before they reach `query`.
-- To guarantee query-side routing, use preserved metadata comments such as:
+- In that path, cached-JDBC processing can consume or strip driver hints such as `-- engine:presto_local` before the request reaches `query`.
+- When a benchmark or JDBC path must select a specific engine at the `query` layer, preserved metadata comments are the reliable mechanism because they survive that handoff:
 
 ```sql
 /* YH_TARGET_ENGINE=presto_local */

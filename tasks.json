@@ -419,7 +419,7 @@
       "module": "query",
       "type": "documentation",
       "priority": 50,
-      "status": "todo",
+      "status": "done",
       "depends_on": [],
       "context_files": [
         "query/README.md",
@@ -432,8 +432,20 @@
       ],
       "validation_commands": [],
       "attempts": 0,
-      "last_result": null,
-      "updated_at": "2026-03-29T00:00:00Z"
+      "last_result": {
+        "evidence": [
+          "[docs/modules/query.md](/Users/sfc/Documents/projects/engine/docs/modules/query.md#L20) now states explicit routing precedence: preserved metadata comments such as `YH_TARGET_ENGINE`, then driver-style hints that still reach `query`, then the default datasource fallback.",
+          "[docs/modules/query.md](/Users/sfc/Documents/projects/engine/docs/modules/query.md#L28) documents the benchmark path `benchmark -> kylin-jdbc-cache -> query` and explains that cached-JDBC processing may consume or strip hints like `-- engine:presto_local` before `query`, making preserved metadata comments the reliable query-side routing mechanism.",
+          "The change is scoped to `docs/modules/query.md` and remains consistent with the canonical architecture description in [docs/architecture/overview.md](/Users/sfc/Documents/projects/engine/docs/architecture/overview.md#L22), which already describes the same data flow and precedence.",
+          "Verification evidence is limited but appropriate for this documentation-only task: `git diff --check` passed, and no code or cross-module behavior changes were introduced."
+        ],
+        "next_action": "Mark QUERY-DOC-001 verified and continue to the normal review/commit step.",
+        "severity": "low",
+        "summary": "Approved. The canonical query documentation now clearly captures `YH_TARGET_ENGINE` routing precedence and the benchmark cached-JDBC caveat, with the diff staying narrow and consistent with existing architecture docs.",
+        "task_id": "QUERY-DOC-001",
+        "validation_status": "approved"
+      },
+      "updated_at": "2026-03-30T07:29:44Z"
     },
     {
       "id": "QUERY-ARCH-001",
