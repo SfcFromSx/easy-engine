@@ -388,12 +388,15 @@ class Harness:
         if completed.returncode != 0:
             raise HarnessError("failed to inspect running harness processes")
         current_pid = os.getpid()
+        relevant_tokens = (" scripts/agent_loop.py run", " scripts/agent_loop.py step")
         processes: List[Dict[str, Any]] = []
         for line in completed.stdout.splitlines():
             line = line.strip()
-            if not line or "scripts/agent_loop.py" not in line:
+            if not line:
                 continue
             pid_text, _, command = line.partition(" ")
+            if not any(token in f" {command}" for token in relevant_tokens):
+                continue
             try:
                 pid = int(pid_text)
             except ValueError:

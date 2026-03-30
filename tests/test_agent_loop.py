@@ -629,6 +629,20 @@ class AgentLoopTests(unittest.TestCase):
         self.assertTrue(status["active"])
         self.assertEqual(1234, status["process"]["pid"])
 
+    def test_other_harness_processes_ignores_doctor_and_status_commands(self) -> None:
+        ps_output = "\n".join(
+            [
+                "1111 python scripts/agent_loop.py doctor",
+                "2222 python scripts/agent_loop.py status",
+                "3333 python scripts/agent_loop.py run --runner codex",
+                "4444 python scripts/agent_loop.py step --runner codex",
+            ]
+        )
+        with mock.patch("scripts.agent_loop.run_command", return_value=mock.Mock(returncode=0, stdout=ps_output, stderr="")), \
+            mock.patch("scripts.agent_loop.os.getpid", return_value=9999):
+            processes = self.harness.other_harness_processes()
+        self.assertEqual([3333, 4444], [item["pid"] for item in processes])
+
     def test_stop_managed_run_terminates_process_and_clears_state(self) -> None:
         self.harness.write_loop_process_state(
             {
