@@ -18,6 +18,7 @@ This file merges the durable backlog signals from the previous root `todo.md` an
 
 ### Benchmark
 
+- `BENCH-E2E-001`: add stronger benchmark E2E scenario coverage that verifies structured run artifacts and context records after each scenario completes.
 - `BENCH-REG-001`: make benchmark regression failures easier to diagnose by surfacing which SQL labels / execution modes / routed targets failed.
 - `BENCH-ACTIVE-001`: recover stale `RUNNING` benchmark runs so the dashboard active-run card does not stay stuck on phantom jobs.
 - Improve datasource query tooling for prepared execution parity.

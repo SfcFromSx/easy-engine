@@ -11,6 +11,36 @@
   },
   "tasks": [
     {
+      "id": "BENCH-E2E-001",
+      "title": "Strengthen benchmark E2E scenario coverage and assert structured run artifacts after execution",
+      "module": "benchmark",
+      "type": "test",
+      "priority": 1,
+      "status": "todo",
+      "depends_on": [],
+      "context_files": [
+        "benchmark/src/test/java/com/smartbi/benchmark",
+        "benchmark/src/main/java/com/smartbi/benchmark/run/BenchmarkAsyncRunner.java",
+        "benchmark/src/main/java/com/smartbi/benchmark/web/RunController.java",
+        "benchmark/src/main/java/com/smartbi/benchmark/report/BenchmarkRunReportService.java",
+        "benchmark/frontend/src/views/Runs.vue",
+        "docs/modules/benchmark.md"
+      ],
+      "acceptance_criteria": [
+        "Benchmark-side E2E or integration-style tests cover multiple realistic run outcomes, including at least a clean success path and one failure-bearing path such as routed Presto failure or prepared-statement failure",
+        "After each scenario run completes, the tests query the stored structured artifacts and assert they exist with the expected shape, including the relevant `BenchmarkRun` fields plus `jobSnapshotJson`, `evaluationJson`, `/api/v1/runs/{id}/context`, and failure breakdown data when failures occur",
+        "The enhanced tests verify that operator-facing structured records are not only generated but also remain consistent with the executed scenario, instead of stopping at raw status assertions alone",
+        "The benchmark module validation passes after the E2E enhancement, and any frontend-facing structured run assumptions remain aligned with the Runs view contract"
+      ],
+      "validation_commands": [
+        "mvn -q -f benchmark/pom.xml test",
+        "npm --prefix benchmark/frontend run build"
+      ],
+      "attempts": 0,
+      "last_result": null,
+      "updated_at": "2026-03-30T07:41:30Z"
+    },
+    {
       "id": "DOC-LOOP-001",
       "title": "Convert legacy doc redirects into concise canonical pointers",
       "module": "docs",
@@ -328,7 +358,7 @@
       "title": "Recover and prevent stale RUNNING benchmark runs from blocking the active-run surface",
       "module": "benchmark",
       "type": "backend",
-      "priority": 41,
+      "priority": 42,
       "status": "todo",
       "depends_on": [],
       "context_files": [
