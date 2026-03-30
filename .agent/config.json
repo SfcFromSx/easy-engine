@@ -4,6 +4,7 @@
   "commit_message_template": "autoloop: {task_id} {title}",
   "push_remote": "origin",
   "auto_push_after_commit": true,
+  "todo_warning_threshold": 3,
   "max_iterations": 8,
   "max_task_attempts": 3,
   "doc_gardening_interval": 2,
@@ -50,6 +51,19 @@
     ],
     "smoke": [
       "bash scripts/benchmark-smoke.sh"
+    ]
+  },
+  "post_task_refresh_commands": {
+    "manager": [
+      "mvn -q -f manager/pom.xml -DskipTests compile",
+      "npm --prefix manager/frontend run build"
+    ],
+    "benchmark": [
+      "mvn -q -f benchmark/pom.xml -DskipTests compile",
+      "npm --prefix benchmark/frontend run build"
+    ],
+    "query": [
+      "mvn -q -f query/pom.xml -DskipTests compile"
     ]
   },
   "runners": {

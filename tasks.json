@@ -252,6 +252,114 @@
       "attempts": 0,
       "last_result": null,
       "updated_at": "2026-03-29T00:00:00Z"
+    },
+    {
+      "id": "QUERY-ARCH-001",
+      "title": "Define query as the execution source of truth and document jdbc migration boundaries",
+      "module": "query",
+      "type": "architecture",
+      "priority": 55,
+      "status": "todo",
+      "depends_on": [],
+      "context_files": [
+        "docs/architecture/overview.md",
+        "docs/modules/query.md",
+        "docs/product/backlog.md",
+        "query/README.md",
+        "kylin-jdbc-cache/README.md"
+      ],
+      "acceptance_criteria": [
+        "Canonical docs explicitly define query as the long-term execution source of truth and jdbc as a compatibility adapter",
+        "The migration boundary between query-owned semantics and jdbc-owned compatibility concerns is documented clearly enough to guide future tasks",
+        "The task does not require jdbc code changes"
+      ],
+      "validation_commands": [],
+      "attempts": 0,
+      "last_result": null,
+      "updated_at": "2026-03-30T08:45:00Z"
+    },
+    {
+      "id": "QUERY-FUNC-001",
+      "title": "Audit and harden prepared-statement cache semantics in query",
+      "module": "query",
+      "type": "backend",
+      "priority": 56,
+      "status": "todo",
+      "depends_on": [],
+      "context_files": [
+        "query/src/main/java/com/smartbi/query/service/QueryExecutionService.java",
+        "query/src/main/java/com/smartbi/query/service/QueryCacheService.java",
+        "query/src/main/java/com/smartbi/query/cache/PreparedParameterSupport.java",
+        "kylin-jdbc-cache/src/main/java/com/kylin/CachedKylinPreparedStatement.java",
+        "kylin-jdbc-cache/src/main/java/com/kylin/cache/prepared/PreparedStatementCacheSupport.java",
+        "docs/modules/query.md"
+      ],
+      "acceptance_criteria": [
+        "Query-side prepared execution and cache fingerprint rules are audited against current driver behavior and any required semantic gaps are either fixed or explicitly documented",
+        "Prepared-statement cache correctness in query is treated as a first-class execution concern",
+        "Any code changes stay inside query and its tests; jdbc code is not modified"
+      ],
+      "validation_commands": [
+        "mvn -q -f query/pom.xml test"
+      ],
+      "attempts": 0,
+      "last_result": null,
+      "updated_at": "2026-03-30T08:45:00Z"
+    },
+    {
+      "id": "QUERY-ARCH-002",
+      "title": "Inventory execution semantics still owned by jdbc and rank migration priority",
+      "module": "query",
+      "type": "architecture",
+      "priority": 57,
+      "status": "todo",
+      "depends_on": [],
+      "context_files": [
+        "docs/architecture/overview.md",
+        "docs/modules/query.md",
+        "docs/product/backlog.md",
+        "query/src/main/java/com/smartbi/query",
+        "kylin-jdbc-cache/src/main/java/com/kylin"
+      ],
+      "acceptance_criteria": [
+        "There is a durable inventory of execution semantics grouped by area such as cache, routing, prepared execution, trace, and fallback",
+        "Each item is classified as query-owned, jdbc-owned, shared temporarily, or deprecated, with migration priority noted",
+        "The task does not require jdbc code changes"
+      ],
+      "validation_commands": [],
+      "attempts": 0,
+      "last_result": null,
+      "updated_at": "2026-03-30T08:45:00Z"
+    },
+    {
+      "id": "ISSUE-COLLECT-001",
+      "title": "Collect newly discovered issues into a human-confirmation inbox",
+      "module": "docs",
+      "type": "triage",
+      "priority": 999,
+      "status": "todo",
+      "depends_on": [
+        "LIST-FILTER-001",
+        "MGR-CSS-001",
+        "QUERY-DOC-001",
+        "QUERY-ARCH-001",
+        "QUERY-FUNC-001",
+        "QUERY-ARCH-002"
+      ],
+      "context_files": [
+        "docs/product/issues-inbox.md",
+        "docs/product/backlog.md",
+        "tasks.json"
+      ],
+      "acceptance_criteria": [
+        "Newly discovered but unconfirmed issues are written into docs/product/issues-inbox.md with evidence and suggested next steps",
+        "The issue inbox remains distinct from implementation tasks and does not automatically expand into coding work",
+        "Each collected issue is clearly marked as awaiting human confirmation"
+      ],
+      "validation_commands": [],
+      "attempts": 0,
+      "last_result": null,
+      "updated_at": "2026-03-30T08:50:00Z"
     }
   ]
 }

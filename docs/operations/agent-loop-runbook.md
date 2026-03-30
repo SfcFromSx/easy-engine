@@ -25,7 +25,8 @@ Each iteration follows:
 6. update task state
 7. commit verified work if Git is ready
 8. push the current branch when auto-push is enabled
-9. trigger doc gardening when required
+9. run best-effort local refresh commands for affected modules
+10. trigger doc gardening when required
 
 ## Halt Conditions
 
@@ -54,4 +55,6 @@ Each iteration follows:
 - For Codex on unstable provider paths, prefer fewer but longer attempts over many short retries. The default profile uses long single-stage windows before giving up.
 - The Codex verifier stage uses a longer timeout window than orchestrator and implementer, because the verification payload is larger and provider latency is higher in practice.
 - When `auto_push_after_commit` is enabled, successful task commits are pushed to the configured remote immediately after the task is marked `done`.
+- After successful task completion, the harness can run best-effort local refresh commands for affected modules so local compiled/backend/frontend artifacts stay close to the newest committed logic.
+- When the todo queue drops to the configured warning threshold, the harness emits a warning with the remaining task IDs so humans can decide whether to add more work.
 - Prefer `smoke-runner` and `step` before multi-iteration Codex runs. For Codex, `run --max-iterations 1` is the safe default until the provider proves stable.

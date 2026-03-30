@@ -24,6 +24,9 @@ This file merges the durable backlog signals from the previous root `todo.md` an
 
 - `QUERY-DOC-001`: keep routed-query documentation aligned with preserved metadata behavior.
 - Continue protecting compatibility between `query` and `kylin-jdbc-cache`.
+- `QUERY-ARCH-001`: define `query` as the execution source of truth and document the migration boundary from `jdbc`.
+- `QUERY-FUNC-001`: audit and harden prepared-statement cache semantics in `query`.
+- `QUERY-ARCH-002`: inventory execution semantics still owned by `jdbc` and rank migration priority for future extraction.
 - `QUERY-ARCH-001`: define `query` as the execution source of truth and document the long-term migration boundary from `jdbc`.
 - `QUERY-FUNC-001`: audit and harden prepared-statement cache semantics in `query`.
 - `QUERY-ARCH-002`: inventory execution semantics still owned by `jdbc` and rank migration priority for future extraction.
@@ -44,3 +47,7 @@ This file merges the durable backlog signals from the previous root `todo.md` an
 
 - The root Git boundary now exists, but archived nested repository history for `kylin-jdbc-cache` still needs an explicit long-term ownership decision.
 - The workspace still carries module-local helper artifacts and legacy Java test helpers in `kylin-jdbc-cache` that may deserve further normalization.
+
+## Issue Intake
+
+- `ISSUE-COLLECT-001`: collect newly discovered but still unconfirmed issues into [issues-inbox.md](/Users/sfc/Documents/projects/engine/docs/product/issues-inbox.md) for human review before task creation.

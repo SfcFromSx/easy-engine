@@ -641,6 +641,27 @@ class Harness:
     def current_done_count(self, tasks_payload: Dict[str, Any]) -> int:
         return sum(1 for task in tasks_payload["tasks"] if task["status"] in {"done", "verified"})
 
+    def todo_count(self, tasks_payload: Dict[str, Any]) -> int:
+        return sum(1 for task in tasks_payload["tasks"] if task["status"] == "todo")
+
+    def todo_warning_threshold(self) -> int:
+        value = self.config.get("todo_warning_threshold", 3)
+        if not isinstance(value, int) or value < 0:
+            raise HarnessError("todo_warning_threshold must be a non-negative integer")
+        return value
+
+    def build_todo_warning(self, tasks_payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        todo_tasks = [task for task in tasks_payload["tasks"] if task["status"] == "todo"]
+        threshold = self.todo_warning_threshold()
+        if len(todo_tasks) > threshold:
+            return None
+        todo_tasks.sort(key=lambda item: (item["priority"], item.get("updated_at", "")))
+        return {
+            "remaining_todo": len(todo_tasks),
+            "threshold": threshold,
+            "next_candidates": [task["id"] for task in todo_tasks[:5]],
+        }
+
     def should_run_doc_gardener(self, tasks_payload: Dict[str, Any], changed_files: List[str]) -> bool:
         interval = int(self.config.get("doc_gardening_interval", 2))
         done_count = self.current_done_count(tasks_payload)
@@ -692,6 +713,51 @@ class Harness:
         remote = self.push_remote()
         run_command(["git", "push", remote, branch], self.root, check=True)
         return branch
+
+    def post_task_refresh_commands(self) -> Dict[str, List[str]]:
+        commands = self.config.get("post_task_refresh_commands", {})
+        if not isinstance(commands, dict):
+            raise HarnessError("post_task_refresh_commands must be an object")
+        normalized: Dict[str, List[str]] = {}
+        for key, value in commands.items():
+            if isinstance(value, list):
+                normalized[str(key)] = [str(item) for item in value]
+        return normalized
+
+    def infer_refresh_modules(self, changed_files: List[str]) -> List[str]:
+        modules = []
+        for prefix, module in (
+            ("manager/", "manager"),
+            ("benchmark/", "benchmark"),
+            ("query/", "query"),
+        ):
+            if any(path.startswith(prefix) for path in changed_files):
+                modules.append(module)
+        return modules
+
+    def run_post_task_refresh(self, changed_files: List[str]) -> List[Dict[str, Any]]:
+        commands_by_module = self.post_task_refresh_commands()
+        modules = self.infer_refresh_modules(changed_files)
+        results: List[Dict[str, Any]] = []
+        for module in modules:
+            for command in commands_by_module.get(module, []):
+                started = time.monotonic()
+                completed = run_command(["/bin/zsh", "-lc", command], self.root)
+                elapsed = round(time.monotonic() - started, 3)
+                result = {
+                    "module": module,
+                    "command": command,
+                    "returncode": completed.returncode,
+                    "elapsed_seconds": elapsed,
+                    "stdout": truncate_text(completed.stdout or ""),
+                    "stderr": truncate_text(completed.stderr or ""),
+                }
+                results.append(result)
+                if completed.returncode != 0:
+                    raise HarnessError(
+                        f"post-task refresh failed for {module}: {command} (code {completed.returncode})"
+                    )
+        return results
 
     def task_context_payload(self, task: Dict[str, Any], extra: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         payload: Dict[str, Any] = {
@@ -808,7 +874,27 @@ class Harness:
             if commit_message and self.auto_push_enabled():
                 pushed_branch = self.push_current_branch()
                 self.log_event({"role": "git-push", "task_id": task["id"], "branch": pushed_branch})
-            return {"status": "done", "task_id": task["id"], "commit": commit_message, "pushed_branch": pushed_branch}
+            refresh_results = []
+            refresh_error = None
+            try:
+                refresh_results = self.run_post_task_refresh(changed_files)
+                if refresh_results:
+                    self.log_event({"role": "post-task-refresh", "task_id": task["id"], "results": refresh_results})
+            except HarnessError as exc:
+                refresh_error = str(exc)
+                self.log_event({"role": "post-task-refresh", "task_id": task["id"], "error": refresh_error})
+            todo_warning = self.build_todo_warning(tasks_payload)
+            if todo_warning:
+                self.log_event({"role": "todo-warning", "task_id": task["id"], "warning": todo_warning})
+            return {
+                "status": "done",
+                "task_id": task["id"],
+                "commit": commit_message,
+                "pushed_branch": pushed_branch,
+                "refresh_results": refresh_results,
+                "refresh_error": refresh_error,
+                "todo_warning": todo_warning,
+            }
         finally:
             self.release_lock()
 
