@@ -12,6 +12,8 @@ import subprocess
 import sys
 import tempfile
 import uuid
+
+import jsonschema
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -35,7 +37,9 @@ ROLE_TO_PROMPT = {
 
 
 class HarnessError(RuntimeError):
-    pass
+    def __init__(self, message: str, *, failure_type: str = "permanent") -> None:
+        super().__init__(message)
+        self.failure_type = failure_type  # "transient" or "permanent"
 
 
 @dataclass
@@ -350,9 +354,6 @@ class Harness:
         self.loop_process_path.unlink(missing_ok=True)
 
     def acquire_lock(self, runner: str, task_id: Optional[str]) -> None:
-        state = self.read_lock_state()
-        if state.get("locked"):
-            raise HarnessError("loop lock is already active")
         payload = {
             "locked": True,
             "owner": str(uuid.uuid4()),
@@ -360,10 +361,27 @@ class Harness:
             "runner": runner,
             "task_id": task_id,
         }
-        self.write_lock_state(payload)
+        self.lock_path.parent.mkdir(parents=True, exist_ok=True)
+        # Remove a stale unlocked file left by a previous release_lock so that
+        # O_EXCL reliably reflects whether the lock is *held*, not just whether
+        # the file exists.
+        if self.lock_path.exists():
+            try:
+                existing = read_json(self.lock_path)
+                if not existing.get("locked"):
+                    self.lock_path.unlink(missing_ok=True)
+            except Exception:
+                pass
+        try:
+            fd = os.open(str(self.lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
+        except FileExistsError:
+            raise HarnessError("loop lock is already active")
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(payload, f, indent=2, ensure_ascii=True)
+            f.write("\n")
 
     def release_lock(self) -> None:
-        self.write_lock_state(unlocked_lock_state())
+        self.lock_path.unlink(missing_ok=True)
 
     def is_paused(self) -> bool:
         return self.pause_path.exists()
@@ -557,55 +575,14 @@ class Harness:
         return payload
 
     def validate_runner_payload(self, role: str, payload: Dict[str, Any]) -> None:
-        def require(key: str, expected_type: type) -> None:
-            value = payload.get(key)
-            if not isinstance(value, expected_type):
-                raise HarnessError(f"{role} output field '{key}' must be {expected_type.__name__}")
-
-        if role == "orchestrator":
-            require("task_id", str)
-            require("rationale", str)
-            require("instructions", str)
-            if not isinstance(payload.get("context_files"), list):
-                raise HarnessError("orchestrator output field 'context_files' must be a list")
-            if not isinstance(payload.get("acceptance_criteria"), list):
-                raise HarnessError("orchestrator output field 'acceptance_criteria' must be a list")
-            if "halt_reason" not in payload:
-                raise HarnessError("orchestrator output must include halt_reason")
-            return
-        if role == "implementer":
-            require("task_id", str)
-            require("status", str)
-            if payload["status"] not in {"implemented", "failed"}:
-                raise HarnessError("implementer status must be implemented or failed")
-            require("summary", str)
-            for key in ("files_modified", "commands_run", "tests_executed"):
-                if not isinstance(payload.get(key), list):
-                    raise HarnessError(f"implementer output field '{key}' must be a list")
-            require("test_results", str)
-            if "error_log" not in payload:
-                raise HarnessError("implementer output must include error_log")
-            return
-        if role == "verifier":
-            require("task_id", str)
-            require("validation_status", str)
-            if payload["validation_status"] not in {"approved", "rejected"}:
-                raise HarnessError("verifier validation_status must be approved or rejected")
-            require("summary", str)
-            if not isinstance(payload.get("evidence"), list):
-                raise HarnessError("verifier output field 'evidence' must be a list")
-            require("severity", str)
-            require("next_action", str)
-            return
-        if role == "doc-gardener":
-            require("status", str)
-            if payload["status"] not in {"updated", "no_changes", "blocked"}:
-                raise HarnessError("doc-gardener status must be updated, no_changes, or blocked")
-            for key in ("docs_updated", "stale_docs", "unresolved_drift"):
-                if not isinstance(payload.get(key), list):
-                    raise HarnessError(f"doc-gardener output field '{key}' must be a list")
-            return
-        raise HarnessError(f"unknown role for validation: {role}")
+        schema_file = ROLE_TO_SCHEMA.get(role)
+        if not schema_file:
+            raise HarnessError(f"unknown role for validation: {role}")
+        schema = json.loads((self.schemas_dir / schema_file).read_text(encoding="utf-8"))
+        try:
+            jsonschema.validate(payload, schema)
+        except jsonschema.ValidationError as exc:
+            raise HarnessError(f"{role} output invalid: {exc.message}") from exc
 
     def invoke_runner(
         self,
@@ -669,7 +646,7 @@ class Harness:
                     if attempt < retry_attempts and retry_on_timeout:
                         time.sleep(retry_backoff_seconds * attempt)
                         continue
-                    raise HarnessError(last_error_message) from exc
+                    raise HarnessError(last_error_message, failure_type="transient") from exc
                 if completed.returncode != 0:
                     stderr_text = truncate_text(completed.stderr or "")
                     log_path = self.write_runner_log(
@@ -697,7 +674,7 @@ class Harness:
                     if attempt < retry_attempts and self.is_retryable_runner_error(runner, stderr_text):
                         time.sleep(retry_backoff_seconds * attempt)
                         continue
-                    raise HarnessError(last_error_message)
+                    raise HarnessError(last_error_message, failure_type="transient")
                 raw = output_path.read_text(encoding="utf-8")
                 self.write_runner_log(
                     runner,
@@ -752,7 +729,7 @@ class Harness:
                     if attempt < retry_attempts and retry_on_timeout:
                         time.sleep(retry_backoff_seconds * attempt)
                         continue
-                    raise HarnessError(last_error_message) from exc
+                    raise HarnessError(last_error_message, failure_type="transient") from exc
                 if completed.returncode != 0:
                     stderr_text = truncate_text(completed.stderr or "")
                     log_path = self.write_runner_log(
@@ -778,7 +755,7 @@ class Harness:
                     if attempt < retry_attempts and self.is_retryable_runner_error(runner, stderr_text):
                         time.sleep(retry_backoff_seconds * attempt)
                         continue
-                    raise HarnessError(last_error_message)
+                    raise HarnessError(last_error_message, failure_type="transient")
                 raw = completed.stdout
                 self.write_runner_log(
                     runner,
@@ -812,14 +789,24 @@ class Harness:
         stage: str,
         error: Exception,
     ) -> Dict[str, Any]:
+        task = next((t for t in tasks_payload["tasks"] if t["id"] == task_id), None)
+        failure_type = getattr(error, "failure_type", "permanent")
+        # Transient failures (timeout, network, process crash) don't count toward
+        # max_task_attempts — only real implementation failures do.
+        if failure_type == "transient":
+            attempts = int(task.get("attempts", 0)) if task else 0
+        else:
+            attempts = int(task.get("attempts", 0)) + 1 if task else 1
+        next_status = "blocked" if failure_type != "transient" and attempts >= int(self.config.get("max_task_attempts", 3)) else "todo"
         self.update_task(
             tasks_payload,
             task_id,
-            status="todo",
-            last_result={"stage": stage, "error": str(error)},
+            status=next_status,
+            attempts=attempts,
+            last_result={"stage": stage, "error": str(error), "failure_type": failure_type},
         )
         self.save_tasks(tasks_payload)
-        return {"status": "halted", "reason": "runner_failed", "task_id": task_id, "stage": stage, "error": str(error)}
+        return {"status": "task_failed", "task_id": task_id, "stage": stage, "error": str(error), "failure_type": failure_type, "attempts": attempts, "next_status": next_status}
 
     def current_done_count(self, tasks_payload: Dict[str, Any]) -> int:
         return sum(1 for task in tasks_payload["tasks"] if task["status"] in {"done", "verified"})
@@ -1195,6 +1182,9 @@ class Harness:
                 iterations += 1
                 continue
             if outcome["status"] == "rejected":
+                iterations += 1
+                continue
+            if outcome["status"] == "task_failed":
                 iterations += 1
                 continue
             if outcome["status"] == "halted" and outcome.get("reason") in {"no_tasks", "paused"}:

@@ -24,10 +24,10 @@ ROOT_FIXTURE_FILES = {
     "docs/agent/prompts/implementer.md": "implementer\n",
     "docs/agent/prompts/verifier.md": "verifier\n",
     "docs/agent/prompts/doc-gardener.md": "doc-gardener\n",
-    "docs/agent/schemas/orchestrator-output.schema.json": "{}\n",
-    "docs/agent/schemas/implementer-output.schema.json": "{}\n",
-    "docs/agent/schemas/verifier-output.schema.json": "{}\n",
-    "docs/agent/schemas/doc-gardener-output.schema.json": "{}\n",
+    "docs/agent/schemas/orchestrator-output.schema.json": json.dumps({"$schema": "https://json-schema.org/draft/2020-12/schema", "type": "object", "additionalProperties": False, "required": ["task_id", "rationale", "instructions", "context_files", "acceptance_criteria", "halt_reason"], "properties": {"task_id": {"type": "string"}, "rationale": {"type": "string"}, "instructions": {"type": "string"}, "context_files": {"type": "array", "items": {"type": "string"}}, "acceptance_criteria": {"type": "array", "items": {"type": "string"}}, "halt_reason": {"type": ["string", "null"]}}}) + "\n",
+    "docs/agent/schemas/implementer-output.schema.json": json.dumps({"$schema": "https://json-schema.org/draft/2020-12/schema", "type": "object", "additionalProperties": False, "required": ["task_id", "status", "summary", "files_modified", "commands_run", "tests_executed", "test_results", "error_log"], "properties": {"task_id": {"type": "string"}, "status": {"type": "string", "enum": ["implemented", "failed"]}, "summary": {"type": "string"}, "files_modified": {"type": "array", "items": {"type": "string"}}, "commands_run": {"type": "array", "items": {"type": "string"}}, "tests_executed": {"type": "array", "items": {"type": "string"}}, "test_results": {"type": "string"}, "error_log": {"type": ["string", "null"]}}}) + "\n",
+    "docs/agent/schemas/verifier-output.schema.json": json.dumps({"$schema": "https://json-schema.org/draft/2020-12/schema", "type": "object", "additionalProperties": False, "required": ["task_id", "validation_status", "summary", "evidence", "severity", "next_action"], "properties": {"task_id": {"type": "string"}, "validation_status": {"type": "string", "enum": ["approved", "rejected"]}, "summary": {"type": "string"}, "evidence": {"type": "array", "items": {"type": "string"}}, "severity": {"type": "string", "enum": ["low", "medium", "high", "critical"]}, "next_action": {"type": "string"}}}) + "\n",
+    "docs/agent/schemas/doc-gardener-output.schema.json": json.dumps({"$schema": "https://json-schema.org/draft/2020-12/schema", "type": "object", "additionalProperties": False, "required": ["status", "docs_updated", "stale_docs", "unresolved_drift"], "properties": {"status": {"type": "string", "enum": ["updated", "no_changes", "blocked"]}, "docs_updated": {"type": "array", "items": {"type": "string"}}, "stale_docs": {"type": "array", "items": {"type": "string"}}, "unresolved_drift": {"type": "array", "items": {"type": "string"}}}}) + "\n",
     ".agent/config.json": json.dumps(
         {
             "version": 1,
@@ -196,7 +196,7 @@ class AgentLoopTests(unittest.TestCase):
         self.assertEqual(0, self.harness.sync_doc_cn(check=True))
 
     def test_runner_payload_validation_rejects_bad_status(self) -> None:
-        with self.assertRaisesRegex(Exception, "implementer status"):
+        with self.assertRaisesRegex(Exception, "implementer output invalid"):
             self.harness.validate_runner_payload(
                 "implementer",
                 {
@@ -477,11 +477,42 @@ class AgentLoopTests(unittest.TestCase):
         tasks = self.harness.load_tasks()
         self.harness.update_task(tasks, "C", status="in_progress", last_result=None)
         result = self.harness.handle_stage_failure(tasks, "C", "orchestrator", RuntimeError("boom"))
-        self.assertEqual("halted", result["status"])
+        self.assertEqual("task_failed", result["status"])
+        self.assertEqual(1, result["attempts"])
+        self.assertEqual("todo", result["next_status"])
         updated = self.harness.load_tasks()
         task = next(task for task in updated["tasks"] if task["id"] == "C")
         self.assertEqual("todo", task["status"])
+        self.assertEqual(1, task["attempts"])
         self.assertEqual("orchestrator", task["last_result"]["stage"])
+
+    def test_handle_stage_failure_blocks_task_after_max_attempts(self) -> None:
+        tasks = self.harness.load_tasks()
+        self.harness.update_task(tasks, "C", status="in_progress", attempts=2)
+        result = self.harness.handle_stage_failure(tasks, "C", "implementer", RuntimeError("repeated failure"))
+        self.assertEqual("task_failed", result["status"])
+        self.assertEqual(3, result["attempts"])
+        self.assertEqual("blocked", result["next_status"])
+        updated = self.harness.load_tasks()
+        task = next(task for task in updated["tasks"] if task["id"] == "C")
+        self.assertEqual("blocked", task["status"])
+
+    def test_run_continues_after_task_failed(self) -> None:
+        step_results = iter(
+            [
+                {"status": "task_failed", "task_id": "C", "stage": "implementer", "error": "code 1", "attempts": 1, "next_status": "todo"},
+                {"status": "done", "task_id": "D"},
+                {"status": "halted", "reason": "no_tasks"},
+            ]
+        )
+        unlocked = {"locked": False, "owner": None, "started_at": None, "runner": None, "task_id": None}
+        with mock.patch.object(self.harness, "read_lock_state", side_effect=[unlocked, unlocked, unlocked]), \
+            mock.patch.object(self.harness, "stray_harness_processes", return_value=[]), \
+            mock.patch.object(self.harness, "step", side_effect=lambda *args, **kwargs: next(step_results)) as step_mock, \
+            mock.patch("sys.stdout", new_callable=io.StringIO):
+            exit_code = self.harness.run("codex", None)
+        self.assertEqual(0, exit_code)
+        self.assertEqual(3, step_mock.call_count)
 
     def test_codex_timeout_retries_then_succeeds(self) -> None:
         state = {"calls": 0}
@@ -511,6 +542,33 @@ class AgentLoopTests(unittest.TestCase):
             payload = self.harness.invoke_runner("codex", "orchestrator", {"task": {"id": "C"}})
         self.assertEqual("C", payload["task_id"])
         self.assertEqual(2, state["calls"])
+
+    def test_handle_stage_failure_transient_does_not_increment_attempts(self) -> None:
+        from scripts.agent_loop import HarnessError
+        tasks = self.harness.load_tasks()
+        self.harness.update_task(tasks, "C", status="in_progress", attempts=1)
+        err = HarnessError("timeout", failure_type="transient")
+        result = self.harness.handle_stage_failure(tasks, "C", "orchestrator", err)
+        self.assertEqual("task_failed", result["status"])
+        self.assertEqual("transient", result["failure_type"])
+        self.assertEqual(1, result["attempts"])  # not incremented
+        self.assertEqual("todo", result["next_status"])  # never blocked by transient
+        updated = self.harness.load_tasks()
+        task = next(t for t in updated["tasks"] if t["id"] == "C")
+        self.assertEqual("todo", task["status"])
+        self.assertEqual(1, task["attempts"])  # unchanged
+
+    def test_handle_stage_failure_transient_never_blocks_at_max_attempts(self) -> None:
+        from scripts.agent_loop import HarnessError
+        tasks = self.harness.load_tasks()
+        self.harness.update_task(tasks, "C", status="in_progress", attempts=2)
+        err = HarnessError("connection reset", failure_type="transient")
+        result = self.harness.handle_stage_failure(tasks, "C", "implementer", err)
+        self.assertEqual("todo", result["next_status"])  # transient never causes blocked
+        updated = self.harness.load_tasks()
+        task = next(t for t in updated["tasks"] if t["id"] == "C")
+        self.assertEqual("todo", task["status"])
+        self.assertEqual(2, task["attempts"])  # still 2, not incremented
 
     def test_run_drains_queue_until_no_tasks(self) -> None:
         step_results = iter(
