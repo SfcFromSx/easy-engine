@@ -44,6 +44,10 @@ class DoctorReport:
     warnings: List[str]
 
 
+def unlocked_lock_state() -> Dict[str, Any]:
+    return {"locked": False, "owner": None, "started_at": None, "runner": None, "task_id": None}
+
+
 def utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
@@ -165,6 +169,9 @@ class Harness:
             raise HarnessError("config validation_commands must be an object")
         if not isinstance(self.config.get("runners"), dict):
             raise HarnessError("config runners must be an object")
+        lock_poll_seconds = self.config.get("lock_poll_seconds", 5)
+        if not isinstance(lock_poll_seconds, int) or lock_poll_seconds <= 0:
+            raise HarnessError("config lock_poll_seconds must be a positive integer")
 
     def schema_path(self, role: str) -> Path:
         return self.schemas_dir / ROLE_TO_SCHEMA[role]
@@ -293,6 +300,16 @@ class Harness:
                 "nested Git repositories detected: "
                 + ", ".join(str(path.relative_to(self.root)) for path in nested_repos)
             )
+        try:
+            stray_processes = self.stray_harness_processes()
+        except HarnessError as exc:
+            issues.append(str(exc))
+        else:
+            if stray_processes:
+                issues.append(
+                    "agent_loop.py process is running while .agent/lock.json is unlocked: "
+                    + ", ".join(f"{item['pid']}:{item['command']}" for item in stray_processes)
+                )
         for runner in ("codex", "claude"):
             binary = self.runner_bin(runner)
             if shutil.which(binary) is None:
@@ -302,8 +319,22 @@ class Harness:
         ok = not issues
         return DoctorReport(ok=ok, issues=issues, warnings=warnings)
 
-    def acquire_lock(self, runner: str, task_id: Optional[str]) -> None:
+    def read_lock_state(self) -> Dict[str, Any]:
+        if not self.lock_path.exists():
+            return unlocked_lock_state()
         state = read_json(self.lock_path)
+        default = unlocked_lock_state()
+        if not isinstance(state, dict):
+            raise HarnessError(".agent/lock.json must be an object")
+        for key, value in default.items():
+            state.setdefault(key, value)
+        return state
+
+    def write_lock_state(self, payload: Dict[str, Any]) -> None:
+        write_json(self.lock_path, payload)
+
+    def acquire_lock(self, runner: str, task_id: Optional[str]) -> None:
+        state = self.read_lock_state()
         if state.get("locked"):
             raise HarnessError("loop lock is already active")
         payload = {
@@ -313,16 +344,45 @@ class Harness:
             "runner": runner,
             "task_id": task_id,
         }
-        write_json(self.lock_path, payload)
+        self.write_lock_state(payload)
 
     def release_lock(self) -> None:
-        write_json(
-            self.lock_path,
-            {"locked": False, "owner": None, "started_at": None, "runner": None, "task_id": None},
-        )
+        self.write_lock_state(unlocked_lock_state())
 
     def is_paused(self) -> bool:
         return self.pause_path.exists()
+
+    def lock_poll_seconds(self) -> int:
+        value = self.config.get("lock_poll_seconds", 5)
+        if not isinstance(value, int) or value <= 0:
+            raise HarnessError("lock_poll_seconds must be a positive integer")
+        return value
+
+    def other_harness_processes(self) -> List[Dict[str, Any]]:
+        completed = run_command(["ps", "-eo", "pid=,args="], self.root)
+        if completed.returncode != 0:
+            raise HarnessError("failed to inspect running harness processes")
+        current_pid = os.getpid()
+        processes: List[Dict[str, Any]] = []
+        for line in completed.stdout.splitlines():
+            line = line.strip()
+            if not line or "scripts/agent_loop.py" not in line:
+                continue
+            pid_text, _, command = line.partition(" ")
+            try:
+                pid = int(pid_text)
+            except ValueError:
+                continue
+            if pid == current_pid:
+                continue
+            processes.append({"pid": pid, "command": command.strip()})
+        return processes
+
+    def stray_harness_processes(self, lock_state: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+        state = lock_state or self.read_lock_state()
+        if state.get("locked"):
+            return []
+        return self.other_harness_processes()
 
     def select_next_task(self, tasks_payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         tasks = tasks_payload["tasks"]
@@ -837,7 +897,10 @@ class Harness:
         task = self.select_next_task(tasks_payload)
         if not task:
             return {"status": "halted", "reason": "no_tasks"}
-        self.acquire_lock(runner, task["id"])
+        try:
+            self.acquire_lock(runner, task["id"])
+        except HarnessError as exc:
+            return {"status": "halted", "reason": "lock_active", "task_id": task["id"], "error": str(exc)}
         try:
             self.ensure_loop_branch()
             try:
@@ -967,18 +1030,56 @@ class Harness:
             self.release_lock()
 
     def run(self, runner: str, max_iterations: Optional[int], *, live_runner_check: bool = False) -> int:
-        iterations = max_iterations or int(self.config.get("max_iterations", 8))
-        for _ in range(iterations):
+        iterations = 0
+        waiting_for_lock = False
+        while True:
+            if max_iterations is not None and iterations >= max_iterations:
+                print(json.dumps({"status": "halted", "reason": "max_iterations", "iterations": iterations}, ensure_ascii=True))
+                return 0
+            if self.is_paused():
+                print(json.dumps({"status": "halted", "reason": "paused"}, ensure_ascii=True))
+                return 0
+            lock_state = self.read_lock_state()
+            if lock_state.get("locked"):
+                if not waiting_for_lock:
+                    print(
+                        json.dumps(
+                            {
+                                "status": "waiting",
+                                "reason": "lock_active",
+                                "task_id": lock_state.get("task_id"),
+                                "runner": lock_state.get("runner"),
+                            },
+                            ensure_ascii=True,
+                        )
+                    )
+                waiting_for_lock = True
+                time.sleep(self.lock_poll_seconds())
+                continue
+            waiting_for_lock = False
+            stray_processes = self.stray_harness_processes(lock_state)
+            if stray_processes:
+                print(
+                    json.dumps(
+                        {"status": "halted", "reason": "stale_process", "processes": stray_processes},
+                        ensure_ascii=True,
+                    )
+                )
+                return 1
             outcome = self.step(runner, live_runner_check=live_runner_check)
             print(json.dumps(outcome, ensure_ascii=True))
             if outcome["status"] == "done":
+                iterations += 1
                 continue
             if outcome["status"] == "rejected":
+                iterations += 1
                 continue
-            if outcome["status"] == "halted" and outcome.get("reason") == "no_tasks":
+            if outcome["status"] == "halted" and outcome.get("reason") in {"no_tasks", "paused"}:
                 return 0
+            if outcome["status"] == "halted" and outcome.get("reason") == "lock_active":
+                time.sleep(self.lock_poll_seconds())
+                continue
             return 1
-        return 0
 
     def sync_doc_cn(self, *, check: bool = False) -> int:
         failures = 0

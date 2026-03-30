@@ -118,6 +118,49 @@
       "updated_at": "2026-03-29T23:29:28Z"
     },
     {
+      "id": "HARNESS-RUNLOOP-001",
+      "title": "Implement a continuous run-until-empty harness loop",
+      "module": "docs",
+      "type": "architecture",
+      "priority": 1,
+      "status": "done",
+      "depends_on": [],
+      "context_files": [
+        "scripts/agent_loop.py",
+        ".agent/config.json",
+        "docs/operations/agent-loop-runbook.md",
+        "AGENTS.md",
+        "HUMAN.MD",
+        "docs/product/issues-inbox.md"
+      ],
+      "acceptance_criteria": [
+        "The harness can continue pulling the next eligible todo task automatically without requiring a new manual step invocation after each completed task",
+        "The continuous loop stops only on explicit pause, no remaining eligible tasks, or a hard failure condition defined by the harness contract",
+        "The new run-loop behavior is documented clearly and validated with focused tests",
+        "This task changes only the harness and its documentation"
+      ],
+      "validation_commands": [
+        "python3 -m unittest -v tests/test_agent_loop.py",
+        "python3 scripts/agent_loop.py doctor"
+      ],
+      "attempts": 0,
+      "last_result": {
+        "evidence": [
+          "Quarantined the mixed `TRACE-MODE-001` and `MGR-CSS-001` worktrees under `.agent/runtime/quarantine/20260330T051049Z/` with task-specific patch bundles and manifests, then restored the repository worktree to a clean `HEAD` before changing the harness.",
+          "`scripts/agent_loop.py` now treats `run` as a queue-draining loop: it waits on a valid active lock, halts on stray unlocked `agent_loop.py` processes, keeps draining after both `done` and `rejected` outcomes, and stops cleanly on `no_tasks`, `paused`, or an explicit `--max-iterations` cap.",
+          "`.agent/config.json` now defines `lock_poll_seconds`, and `docs/operations/agent-loop-runbook.md` documents continuous drain mode, quarantine recovery, lock polling, and stale-process recovery expectations.",
+          "Re-ran `python3 -m unittest -v tests/test_agent_loop.py`; all 19 harness tests passed, including the new continuous-run, lock-wait, max-iteration, and stray-process coverage.",
+          "Re-ran `python3 scripts/agent_loop.py doctor`; it returned `ok: true` with no issues and only the existing warning that runner auth was not live-verified."
+        ],
+        "next_action": "Commit and push the harness-only change set, then start `python3 scripts/agent_loop.py run --runner codex` to resume autonomous task draining.",
+        "severity": "low",
+        "summary": "Approved. The harness now supports clean worktree quarantine recovery and a true serial run-until-empty loop with lock polling, stale-process detection, updated docs, and focused regression coverage.",
+        "task_id": "HARNESS-RUNLOOP-001",
+        "validation_status": "approved"
+      },
+      "updated_at": "2026-03-30T05:22:43Z"
+    },
+    {
       "id": "TRACE-MODE-001",
       "title": "Record execution mode for every SQL trace and benchmark execution record",
       "module": "query",

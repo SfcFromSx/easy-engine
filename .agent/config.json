@@ -6,6 +6,7 @@
   "auto_push_after_commit": true,
   "todo_warning_threshold": 3,
   "max_iterations": 8,
+  "lock_poll_seconds": 5,
   "max_task_attempts": 3,
   "doc_gardening_interval": 2,
   "runner_timeout_seconds": 300,

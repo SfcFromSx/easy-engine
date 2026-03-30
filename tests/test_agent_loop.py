@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import json
 import subprocess
 import tempfile
@@ -35,6 +36,7 @@ ROOT_FIXTURE_FILES = {
             "push_remote": "origin",
             "auto_push_after_commit": True,
             "max_iterations": 8,
+            "lock_poll_seconds": 1,
             "max_task_attempts": 3,
             "doc_gardening_interval": 2,
             "runner_timeout_seconds": 30,
@@ -213,6 +215,19 @@ class AgentLoopTests(unittest.TestCase):
         report = self.harness.doctor()
         self.assertFalse(report.ok)
         self.assertTrue(any("root Git repository is not initialized" in issue for issue in report.issues))
+
+    def test_doctor_flags_stray_process_when_lock_is_unlocked(self) -> None:
+        with mock.patch.object(self.harness, "check_root_git", return_value=[]), \
+            mock.patch.object(self.harness, "find_nested_git_dirs", return_value=[]), \
+            mock.patch.object(
+                self.harness,
+                "stray_harness_processes",
+                return_value=[{"pid": 4242, "command": "python scripts/agent_loop.py run --runner codex"}],
+            ), \
+            mock.patch("scripts.agent_loop.shutil.which", return_value="/usr/bin/mock"):
+            report = self.harness.doctor()
+        self.assertFalse(report.ok)
+        self.assertTrue(any("agent_loop.py process is running while .agent/lock.json is unlocked" in issue for issue in report.issues))
 
     def test_step_blocks_after_three_rejections(self) -> None:
         tasks = self.harness.load_tasks()
@@ -496,6 +511,91 @@ class AgentLoopTests(unittest.TestCase):
             payload = self.harness.invoke_runner("codex", "orchestrator", {"task": {"id": "C"}})
         self.assertEqual("C", payload["task_id"])
         self.assertEqual(2, state["calls"])
+
+    def test_run_drains_queue_until_no_tasks(self) -> None:
+        step_results = iter(
+            [
+                {"status": "done", "task_id": "C"},
+                {"status": "done", "task_id": "D"},
+                {"status": "halted", "reason": "no_tasks"},
+            ]
+        )
+        unlocked = {"locked": False, "owner": None, "started_at": None, "runner": None, "task_id": None}
+        with mock.patch.object(self.harness, "read_lock_state", side_effect=[unlocked, unlocked, unlocked]), \
+            mock.patch.object(self.harness, "stray_harness_processes", return_value=[]), \
+            mock.patch.object(self.harness, "step", side_effect=lambda *args, **kwargs: next(step_results)) as step_mock, \
+            mock.patch("sys.stdout", new_callable=io.StringIO):
+            exit_code = self.harness.run("codex", None)
+        self.assertEqual(0, exit_code)
+        self.assertEqual(3, step_mock.call_count)
+
+    def test_run_continues_after_rejected_until_no_tasks(self) -> None:
+        step_results = iter(
+            [
+                {"status": "rejected", "task_id": "C", "attempts": 1, "next_status": "todo"},
+                {"status": "done", "task_id": "D"},
+                {"status": "halted", "reason": "no_tasks"},
+            ]
+        )
+        unlocked = {"locked": False, "owner": None, "started_at": None, "runner": None, "task_id": None}
+        with mock.patch.object(self.harness, "read_lock_state", side_effect=[unlocked, unlocked, unlocked]), \
+            mock.patch.object(self.harness, "stray_harness_processes", return_value=[]), \
+            mock.patch.object(self.harness, "step", side_effect=lambda *args, **kwargs: next(step_results)) as step_mock, \
+            mock.patch("sys.stdout", new_callable=io.StringIO):
+            exit_code = self.harness.run("codex", None)
+        self.assertEqual(0, exit_code)
+        self.assertEqual(3, step_mock.call_count)
+
+    def test_run_respects_max_iterations(self) -> None:
+        unlocked = {"locked": False, "owner": None, "started_at": None, "runner": None, "task_id": None}
+        with mock.patch.object(self.harness, "read_lock_state", side_effect=[unlocked, unlocked]), \
+            mock.patch.object(self.harness, "stray_harness_processes", return_value=[]), \
+            mock.patch.object(self.harness, "step", return_value={"status": "done", "task_id": "C"}) as step_mock, \
+            mock.patch("sys.stdout", new_callable=io.StringIO):
+            exit_code = self.harness.run("codex", 2)
+        self.assertEqual(0, exit_code)
+        self.assertEqual(2, step_mock.call_count)
+
+    def test_run_waits_for_active_lock_then_resumes(self) -> None:
+        locked = {
+            "locked": True,
+            "owner": "owner-1",
+            "started_at": "2026-03-30T00:00:00Z",
+            "runner": "codex",
+            "task_id": "C",
+        }
+        unlocked = {"locked": False, "owner": None, "started_at": None, "runner": None, "task_id": None}
+        step_results = iter(
+            [
+                {"status": "done", "task_id": "D"},
+                {"status": "halted", "reason": "no_tasks"},
+            ]
+        )
+        with mock.patch.object(self.harness, "read_lock_state", side_effect=[locked, unlocked, unlocked]), \
+            mock.patch.object(self.harness, "stray_harness_processes", return_value=[]), \
+            mock.patch.object(self.harness, "step", side_effect=lambda *args, **kwargs: next(step_results)) as step_mock, \
+            mock.patch("scripts.agent_loop.time.sleep") as sleep_mock, \
+            mock.patch("sys.stdout", new_callable=io.StringIO) as stdout:
+            exit_code = self.harness.run("codex", None)
+        self.assertEqual(0, exit_code)
+        self.assertEqual(2, step_mock.call_count)
+        sleep_mock.assert_called_once_with(1)
+        self.assertIn('"status": "waiting"', stdout.getvalue())
+
+    def test_run_halts_on_stray_process_when_lock_is_unlocked(self) -> None:
+        unlocked = {"locked": False, "owner": None, "started_at": None, "runner": None, "task_id": None}
+        with mock.patch.object(self.harness, "read_lock_state", return_value=unlocked), \
+            mock.patch.object(
+                self.harness,
+                "stray_harness_processes",
+                return_value=[{"pid": 4242, "command": "python scripts/agent_loop.py run --runner codex"}],
+            ), \
+            mock.patch.object(self.harness, "step") as step_mock, \
+            mock.patch("sys.stdout", new_callable=io.StringIO) as stdout:
+            exit_code = self.harness.run("codex", None)
+        self.assertEqual(1, exit_code)
+        step_mock.assert_not_called()
+        self.assertIn('"reason": "stale_process"', stdout.getvalue())
 
 
 if __name__ == "__main__":

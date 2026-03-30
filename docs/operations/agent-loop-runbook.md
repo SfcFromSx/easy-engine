@@ -8,14 +8,17 @@ The autonomous loop is driven by [scripts/agent_loop.py](/Users/sfc/Documents/pr
 python3 scripts/agent_loop.py doctor
 python3 scripts/agent_loop.py smoke-runner --runner codex
 python3 scripts/agent_loop.py step --runner codex
-python3 scripts/agent_loop.py run --runner codex --max-iterations 1
+python3 scripts/agent_loop.py run --runner codex
+python3 scripts/agent_loop.py run --runner codex --max-iterations 8
 python3 scripts/agent_loop.py run --runner claude --max-iterations 8
 python3 scripts/agent_loop.py sync-doc-cn
 ```
 
 ## Loop Shape
 
-Each iteration follows:
+`step` is the single-task primitive. `run` is the default long-lived mode and keeps draining the next eligible `todo` task until the queue is empty, `.agent/PAUSE` exists, or a hard failure occurs. An explicit `--max-iterations` value acts as a temporary cap for debugging.
+
+Each successful polling cycle follows:
 
 1. `doctor`
 2. select the next eligible task from `tasks.json`
@@ -29,6 +32,8 @@ Each iteration follows:
 10. confirm affected local services and frontends are healthy, starting configured frontend dev servers when needed
 11. trigger doc gardening when required
 
+If another valid loop currently holds `.agent/lock.json`, `run` waits and polls using the configured `lock_poll_seconds` interval instead of failing immediately.
+
 ## Halt Conditions
 
 - `doctor` fails
@@ -36,7 +41,8 @@ Each iteration follows:
 - no eligible tasks remain
 - schema validation fails
 - verifier retry ceiling is hit
-- max iterations are exhausted
+- a stray `agent_loop.py` process is detected while `.agent/lock.json` is unlocked
+- `--max-iterations` is exhausted when that cap is provided
 
 ## State Files
 
@@ -44,6 +50,7 @@ Each iteration follows:
 - `.agent/config.json`: runtime policy
 - `.agent/lock.json`: active-loop lock
 - `.agent/history/*.jsonl`: iteration logs
+- `.agent/runtime/quarantine/`: parked patch bundles and manifests for interrupted mixed task work
 
 ## Safety Notes
 
@@ -59,4 +66,6 @@ Each iteration follows:
 - After successful task completion, the harness can run best-effort local refresh commands for affected modules so local compiled/backend/frontend artifacts stay close to the newest committed logic.
 - For changed frontend modules, the harness should also verify the local dev surface is available and start the configured frontend dev server if it is missing.
 - When the todo queue drops to the configured warning threshold, the harness emits a warning with the remaining task IDs so humans can decide whether to add more work.
-- Prefer `smoke-runner` and `step` before multi-iteration Codex runs. For Codex, `run --max-iterations 1` is the safe default until the provider proves stable.
+- When a mixed task worktree must be parked before harness maintenance, capture the patches and manifest under `.agent/runtime/quarantine/` before restoring the repo to a clean `HEAD`.
+- `doctor` and `run` now treat an unlocked `.agent/lock.json` plus another live `agent_loop.py` process as a recovery error. Resolve or quarantine that stale process state before starting a new loop.
+- Prefer `smoke-runner` and `step` for debugging one stage in isolation. For normal autonomous work, `run --runner codex` is the supported default.
