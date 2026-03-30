@@ -376,7 +376,7 @@
       "module": "manager",
       "type": "frontend",
       "priority": 46,
-      "status": "todo",
+      "status": "done",
       "depends_on": [],
       "context_files": [
         "manager/frontend/src/App.vue",
@@ -399,17 +399,19 @@
       "attempts": 1,
       "last_result": {
         "evidence": [
-          "`npm --prefix manager/frontend run build` completed successfully during verification, so the required build validation passed.",
-          "`manager/frontend/src/views/Acceleration.vue:37`-`manager/frontend/src/views/Acceleration.vue:93` still defines 1300px of table columns, including a `fixed=\"right\"` 220px actions column. Local route inspection of `/acceleration` with mocked API data showed the table container at 1106px wide on desktop and 320px on mobile while the inner table still rendered at 1300px, leaving the fixed actions column overlaid on the `REFRESH SQL` column.",
-          "During local desktop/mobile inspection of `/acceleration`, the header geometry overlapped (`REFRESH SQL` right edge 1367 vs `ACTIONS` left edge 1173 on desktop; 1115 vs 135 on mobile), and the screenshots showed clipped/visually detached right-side controls. That leaves a major manager view with an obvious unresolved CSS defect, so the acceptance criteria for coherent table shells and small-screen readability are not met."
+          "[manager/frontend/src/views/Acceleration.vue](/Users/sfc/Documents/projects/engine/manager/frontend/src/views/Acceleration.vue#L36) reworks the acceleration list into a non-fixed desktop table plus dedicated mobile cards; the old fixed-right actions column is gone, the actions column is now a normal 176px column, and schema/source/cron metadata is collapsed to reduce width pressure while keeping pagination semantics unchanged.",
+          "[manager/frontend/src/style.css](/Users/sfc/Documents/projects/engine/manager/frontend/src/style.css#L180), [manager/frontend/src/style.css](/Users/sfc/Documents/projects/engine/manager/frontend/src/style.css#L327), and [manager/frontend/src/style.css](/Users/sfc/Documents/projects/engine/manager/frontend/src/style.css#L584) add shared header/filter/table shells and the <=960px responsive switch that hides dense desktop tables and shows mobile record cards, which aligns the major manager views to one visual system.",
+          "[manager/frontend/src/views/Traces.vue](/Users/sfc/Documents/projects/engine/manager/frontend/src/views/Traces.vue#L24) and [manager/frontend/src/views/Patterns.vue](/Users/sfc/Documents/projects/engine/manager/frontend/src/views/Patterns.vue#L24) now use the shared filter/table shell and mobile-record layouts; independent Playwright screenshot checks against a local mock-backed build at 390x844 showed readable filters, spacing, and cards on `/traces`, `/patterns`, and `/acceleration`, and the 1280x900 `/acceleration` screenshot showed no action-column overlap or clipping.",
+          "[docs/modules/manager.md](/Users/sfc/Documents/projects/engine/docs/modules/manager.md#L13) says the acceleration list remains pagination-only because the backend only supports `page` and `size`; the frontend changes preserve that contract.",
+          "`npm --prefix manager/frontend run build` passed locally. Vite completed a production build successfully; the only output beyond success was a chunk-size warning, not a build failure."
         ],
-        "next_action": "Rework the acceleration table layout so the actions column no longer overlays content at desktop or <=960px widths, then rerun `npm --prefix manager/frontend run build` and re-verify `/acceleration` alongside the other manager routes.",
-        "severity": "medium",
-        "summary": "Rejected: the cleanup is incomplete because the Acceleration view still has a clear table layout defect. Its fixed right-side actions column overlaps the `REFRESH SQL` column and remains cramped on mobile, so the task does not satisfy the visual consistency and responsive-readability acceptance criteria across the major manager views.",
+        "next_action": "Mark `MGR-CSS-001` as verified/ready for the normal review-and-commit step.",
+        "severity": "low",
+        "summary": "Approved. The frontend changes stay within the manager UI scope, remove the previously rejected Acceleration table overlap, unify the shared page/header/filter/table styling across the targeted views, preserve documented pagination behavior, and pass the required local frontend build.",
         "task_id": "MGR-CSS-001",
-        "validation_status": "rejected"
+        "validation_status": "approved"
       },
-      "updated_at": "2026-03-30T01:14:32Z"
+      "updated_at": "2026-03-30T06:59:50Z"
     },
     {
       "id": "QUERY-DOC-001",

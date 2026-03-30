@@ -20,6 +20,10 @@
   --shadow-soft: 0 12px 28px -20px rgba(37, 99, 235, 0.2);
 }
 
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -182,6 +186,14 @@ h1, h2, h3, h4 {
   margin-bottom: 24px;
 }
 
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .title-group h1 { margin: 0; font-size: 24px; }
 .title-group h1 {
   margin: 0;
@@ -230,6 +242,7 @@ h1, h2, h3, h4 {
   gap: 12px;
   flex: 1;
   min-width: 0;
+  flex-wrap: wrap;
 }
 
 .filter-input {
@@ -251,6 +264,13 @@ h1, h2, h3, h4 {
   gap: 8px;
   color: var(--text-primary);
   font-size: 13px;
+}
+
+.filter-summary .mini-code {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mini-muted {
@@ -302,6 +322,157 @@ h1, h2, h3, h4 {
   display: flex;
   justify-content: flex-end;
   margin-top: 18px;
+}
+
+.table-content {
+  position: relative;
+}
+
+.table-shell {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.data-table {
+  min-width: 100%;
+}
+
+.traces-table {
+  min-width: 1180px;
+}
+
+.patterns-table {
+  min-width: 900px;
+}
+
+.acceleration-table {
+  min-width: 980px;
+}
+
+.row-actions {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+.row-actions .el-button + .el-button {
+  margin-left: 0;
+}
+
+.row-actions--stacked {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.mobile-records {
+  display: none;
+}
+
+.mobile-record {
+  padding: 16px;
+}
+
+.mobile-record--selected {
+  border-color: rgba(47, 109, 246, 0.24);
+  box-shadow: 0 20px 40px -32px rgba(47, 109, 246, 0.45);
+}
+
+.mobile-record-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mobile-record-title {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.mobile-record-subtitle {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.mobile-record-tags,
+.mobile-record-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.mobile-record-actions .el-button + .el-button {
+  margin-left: 0;
+}
+
+.mobile-record-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+  margin-top: 12px;
+}
+
+.mobile-record-field,
+.mobile-record-code {
+  min-width: 0;
+}
+
+.mobile-record-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mobile-record-label,
+.sql-snippet-label {
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mobile-record-value {
+  min-width: 0;
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.mobile-record-code {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.mobile-record-code .mini-code {
+  display: block;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.mobile-only-empty {
+  display: none;
+}
+
+.sql-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sql-snippet {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
 }
 
 /* Code Blocks */
@@ -357,6 +528,17 @@ code.mini-code {
 :deep(.el-table td.el-table__cell) {
   padding-top: 14px;
   padding-bottom: 14px;
+  vertical-align: top;
+}
+
+:deep(.el-table .cell) {
+  line-height: 1.45;
+}
+
+:deep(.el-table .el-button.is-link) {
+  height: auto;
+  min-height: 0;
+  padding: 2px 0;
 }
 
 :deep(.el-table__inner-wrapper::before) {
@@ -405,6 +587,11 @@ code.mini-code {
     align-items: flex-start;
   }
 
+  .page-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
   .el-aside {
     width: 100% !important;
     min-height: auto !important;
@@ -438,6 +625,38 @@ code.mini-code {
   .filter-input {
     max-width: none;
     flex: 1;
+  }
+
+  .desktop-table {
+    display: none;
+  }
+
+  .row-actions {
+    gap: 4px 12px;
+  }
+
+  .mobile-records {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 2px;
+  }
+
+  .mobile-record-header {
+    flex-direction: column;
+  }
+
+  .mobile-record-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mobile-record-actions {
+    gap: 10px;
+  }
+
+  .mobile-only-empty {
+    display: block;
+    padding: 20px 0 8px;
   }
 
   .panel-item {

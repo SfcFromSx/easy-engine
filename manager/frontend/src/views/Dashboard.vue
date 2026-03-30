@@ -5,7 +5,7 @@
         <h1>{{ t('dashboard.title') }}</h1>
         <p class="subtitle">{{ t('dashboard.subtitle') }}</p>
       </div>
-      <div class="system-status">
+      <div class="page-header-actions system-status">
         <el-tag :type="healthTagType" effect="plain" class="status-badge">
           <refresh-cw :size="14" style="margin-right: 4px" :class="{ spin: refreshing }" />
           {{ healthText }}

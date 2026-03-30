@@ -5,9 +5,11 @@
         <h1>{{ t('patterns.title') }}</h1>
         <p class="subtitle">{{ t('patterns.subtitle') }}</p>
       </div>
-      <el-button @click="load" :loading="loading">
-        <el-icon><refresh-cw :size="16" /></el-icon>
-      </el-button>
+      <div class="page-header-actions">
+        <el-button @click="load" :loading="loading">
+          <el-icon><refresh-cw :size="16" /></el-icon>
+        </el-button>
+      </div>
     </div>
 
     <el-alert
@@ -48,43 +50,85 @@
         </div>
       </div>
 
-      <el-table
-        :data="patterns"
-        v-loading="loading"
-        stripe
-        row-key="id"
-        :empty-text="t('patterns.empty')"
-        :row-class-name="rowClassName"
-      >
-        <el-table-column prop="sqlFingerprint" :label="t('patterns.fingerprintId')" width="160">
-          <template #default="{ row }">
-            <code class="mini-code">{{ shortFingerprint(row.sqlFingerprint, 12) }}</code>
-          </template>
-        </el-table-column>
-        <el-table-column prop="executionCount" :label="t('patterns.executionCount')" width="100" align="right">
-          <template #default="{ row }">
-            <span style="font-weight: 700; color: #3b82f6">{{ row.executionCount }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="avgDurationMs" :label="t('patterns.avgDuration')" width="120">
-          <template #default="{ row }">
-            <span :class="['status-text', row.avgDurationMs > 300 ? 'text-amber' : 'text-blue']">
-              {{ Math.round(row.avgDurationMs || 0) }}ms
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="cleanSqlSample" :label="t('patterns.sampleSql')" min-width="320" show-overflow-tooltip>
-          <template #default="{ row }">
-            <code style="font-size: 11px; color: #64748b">{{ row.cleanSqlSample || t('common.noData') }}</code>
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('patterns.actions')" width="220" fixed="right">
-          <template #default="{ row }">
-            <el-button size="small" type="primary" plain @click="goTraces(row)">{{ t('patterns.viewTraces') }}</el-button>
-            <el-button size="small" type="success" @click="openDialog(row)">{{ t('patterns.createAcceleration') }}</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <div class="table-content" v-loading="loading">
+        <div class="table-shell desktop-table">
+          <el-table
+            class="data-table patterns-table"
+            :data="patterns"
+            stripe
+            row-key="id"
+            :empty-text="t('patterns.empty')"
+            :row-class-name="rowClassName"
+          >
+            <el-table-column prop="sqlFingerprint" :label="t('patterns.fingerprintId')" width="160">
+              <template #default="{ row }">
+                <code class="mini-code">{{ shortFingerprint(row.sqlFingerprint, 12) }}</code>
+              </template>
+            </el-table-column>
+            <el-table-column prop="executionCount" :label="t('patterns.executionCount')" width="100" align="right">
+              <template #default="{ row }">
+                <span style="font-weight: 700; color: #3b82f6">{{ row.executionCount }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="avgDurationMs" :label="t('patterns.avgDuration')" width="120">
+              <template #default="{ row }">
+                <span :class="['status-text', row.avgDurationMs > 300 ? 'text-amber' : 'text-blue']">
+                  {{ Math.round(row.avgDurationMs || 0) }}ms
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="cleanSqlSample" :label="t('patterns.sampleSql')" min-width="320" show-overflow-tooltip>
+              <template #default="{ row }">
+                <code style="font-size: 11px; color: #64748b">{{ row.cleanSqlSample || t('common.noData') }}</code>
+              </template>
+            </el-table-column>
+            <el-table-column :label="t('patterns.actions')" width="168">
+              <template #default="{ row }">
+                <div class="row-actions row-actions--stacked">
+                  <el-button size="small" type="primary" plain @click="goTraces(row)">{{ t('patterns.viewTraces') }}</el-button>
+                  <el-button size="small" type="success" @click="openDialog(row)">{{ t('patterns.createAcceleration') }}</el-button>
+                </div>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+        <div v-if="!loading && patterns.length" class="mobile-records">
+          <article
+            v-for="row in patterns"
+            :key="row.id"
+            :class="['glass-card', 'mobile-record', { 'mobile-record--selected': row.sqlFingerprint === selectedFingerprint }]"
+          >
+            <div class="mobile-record-header">
+              <div>
+                <div class="mobile-record-title">{{ shortFingerprint(row.sqlFingerprint, 16) }}</div>
+                <div class="mobile-record-subtitle">{{ row.cleanSqlSample || t('common.noData') }}</div>
+              </div>
+              <span :class="['status-text', row.avgDurationMs > 300 ? 'text-amber' : 'text-blue']">
+                {{ Math.round(row.avgDurationMs || 0) }}ms
+              </span>
+            </div>
+
+            <div class="mobile-record-grid">
+              <div class="mobile-record-field">
+                <span class="mobile-record-label">{{ t('patterns.executionCount') }}</span>
+                <span class="mobile-record-value">{{ row.executionCount }}</span>
+              </div>
+              <div class="mobile-record-field">
+                <span class="mobile-record-label">{{ t('patterns.fingerprintId') }}</span>
+                <code class="mini-code">{{ shortFingerprint(row.sqlFingerprint, 12) }}</code>
+              </div>
+            </div>
+
+            <div class="mobile-record-actions">
+              <el-button size="small" type="primary" plain @click="goTraces(row)">{{ t('patterns.viewTraces') }}</el-button>
+              <el-button size="small" type="success" @click="openDialog(row)">{{ t('patterns.createAcceleration') }}</el-button>
+            </div>
+          </article>
+        </div>
+
+        <el-empty v-else-if="!loading" class="mobile-only-empty" :description="t('patterns.empty')" />
+      </div>
 
       <div class="pagination-container">
         <el-pagination

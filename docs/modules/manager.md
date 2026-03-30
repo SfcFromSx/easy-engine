@@ -12,6 +12,8 @@
 
 ## Operator Notes
 
+- The dashboard plus the traces, patterns, and acceleration views now share the same page-header, filter-bar, table-shell, and card styling so operators see one consistent control-plane layout across the main manager routes.
+- On screens at or below 960px wide, the traces, patterns, and acceleration list views switch from dense desktop tables to stacked record cards to preserve readable controls, SQL snippets, and row actions on smaller devices.
 - The traces and patterns list views expose a route-backed SQL fingerprint filter.
 - Applying or clearing the fingerprint filter resets the current page to page 1 and reloads the existing `/traces` or `/patterns/top` data with the same `fingerprint` request parameter.
 - The acceleration list remains pagination-only because the current backend only supports `page` and `size`.
