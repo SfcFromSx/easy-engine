@@ -24,6 +24,9 @@ This file merges the durable backlog signals from the previous root `todo.md` an
 
 - `QUERY-DOC-001`: keep routed-query documentation aligned with preserved metadata behavior.
 - Continue protecting compatibility between `query` and `kylin-jdbc-cache`.
+- `QUERY-ARCH-001`: define `query` as the execution source of truth and document the long-term migration boundary from `jdbc`.
+- `QUERY-FUNC-001`: audit and harden prepared-statement cache semantics in `query`.
+- `QUERY-ARCH-002`: inventory execution semantics still owned by `jdbc` and rank migration priority for future extraction.
 
 ## Medium Priority
 

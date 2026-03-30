@@ -10,6 +10,12 @@
 - Maintain SQL fingerprint and pattern statistics.
 - Expose stats, trace, pattern, parse-preview, and acceleration APIs.
 
+## Operator Notes
+
+- The traces and patterns list views expose a route-backed SQL fingerprint filter.
+- Applying or clearing the fingerprint filter resets the current page to page 1 and reloads the existing `/traces` or `/patterns/top` data with the same `fingerprint` request parameter.
+- The acceleration list remains pagination-only because the current backend only supports `page` and `size`.
+
 ## Run
 
 ```bash

@@ -26,6 +26,12 @@ benchmark -> kylin-jdbc-cache -> query -> Kylin or Presto
 - Template authoring and test-set import both expose `execution_mode` and `param_json` for prepared workflows.
 - Benchmark runs support prepared execution more fully than the datasource debug endpoint.
 
+## Operator Notes
+
+- Datasources, jobs, and test sets load full lists in the frontend and now expose client-side keyword or select filters over those loaded arrays.
+- Templates keep their existing request-backed keyword search and pagination behavior.
+- Runs keep job selection as the primary request-backed filter; changing the selected job resets pagination to page 1 before reloading `/runs`.
+
 ## Run
 
 ```bash

@@ -20,13 +20,32 @@
     />
 
     <div class="glass-card table-card">
-      <div v-if="selectedFingerprint" class="filter-bar">
-        <div class="filter-summary">
-          <terminal :size="14" />
-          <span>{{ t('patterns.onlyFingerprint') }}</span>
-          <code class="mini-code">{{ selectedFingerprint }}</code>
+      <div class="filter-bar">
+        <div class="filter-controls">
+          <el-input
+            v-model="fingerprintDraft"
+            class="filter-input"
+            clearable
+            :placeholder="t('patterns.filterPlaceholder')"
+            @clear="applyFilter"
+            @keyup.enter="applyFilter"
+          >
+            <template #prefix>
+              <terminal :size="14" />
+            </template>
+          </el-input>
+          <el-button type="primary" plain @click="applyFilter">
+            {{ t('common.search') }}
+          </el-button>
         </div>
-        <el-button text @click="clearFilter">{{ t('common.viewAll') }}</el-button>
+        <div v-if="selectedFingerprint" class="filter-actions">
+          <div class="filter-summary">
+            <terminal :size="14" />
+            <span>{{ t('patterns.onlyFingerprint') }}</span>
+            <code class="mini-code">{{ selectedFingerprint }}</code>
+          </div>
+          <el-button text @click="clearFilter">{{ t('common.viewAll') }}</el-button>
+        </div>
       </div>
 
       <el-table
@@ -123,6 +142,7 @@ const submitting = ref(false)
 const error = ref('')
 const visible = ref(false)
 const selected = ref(null)
+const fingerprintDraft = ref('')
 const form = reactive({ tableName: '', schemaName: 'public' })
 
 const selectedFingerprint = computed(() => {
@@ -134,8 +154,23 @@ function goTraces(row) {
   router.push({ path: '/traces', query: { fingerprint: row.sqlFingerprint } })
 }
 
+function updateFingerprintFilter(nextFingerprint) {
+  const normalized = nextFingerprint.trim()
+  page.value = 1
+  if (normalized === selectedFingerprint.value) {
+    load()
+    return
+  }
+  router.push({ path: '/patterns', query: normalized ? { fingerprint: normalized } : {} })
+}
+
+function applyFilter() {
+  updateFingerprintFilter(fingerprintDraft.value)
+}
+
 function clearFilter() {
-  router.push({ path: '/patterns' })
+  fingerprintDraft.value = ''
+  updateFingerprintFilter('')
 }
 
 function rowClassName({ row }) {
@@ -199,6 +234,7 @@ async function submit() {
 watch(
   () => selectedFingerprint.value,
   () => {
+    fingerprintDraft.value = selectedFingerprint.value
     page.value = 1
     load()
   },

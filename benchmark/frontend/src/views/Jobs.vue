@@ -12,7 +12,35 @@
     </div>
 
     <div class="glass-card table-card">
-      <el-table :data="jobs" v-loading="loading" stripe class="custom-table" size="small">
+      <div class="list-toolbar">
+        <div class="toolbar-filters">
+          <el-input
+            v-model="keyword"
+            clearable
+            class="toolbar-input"
+            :placeholder="$t('jobs.filterKeywordPlaceholder')"
+          />
+          <el-select
+            v-model="selectedDataSourceId"
+            clearable
+            filterable
+            class="toolbar-select"
+            :placeholder="$t('jobs.filterDataSourcePlaceholder')"
+          >
+            <el-option
+              v-for="ds in dataSources"
+              :key="ds.id"
+              :label="ds.name"
+              :value="String(ds.id)"
+            />
+          </el-select>
+        </div>
+        <div class="toolbar-summary">
+          <span>{{ $t('jobs.filterSummary', { count: filteredJobs.length, total: jobs.length }) }}</span>
+        </div>
+      </div>
+
+      <el-table :data="filteredJobs" v-loading="loading" stripe class="custom-table" size="small">
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="name" :label="$t('jobs.colName')" min-width="180">
           <template #default="{ row }">
@@ -154,7 +182,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { Plus, Connection } from '@element-plus/icons-vue'
@@ -167,6 +195,8 @@ const dataSources = ref([])
 const loading = ref(false)
 const startingId = ref(null)
 const dlg = ref(false)
+const keyword = ref('')
+const selectedDataSourceId = ref('')
 const form = reactive({
   id: null,
   name: '',
@@ -175,6 +205,20 @@ const form = reactive({
   rounds: 100,
   strategy: 'RANDOM_WEIGHT',
   testSetId: null
+})
+
+const filteredJobs = computed(() => {
+  const normalizedKeyword = keyword.value.trim().toLowerCase()
+  return jobs.value.filter((job) => {
+    const matchesKeyword = !normalizedKeyword || [
+      job.name,
+      job.strategy,
+      getDataSourceName(job.dataSourceId),
+      getTestSetName(job.testSetId)
+    ].some((value) => String(value || '').toLowerCase().includes(normalizedKeyword))
+    const matchesDataSource = !selectedDataSourceId.value || String(job.dataSourceId || '') === selectedDataSourceId.value
+    return matchesKeyword && matchesDataSource
+  })
 })
 
 async function load() {
@@ -384,5 +428,17 @@ onMounted(load)
   text-transform: uppercase;
   font-size: 11px;
   letter-spacing: 0.05em;
+}
+
+@media (max-width: 960px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .premium-btn {
+    width: 100%;
+  }
 }
 </style>

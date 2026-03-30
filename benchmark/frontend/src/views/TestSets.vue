@@ -44,12 +44,35 @@
     </el-card>
 
     <div class="glass-card table-card">
-      <el-table :data="testSets" v-loading="loading" stripe>
+      <div class="list-toolbar">
+        <div class="toolbar-filters">
+          <el-input
+            v-model="keyword"
+            clearable
+            class="toolbar-input"
+            :placeholder="$t('testSets.filterKeywordPlaceholder')"
+          />
+          <el-select
+            v-model="sourceFilter"
+            class="toolbar-select"
+            :placeholder="$t('testSets.filterSourcePlaceholder')"
+          >
+            <el-option :label="$t('testSets.sourceAll')" value="all" />
+            <el-option :label="$t('testSets.sourceUploaded')" value="uploaded" />
+            <el-option :label="$t('testSets.sourceManual')" value="manual" />
+          </el-select>
+        </div>
+        <div class="toolbar-summary">
+          <span>{{ $t('testSets.filterSummary', { count: filteredTestSets.length, total: testSets.length }) }}</span>
+        </div>
+      </div>
+
+      <el-table :data="filteredTestSets" v-loading="loading" stripe>
         <el-table-column prop="name" :label="$t('testSets.colName')" width="220" />
         <el-table-column prop="sourceFilename" :label="$t('testSets.colType')" width="180">
           <template #default="{ row }">
             <el-tag :type="row.sourceFilename ? 'primary' : 'info'" size="small">
-              {{ row.sourceFilename || 'Manual' }}
+              {{ row.sourceFilename || $t('testSets.manualLabel') }}
             </el-tag>
           </template>
         </el-table-column>
@@ -127,7 +150,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, UploadCloud } from 'lucide-vue-next'
 import client from '../api/client'
@@ -141,8 +164,25 @@ const drawerVisible = ref(false)
 const itemsLoading = ref(false)
 const items = ref([])
 const activeSet = ref(null)
+const keyword = ref('')
+const sourceFilter = ref('all')
 
 const form = reactive({ id: null, name: '', description: '' })
+
+const filteredTestSets = computed(() => {
+  const normalizedKeyword = keyword.value.trim().toLowerCase()
+  return testSets.value.filter((item) => {
+    const matchesKeyword = !normalizedKeyword || [
+      item.name,
+      item.description,
+      item.sourceFilename
+    ].some((value) => String(value || '').toLowerCase().includes(normalizedKeyword))
+    const matchesSource = sourceFilter.value === 'all'
+      || (sourceFilter.value === 'uploaded' && Boolean(item.sourceFilename))
+      || (sourceFilter.value === 'manual' && !item.sourceFilename)
+    return matchesKeyword && matchesSource
+  })
+})
 
 async function load() {
   loading.value = true

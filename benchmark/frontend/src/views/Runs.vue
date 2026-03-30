@@ -10,7 +10,7 @@
         <el-select
           v-model="jobId"
           :placeholder="$t('runs.selectJob')"
-          style="width: 240px"
+          class="job-filter-select"
           filterable
           @change="onJobChange"
         >
@@ -335,6 +335,7 @@ watch(
   () => route.query.jobId,
   (v) => {
     if (v != null && String(v) !== jobId.value) {
+      page.value = 1
       jobId.value = String(v)
       load()
     }
@@ -367,6 +368,11 @@ onUnmounted(() => clearInterval(timer))
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+.job-filter-select {
+  width: 240px;
 }
 .label {
   color: #64748b;
@@ -437,5 +443,20 @@ onUnmounted(() => clearInterval(timer))
 }
 .delta-value.down {
   color: #ef4444;
+}
+
+@media (max-width: 960px) {
+  .page-header {
+    margin-bottom: 20px;
+  }
+
+  .toolbar-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .job-filter-select {
+    width: 100%;
+  }
 }
 </style>

@@ -160,7 +160,7 @@
       "module": "frontend",
       "type": "frontend",
       "priority": 45,
-      "status": "todo",
+      "status": "done",
       "depends_on": [],
       "context_files": [
         "manager/frontend/src/views/Traces.vue",
@@ -185,8 +185,21 @@
         "npm --prefix benchmark/frontend run build"
       ],
       "attempts": 0,
-      "last_result": null,
-      "updated_at": "2026-03-30T00:00:00Z"
+      "last_result": {
+        "evidence": [
+          "Manager traces and patterns now expose editable fingerprint inputs and keep the existing server-backed `fingerprint` param, with page reset to 1 before reload on apply/clear in `manager/frontend/src/views/Traces.vue:23-49,151-168,183-212` and `manager/frontend/src/views/Patterns.vue:23-49,157-174,180-242`.",
+          "Benchmark full-list pages use client-side computed filters over loaded arrays rather than paginated page slices: datasources keyword search in `benchmark/frontend/src/views/DataSources.vue:17-38,132-147`, jobs keyword plus datasource selector in `benchmark/frontend/src/views/Jobs.vue:15-43,210-235`, and test sets keyword plus source selector in `benchmark/frontend/src/views/TestSets.vue:47-70,172-191`.",
+          "Server-backed pages kept their existing semantics: templates still submit `keyword`, `page`, and `size` requests without adding fake local filters in `benchmark/frontend/src/views/Templates.vue:7-18,194-233`, and runs remains keyed by `jobId` with page reset on job changes in `benchmark/frontend/src/views/Runs.vue:8-31,259-273,334-355`.",
+          "Responsive toolbar/layout support was added for narrow screens instead of a redesign, with wrapping/full-width rules in `benchmark/frontend/src/style.css:122-197`, `manager/frontend/src/style.css:215-245,402-450`, and the runs-specific select sizing in `benchmark/frontend/src/views/Runs.vue:367-460`.",
+          "Validation was re-run locally and both required builds succeeded: `npm --prefix manager/frontend run build` and `npm --prefix benchmark/frontend run build` completed successfully, with only Vite chunk-size warnings."
+        ],
+        "next_action": "Mark LIST-FILTER-001 verified and proceed to normal review/commit flow.",
+        "severity": "low",
+        "summary": "Approved. The implementation matches the frontend-only brief: supported list views gained practical filters backed either by existing request params or full-list client-side filtering, pagination reset behavior is preserved where required, responsive toolbar handling was added, and both frontend builds passed.",
+        "task_id": "LIST-FILTER-001",
+        "validation_status": "approved"
+      },
+      "updated_at": "2026-03-30T00:53:07Z"
     },
     {
       "id": "MGR-CSS-001",

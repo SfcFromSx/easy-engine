@@ -214,7 +214,7 @@ h1, h2, h3, h4 {
 
 .filter-bar {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 16px;
@@ -222,6 +222,26 @@ h1, h2, h3, h4 {
   border-radius: 16px;
   background: linear-gradient(90deg, rgba(47, 109, 246, 0.08) 0%, rgba(25, 194, 168, 0.05) 100%);
   border: 1px solid rgba(96, 122, 173, 0.14);
+}
+
+.filter-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.filter-input {
+  max-width: 420px;
+}
+
+.filter-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .filter-summary {
@@ -408,6 +428,16 @@ code.mini-code {
   .filter-bar {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .filter-controls,
+  .filter-actions {
+    width: 100%;
+  }
+
+  .filter-input {
+    max-width: none;
+    flex: 1;
   }
 
   .panel-item {

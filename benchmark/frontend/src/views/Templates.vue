@@ -9,7 +9,7 @@
         <el-input
           v-model="searchKeyword"
           :placeholder="$t('templates.searchPlaceholder')"
-          style="width: 300px; margin-right: 16px"
+          class="toolbar-input"
           clearable
           @clear="handleSearch"
           @keyup.enter="handleSearch"
@@ -316,6 +316,9 @@ onMounted(load)
 .actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-end;
 }
 .flow-callout {
   margin-bottom: 16px;
@@ -431,5 +434,12 @@ onMounted(load)
 
 :deep(.el-table .cell) {
   line-height: inherit;
+}
+
+@media (max-width: 960px) {
+  .actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 </style>

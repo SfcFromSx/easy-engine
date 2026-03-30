@@ -14,9 +14,27 @@
     </div>
 
     <el-card class="glass-card table-card">
+      <div class="list-toolbar">
+        <div class="toolbar-filters">
+          <el-input
+            v-model="searchTerm"
+            clearable
+            class="toolbar-input"
+            :placeholder="$t('datasources.filterPlaceholder')"
+          >
+            <template #prefix>
+              <el-icon><search /></el-icon>
+            </template>
+          </el-input>
+        </div>
+        <div class="toolbar-summary">
+          <span>{{ $t('datasources.filterSummary', { count: filteredDataSources.length, total: dataSources.length }) }}</span>
+        </div>
+      </div>
+
       <el-table 
         v-loading="loading" 
-        :data="dataSources" 
+        :data="filteredDataSources" 
         stripe 
         class="custom-table"
         size="small"
@@ -89,8 +107,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { Plus, Edit, Delete, Connection } from '@element-plus/icons-vue'
+import { computed, ref, onMounted } from 'vue'
+import { Plus, Edit, Delete, Connection, Search } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import client from '../api/client'
@@ -99,6 +117,7 @@ const { t } = useI18n()
 const loading = ref(false)
 const saving = ref(false)
 const dataSources = ref([])
+const searchTerm = ref('')
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const form = ref({
@@ -110,12 +129,21 @@ const form = ref({
   driverClass: 'org.apache.kylin.jdbc.Driver'
 })
 
+const filteredDataSources = computed(() => {
+  const keyword = searchTerm.value.trim().toLowerCase()
+  if (!keyword) {
+    return dataSources.value
+  }
+  return dataSources.value.filter((item) => {
+    return [item.name, item.jdbcUrl, item.jdbcUser, item.driverClass]
+      .some((value) => String(value || '').toLowerCase().includes(keyword))
+  })
+})
+
 async function fetchDataSources() {
   loading.value = true
   try {
     const { data } = await client.get('/datasources')
-    dataSources.ref = data
-    // Fixing a potential issue with ref assignment in nested objects
     dataSources.value = data
   } catch (err) {
     ElMessage.error(t('common.error'))
@@ -296,5 +324,21 @@ onMounted(fetchDataSources)
   justify-content: flex-end;
   gap: 12px;
   padding-top: 12px;
+}
+
+@media (max-width: 960px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .premium-btn {
+    width: 100%;
+  }
 }
 </style>
