@@ -118,6 +118,93 @@
       "updated_at": "2026-03-29T23:29:28Z"
     },
     {
+      "id": "TRACE-MODE-001",
+      "title": "Record execution mode for every SQL trace and benchmark execution record",
+      "module": "query",
+      "type": "backend",
+      "priority": 31,
+      "status": "todo",
+      "depends_on": [],
+      "context_files": [
+        "query/src/main/java/com/smartbi/query/service/TraceReportingService.java",
+        "query/src/main/java/com/smartbi/query/service/TracePayload.java",
+        "manager/src/main/java/com/smartbi/engine/domain/SqlExecutionRecord.java",
+        "manager/src/main/java/com/smartbi/engine/trace/TraceIngestionService.java",
+        "benchmark/src/main/java/com/smartbi/benchmark/report/BenchmarkRunReportService.java",
+        "docs/modules/query.md",
+        "docs/modules/manager.md"
+      ],
+      "acceptance_criteria": [
+        "Every execution record can explicitly distinguish STATEMENT versus PREPARED_STATEMENT without relying on SQL text inspection",
+        "The execution mode is available in the trace or record path that manager and benchmark operators use for diagnosis",
+        "The change is validated with the relevant module tests"
+      ],
+      "validation_commands": [
+        "mvn -q -f query/pom.xml test",
+        "mvn -q -f manager/pom.xml test",
+        "mvn -q -f benchmark/pom.xml test"
+      ],
+      "attempts": 0,
+      "last_result": null,
+      "updated_at": "2026-03-30T09:00:00Z"
+    },
+    {
+      "id": "TRACE-PARAM-001",
+      "title": "Expose SQL parameter values or a readable parameter payload for failed executions",
+      "module": "query",
+      "type": "backend",
+      "priority": 32,
+      "status": "todo",
+      "depends_on": [],
+      "context_files": [
+        "query/src/main/java/com/smartbi/query/service/TraceReportingService.java",
+        "query/src/main/java/com/smartbi/query/service/TracePayload.java",
+        "query/src/main/java/com/smartbi/query/api/dto/StatementParameterDto.java",
+        "manager/src/main/java/com/smartbi/engine/domain/SqlExecutionRecord.java",
+        "manager/src/main/java/com/smartbi/engine/trace/TraceIngestionService.java",
+        "docs/product/issues-inbox.md"
+      ],
+      "acceptance_criteria": [
+        "Operators can inspect actual SQL parameters or a readable parameter payload when debugging failed query executions",
+        "The recorded parameter payload is intentional and documented, not accidental leakage through stack traces only",
+        "The feature is implemented without changing jdbc code in this task"
+      ],
+      "validation_commands": [
+        "mvn -q -f query/pom.xml test",
+        "mvn -q -f manager/pom.xml test"
+      ],
+      "attempts": 0,
+      "last_result": null,
+      "updated_at": "2026-03-30T09:00:00Z"
+    },
+    {
+      "id": "BENCH-REG-001",
+      "title": "Harden regression visibility for routed Presto and prepared execution failures",
+      "module": "benchmark",
+      "type": "diagnostics",
+      "priority": 33,
+      "status": "todo",
+      "depends_on": [],
+      "context_files": [
+        "benchmark/src/main/java/com/smartbi/benchmark/report/BenchmarkRunReportService.java",
+        "benchmark/src/main/java/com/smartbi/benchmark/web/RunController.java",
+        "benchmark/frontend/src/views/Runs.vue",
+        "docs/product/backlog.md"
+      ],
+      "acceptance_criteria": [
+        "A failed benchmark run makes it easy to see which SQL labels, execution modes, or routed targets failed instead of exposing only one error sample",
+        "Regression diagnosis for routed Presto and prepared execution becomes materially easier from the stored run context",
+        "The improvement is validated with benchmark tests and, if applicable, frontend build checks"
+      ],
+      "validation_commands": [
+        "mvn -q -f benchmark/pom.xml test",
+        "npm --prefix benchmark/frontend run build"
+      ],
+      "attempts": 0,
+      "last_result": null,
+      "updated_at": "2026-03-30T09:00:00Z"
+    },
+    {
       "id": "BENCH-UX-001",
       "title": "Improve prepared-statement authoring clarity in benchmark UI",
       "module": "benchmark",
@@ -227,9 +314,20 @@
       "validation_commands": [
         "npm --prefix manager/frontend run build"
       ],
-      "attempts": 0,
-      "last_result": null,
-      "updated_at": "2026-03-30T00:00:00Z"
+      "attempts": 1,
+      "last_result": {
+        "evidence": [
+          "`npm --prefix manager/frontend run build` completed successfully during verification, so the required build validation passed.",
+          "`manager/frontend/src/views/Acceleration.vue:37`-`manager/frontend/src/views/Acceleration.vue:93` still defines 1300px of table columns, including a `fixed=\"right\"` 220px actions column. Local route inspection of `/acceleration` with mocked API data showed the table container at 1106px wide on desktop and 320px on mobile while the inner table still rendered at 1300px, leaving the fixed actions column overlaid on the `REFRESH SQL` column.",
+          "During local desktop/mobile inspection of `/acceleration`, the header geometry overlapped (`REFRESH SQL` right edge 1367 vs `ACTIONS` left edge 1173 on desktop; 1115 vs 135 on mobile), and the screenshots showed clipped/visually detached right-side controls. That leaves a major manager view with an obvious unresolved CSS defect, so the acceptance criteria for coherent table shells and small-screen readability are not met."
+        ],
+        "next_action": "Rework the acceleration table layout so the actions column no longer overlays content at desktop or <=960px widths, then rerun `npm --prefix manager/frontend run build` and re-verify `/acceleration` alongside the other manager routes.",
+        "severity": "medium",
+        "summary": "Rejected: the cleanup is incomplete because the Acceleration view still has a clear table layout defect. Its fixed right-side actions column overlaps the `REFRESH SQL` column and remains cramped on mobile, so the task does not satisfy the visual consistency and responsive-readability acceptance criteria across the major manager views.",
+        "task_id": "MGR-CSS-001",
+        "validation_status": "rejected"
+      },
+      "updated_at": "2026-03-30T01:14:32Z"
     },
     {
       "id": "QUERY-DOC-001",
@@ -349,12 +447,15 @@
       "context_files": [
         "docs/product/issues-inbox.md",
         "docs/product/backlog.md",
-        "tasks.json"
+        "tasks.json",
+        "AGENTS.md",
+        "HUMAN.MD"
       ],
       "acceptance_criteria": [
         "Newly discovered but unconfirmed issues are written into docs/product/issues-inbox.md with evidence and suggested next steps",
         "The issue inbox remains distinct from implementation tasks and does not automatically expand into coding work",
-        "Each collected issue is clearly marked as awaiting human confirmation"
+        "Each collected issue is clearly marked as awaiting human confirmation",
+        "Harness-framework issues are collected into the inbox instead of being changed directly unless a human explicitly approves a harness change"
       ],
       "validation_commands": [],
       "attempts": 0,

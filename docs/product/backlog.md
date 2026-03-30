@@ -12,10 +12,13 @@ This file merges the durable backlog signals from the previous root `todo.md` an
 ### Manager
 
 - `MGR-DASH-001`: audit dashboard metrics and loading-state consistency against the backend summary contract.
+- `TRACE-MODE-001`: record `STATEMENT` versus `PREPARED_STATEMENT` explicitly in query/manager execution records.
+- `TRACE-PARAM-001`: expose actual SQL parameters or a readable parameter payload for failed executions.
 - Improve acceleration lifecycle depth and scheduling maturity.
 
 ### Benchmark
 
+- `BENCH-REG-001`: make benchmark regression failures easier to diagnose by surfacing which SQL labels / execution modes / routed targets failed.
 - Improve datasource query tooling for prepared execution parity.
 - `STYLE-04`: benchmark migration coverage still depends on a Testcontainers-compatible Docker environment, so local `mvn test` is not yet a full migration guarantee.
 - `LIST-FILTER-001`: add practical list-page filters and search controls across manager and benchmark operator tables.
@@ -25,9 +28,6 @@ This file merges the durable backlog signals from the previous root `todo.md` an
 - `QUERY-DOC-001`: keep routed-query documentation aligned with preserved metadata behavior.
 - Continue protecting compatibility between `query` and `kylin-jdbc-cache`.
 - `QUERY-ARCH-001`: define `query` as the execution source of truth and document the migration boundary from `jdbc`.
-- `QUERY-FUNC-001`: audit and harden prepared-statement cache semantics in `query`.
-- `QUERY-ARCH-002`: inventory execution semantics still owned by `jdbc` and rank migration priority for future extraction.
-- `QUERY-ARCH-001`: define `query` as the execution source of truth and document the long-term migration boundary from `jdbc`.
 - `QUERY-FUNC-001`: audit and harden prepared-statement cache semantics in `query`.
 - `QUERY-ARCH-002`: inventory execution semantics still owned by `jdbc` and rank migration priority for future extraction.
 
@@ -51,3 +51,4 @@ This file merges the durable backlog signals from the previous root `todo.md` an
 ## Issue Intake
 
 - `ISSUE-COLLECT-001`: collect newly discovered but still unconfirmed issues into [issues-inbox.md](/Users/sfc/Documents/projects/engine/docs/product/issues-inbox.md) for human review before task creation.
+- Harness-framework issues should be collected into the inbox first and only turned into implementation work after explicit human confirmation.

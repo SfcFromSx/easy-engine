@@ -84,3 +84,4 @@ Codex-specific operation:
 
 - Humans may reprioritize `tasks.json`, pause or resume the loop, review diffs, and merge.
 - Humans must pause the loop before manual edits outside an explicitly assigned task.
+- If the harness itself needs changes, collect the issue into `docs/product/issues-inbox.md` first unless a human explicitly authorizes a harness modification task.

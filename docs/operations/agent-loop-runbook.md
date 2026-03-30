@@ -26,7 +26,8 @@ Each iteration follows:
 7. commit verified work if Git is ready
 8. push the current branch when auto-push is enabled
 9. run best-effort local refresh commands for affected modules
-10. trigger doc gardening when required
+10. confirm affected local services and frontends are healthy, starting configured frontend dev servers when needed
+11. trigger doc gardening when required
 
 ## Halt Conditions
 
@@ -56,5 +57,6 @@ Each iteration follows:
 - The Codex verifier stage uses a longer timeout window than orchestrator and implementer, because the verification payload is larger and provider latency is higher in practice.
 - When `auto_push_after_commit` is enabled, successful task commits are pushed to the configured remote immediately after the task is marked `done`.
 - After successful task completion, the harness can run best-effort local refresh commands for affected modules so local compiled/backend/frontend artifacts stay close to the newest committed logic.
+- For changed frontend modules, the harness should also verify the local dev surface is available and start the configured frontend dev server if it is missing.
 - When the todo queue drops to the configured warning threshold, the harness emits a warning with the remaining task IDs so humans can decide whether to add more work.
 - Prefer `smoke-runner` and `step` before multi-iteration Codex runs. For Codex, `run --max-iterations 1` is the safe default until the provider proves stable.

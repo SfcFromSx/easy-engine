@@ -66,6 +66,17 @@
       "mvn -q -f query/pom.xml -DskipTests compile"
     ]
   },
+  "service_health_checks": {
+    "manager_backend": "curl -fsS -m 5 http://127.0.0.1:8090/api/v1/stats/summary > /dev/null",
+    "benchmark_backend": "curl -fsS -m 5 http://127.0.0.1:8091/api/v1/jobs > /dev/null",
+    "query_backend": "curl -fsS -m 5 http://127.0.0.1:8092/kylin/api/query -H 'Content-Type: application/json' -d '{\"sql\":\"select 1\",\"params\":[]}' > /dev/null",
+    "manager_frontend": "curl -fsS -m 5 http://127.0.0.1:5173/ > /dev/null || curl -fsS -m 5 http://localhost:5173/ > /dev/null",
+    "benchmark_frontend": "curl -fsS -m 5 http://127.0.0.1:5174/ > /dev/null || curl -fsS -m 5 http://localhost:5174/ > /dev/null"
+  },
+  "service_start_commands": {
+    "manager_frontend": "cd /Users/sfc/Documents/projects/engine/manager/frontend && nohup npm run dev -- --host 127.0.0.1 > /tmp/easy-engine-manager-frontend.log 2>&1 &",
+    "benchmark_frontend": "cd /Users/sfc/Documents/projects/engine/benchmark/frontend && nohup npm run dev -- --host 127.0.0.1 > /tmp/easy-engine-benchmark-frontend.log 2>&1 &"
+  },
   "runners": {
     "codex": {
       "bin": "python3",

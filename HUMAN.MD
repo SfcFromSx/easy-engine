@@ -10,6 +10,7 @@ This repository is designed for autonomous, agent-driven development. Humans rem
 - Review diffs, run extra validation, approve merges, and archive finished plans.
 - Resolve Git topology issues such as initializing the root repository or flattening nested repositories.
 - Confirm or reject entries collected in [docs/product/issues-inbox.md](/Users/sfc/Documents/projects/engine/docs/product/issues-inbox.md) before they become implementation tasks.
+- Explicitly approve any harness-framework change before it is converted from an inbox issue into implementation work.
 
 ## Forbidden During Active Loops
 

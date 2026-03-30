@@ -7,6 +7,7 @@ This file is reserved for machine-collected issues that still require human conf
 - Add findings here only when they are not already tracked in `tasks.json`.
 - Keep entries evidence-based and concise.
 - Do not convert inbox entries directly into implementation work without human confirmation.
+- For harness-framework problems, default to collecting the issue here first; do not change the harness without explicit human approval.
 - Once confirmed, promote them into `tasks.json` and, if useful, summarize them in [backlog.md](/Users/sfc/Documents/projects/engine/docs/product/backlog.md).
 
 ## Template

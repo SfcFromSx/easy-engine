@@ -759,6 +759,63 @@ class Harness:
                     )
         return results
 
+    def service_health_checks(self) -> Dict[str, str]:
+        checks = self.config.get("service_health_checks", {})
+        if not isinstance(checks, dict):
+            raise HarnessError("service_health_checks must be an object")
+        return {str(key): str(value) for key, value in checks.items()}
+
+    def service_start_commands(self) -> Dict[str, str]:
+        commands = self.config.get("service_start_commands", {})
+        if not isinstance(commands, dict):
+            raise HarnessError("service_start_commands must be an object")
+        return {str(key): str(value) for key, value in commands.items()}
+
+    def run_shell_command(self, command: str, *, timeout: Optional[int] = None) -> subprocess.CompletedProcess[str]:
+        return run_command(["/bin/zsh", "-lc", command], self.root, timeout=timeout)
+
+    def ensure_local_services(self, changed_files: List[str]) -> List[Dict[str, Any]]:
+        checks = self.service_health_checks()
+        starters = self.service_start_commands()
+        targets = []
+        if any(path.startswith("manager/frontend/") for path in changed_files):
+            targets.append("manager_frontend")
+        if any(path.startswith("benchmark/frontend/") for path in changed_files):
+            targets.append("benchmark_frontend")
+        if any(path.startswith("manager/") for path in changed_files):
+            targets.append("manager_backend")
+        if any(path.startswith("benchmark/") for path in changed_files):
+            targets.append("benchmark_backend")
+        if any(path.startswith("query/") for path in changed_files):
+            targets.append("query_backend")
+
+        seen = set()
+        ordered_targets = []
+        for item in targets:
+            if item not in seen:
+                seen.add(item)
+                ordered_targets.append(item)
+
+        results: List[Dict[str, Any]] = []
+        for target in ordered_targets:
+            check_command = checks.get(target)
+            if not check_command:
+                continue
+            result = self.run_shell_command(check_command, timeout=10)
+            if result.returncode == 0:
+                results.append({"service": target, "status": "healthy"})
+                continue
+            start_command = starters.get(target)
+            if start_command:
+                self.run_shell_command(start_command, timeout=15)
+                time.sleep(3)
+                retry = self.run_shell_command(check_command, timeout=10)
+                if retry.returncode == 0:
+                    results.append({"service": target, "status": "started"})
+                    continue
+            raise HarnessError(f"service check failed for {target}")
+        return results
+
     def task_context_payload(self, task: Dict[str, Any], extra: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         payload: Dict[str, Any] = {
             "task": task,
@@ -876,6 +933,8 @@ class Harness:
                 self.log_event({"role": "git-push", "task_id": task["id"], "branch": pushed_branch})
             refresh_results = []
             refresh_error = None
+            service_results = []
+            service_error = None
             try:
                 refresh_results = self.run_post_task_refresh(changed_files)
                 if refresh_results:
@@ -883,6 +942,13 @@ class Harness:
             except HarnessError as exc:
                 refresh_error = str(exc)
                 self.log_event({"role": "post-task-refresh", "task_id": task["id"], "error": refresh_error})
+            try:
+                service_results = self.ensure_local_services(changed_files)
+                if service_results:
+                    self.log_event({"role": "service-refresh", "task_id": task["id"], "results": service_results})
+            except HarnessError as exc:
+                service_error = str(exc)
+                self.log_event({"role": "service-refresh", "task_id": task["id"], "error": service_error})
             todo_warning = self.build_todo_warning(tasks_payload)
             if todo_warning:
                 self.log_event({"role": "todo-warning", "task_id": task["id"], "warning": todo_warning})
@@ -893,6 +959,8 @@ class Harness:
                 "pushed_branch": pushed_branch,
                 "refresh_results": refresh_results,
                 "refresh_error": refresh_error,
+                "service_results": service_results,
+                "service_error": service_error,
                 "todo_warning": todo_warning,
             }
         finally:
