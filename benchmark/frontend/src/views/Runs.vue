@@ -257,28 +257,33 @@ function formatDeltas(deltas) {
   if (!deltas) return []
   const metricsMap = {
     qps: 'QPS (吞吐量)',
+    qpsSuccessful: 'QPS (吞吐量)',
     p50: 'P50 (中位数延迟)',
+    p50Ms: 'P50 (中位数延迟)',
     p95: 'P95 (尾延迟)',
-    p99: 'P99 (极值延迟)'
+    p95Ms: 'P95 (尾延迟)',
+    p99: 'P99 (极值延迟)',
+    p99Ms: 'P99 (极值延迟)',
+    successRate: 'Success Rate'
   }
   return Object.entries(deltas).map(([k, d]) => {
-    const isQps = k === 'qps'
-    const val = d.delta || 0
+    const current = d.current
+    const previous = d.previous ?? d.baseline
+    const val = d.delta ?? d.percentChange ?? d.absoluteDelta
+    const isHigherBetter = k === 'qps' || k === 'qpsSuccessful' || k === 'successRate'
     let direction = 'none'
-    if (val > 0) direction = isQps ? 'up' : 'down-bad'
-    else if (val < 0) direction = isQps ? 'down-bad' : 'up'
-    
-    // For latency, lower is better (up direction)
-    // For QPS, higher is better (up direction)
-    const isGood = (isQps && val > 0) || (!isQps && val < 0)
-    const finalDir = isGood ? 'up' : 'down'
+    if (typeof val === 'number' && val !== 0) {
+      const improved = isHigherBetter ? val > 0 : val < 0
+      direction = improved ? 'up' : 'down'
+    }
+    const suffix = d.percentChange != null ? '%' : ''
 
     return {
       metric: metricsMap[k] || k,
-      current: d.current?.toFixed(2) || '—',
-      previous: d.previous?.toFixed(2) || '—',
-      deltaText: (val > 0 ? '+' : '') + val.toFixed(2),
-      direction: finalDir
+      current: typeof current === 'number' ? current.toFixed(2) : '—',
+      previous: typeof previous === 'number' ? previous.toFixed(2) : '—',
+      deltaText: typeof val === 'number' ? `${val > 0 ? '+' : ''}${val.toFixed(2)}${suffix}` : '—',
+      direction
     }
   })
 }

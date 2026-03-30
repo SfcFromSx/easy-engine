@@ -20,16 +20,23 @@ import com.smartbi.benchmark.report.BenchmarkRunReportService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(
         classes = BenchmarkApplication.class,
@@ -42,6 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
                 "spring.flyway.enabled=false"
         }
 )
+@AutoConfigureMockMvc
 class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
 
     private static final ObjectMapper JSON = new ObjectMapper();
@@ -68,6 +76,9 @@ class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
 
     @Autowired
     private BenchmarkDataSourceRepository dataSourceRepository;
+
+    @Autowired
+    private MockMvc mockMvc;
 
     private BenchmarkAsyncRunner runner;
 
@@ -158,16 +169,37 @@ class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
 
         JsonNode snapshotSummary = snapshot.path("executionModeSummary");
         assertTrue(snapshotSummary.path("mixed").asBoolean());
+        assertEquals("test_set", snapshot.path("sqlSourceKind").asText());
+        assertEquals(2, snapshot.path("sqlSourceCount").asInt());
+        assertEquals("mixed-modes", snapshot.path("testSetName").asText());
         assertEquals(2, snapshotSummary.path("values").size());
         assertEquals(1, snapshotSummary.path("sourceCountByMode").path("STATEMENT").asInt());
         assertEquals(1, snapshotSummary.path("sourceCountByMode").path("PREPARED_STATEMENT").asInt());
         assertNull(snapshotSummary.path("primary").textValue());
 
+        assertEquals("PASS", evaluation.path("verdict").asText());
+        assertEquals("COMPLETED", evaluation.path("meta").path("status").asText());
+        assertEquals(2, evaluation.path("meta").path("sqlSourceCount").asInt());
+        assertEquals(2, evaluation.path("metrics").path("totalQueries").asInt());
+        assertEquals(2, evaluation.path("metrics").path("successCount").asInt());
+        assertEquals(0, evaluation.path("metrics").path("errorCount").asInt());
+        assertTrue(evaluation.path("metrics").path("latencyMs").path("p50").isNumber());
+        assertTrue(evaluation.path("metrics").path("latencyMs").path("p95").isNumber());
+        assertTrue(evaluation.path("metrics").has("qpsSuccessful"));
         JsonNode evaluationSummary = evaluation.path("meta").path("executionModeSummary");
         assertTrue(evaluationSummary.path("mixed").asBoolean());
         assertEquals(1, evaluationSummary.path("sourceCountByMode").path("STATEMENT").asInt());
         assertEquals(1, evaluationSummary.path("sourceCountByMode").path("PREPARED_STATEMENT").asInt());
         assertFalse(evaluation.path("issues").elements().hasNext());
+
+        JsonNode context = loadContext(run.getId());
+        assertRunContextMatchesPersistedRun(context, persisted);
+        assertEquals(0, context.path("failureBreakdown").path("totalFailures").asInt());
+        assertEquals(0, context.path("failureBreakdown").path("groupCount").asInt());
+        assertTrue(context.path("failureBreakdown").path("groups").isArray());
+        assertEquals(0, context.path("failureBreakdown").path("groups").size());
+        assertFalse(context.path("comparisonDelta").path("available").asBoolean());
+        assertTrue(context.path("comparisonDelta").path("reason").asText().contains("无上一次已完成同任务 Run"));
     }
 
     @Test
@@ -223,8 +255,21 @@ class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
         assertEquals(Long.valueOf(4L), persisted.getTotalQueries());
         assertEquals(Long.valueOf(0L), persisted.getSuccessCount());
         assertEquals(Long.valueOf(4L), persisted.getErrorCount());
+        assertNotNull(persisted.getJobSnapshotJson());
+        assertNotNull(persisted.getEvaluationJson());
+        assertTrue(persisted.getErrorSample().contains("MISSING_PRESTO"));
 
+        JsonNode snapshot = JSON.readTree(persisted.getJobSnapshotJson());
         JsonNode evaluation = JSON.readTree(persisted.getEvaluationJson());
+        assertTrue(snapshot.path("executionModeSummary").path("mixed").asBoolean());
+        assertEquals(2, snapshot.path("sqlSourceCount").asInt());
+        assertEquals("failure-groups", snapshot.path("testSetName").asText());
+        assertEquals("FAIL", evaluation.path("verdict").asText());
+        assertEquals("FAILED", evaluation.path("meta").path("status").asText());
+        assertEquals(2, evaluation.path("meta").path("sqlSourceCount").asInt());
+        assertEquals(4, evaluation.path("metrics").path("totalQueries").asInt());
+        assertEquals(0, evaluation.path("metrics").path("successCount").asInt());
+        assertEquals(4, evaluation.path("metrics").path("errorCount").asInt());
         JsonNode breakdown = evaluation.path("diagnostics").path("failureBreakdown");
         assertEquals(4, breakdown.path("totalFailures").asInt());
         assertEquals(2, breakdown.path("groupCount").asInt());
@@ -234,12 +279,47 @@ class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
         assertEquals("STATEMENT", prestoGroup.path("executionMode").asText());
         assertEquals("presto_local", prestoGroup.path("routedTarget").asText());
         assertEquals(2, prestoGroup.path("failureCount").asInt());
+        assertTrue(prestoGroup.path("sampleMessage").asText().contains("MISSING_PRESTO"));
 
         assertEquals("PREPARED_STATEMENT", preparedGroup.path("executionMode").asText());
         assertEquals("default", preparedGroup.path("routedTarget").asText());
         assertEquals(2, preparedGroup.path("failureCount").asInt());
+        assertTrue(preparedGroup.path("sampleMessage").asText().contains("MISSING_PREPARED"));
         assertTrue(evaluation.path("summary").asText().contains("失败诊断"));
         assertEquals(2, evaluation.path("issues").size());
+
+        JsonNode context = loadContext(run.getId());
+        assertRunContextMatchesPersistedRun(context, persisted);
+        assertEquals(breakdown, context.path("failureBreakdown"));
+        assertEquals(2, context.path("failureBreakdown").path("groups").size());
+        assertEquals("presto_local",
+                findGroup(context.path("failureBreakdown").path("groups"), "presto_stmt_fail").path("routedTarget").asText());
+        assertEquals("PREPARED_STATEMENT",
+                findGroup(context.path("failureBreakdown").path("groups"), "prepared_fail").path("executionMode").asText());
+        assertFalse(context.path("comparisonDelta").path("available").asBoolean());
+    }
+
+    private JsonNode loadContext(Long runId) throws Exception {
+        String response = mockMvc.perform(get("/api/v1/runs/{id}/context", runId)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
+        return JSON.readTree(response);
+    }
+
+    private static void assertRunContextMatchesPersistedRun(JsonNode context, BenchmarkRun persisted) throws Exception {
+        JsonNode runNode = context.path("run");
+        assertEquals(persisted.getId().longValue(), runNode.path("id").asLong());
+        assertEquals(persisted.getStatus().name(), runNode.path("status").asText());
+        assertEquals(persisted.getTotalQueries().longValue(), runNode.path("totalQueries").asLong());
+        assertEquals(persisted.getSuccessCount().longValue(), runNode.path("successCount").asLong());
+        assertEquals(persisted.getErrorCount().longValue(), runNode.path("errorCount").asLong());
+        assertEquals(JSON.readTree(persisted.getJobSnapshotJson()), JSON.readTree(runNode.path("jobSnapshotJson").asText()));
+        assertEquals(JSON.readTree(persisted.getEvaluationJson()), JSON.readTree(runNode.path("evaluationJson").asText()));
+        assertTrue(context.has("failureBreakdown"));
+        assertTrue(context.has("comparisonDelta"));
     }
 
     private static JsonNode findGroup(JsonNode groups, String label) {

@@ -16,7 +16,7 @@
       "module": "benchmark",
       "type": "test",
       "priority": 1,
-      "status": "implemented",
+      "status": "done",
       "depends_on": [],
       "context_files": [
         "benchmark/src/test/java/com/smartbi/benchmark",
@@ -38,45 +38,20 @@
       ],
       "attempts": 0,
       "last_result": {
-        "commands_run": [
-          "sed -n '1,220p' docs/README.md",
-          "sed -n '1,260p' docs/modules/benchmark.md",
-          "sed -n '1,260p' benchmark/src/test/java/com/smartbi/benchmark/run/BenchmarkAsyncRunnerExecutionModeIntegrationTest.java",
-          "sed -n '1,260p' benchmark/src/test/java/com/smartbi/benchmark/web/RunControllerContextTest.java",
-          "sed -n '1,320p' benchmark/src/main/java/com/smartbi/benchmark/run/BenchmarkAsyncRunner.java",
-          "sed -n '1,320p' benchmark/src/main/java/com/smartbi/benchmark/web/RunController.java",
-          "sed -n '1,360p' benchmark/src/main/java/com/smartbi/benchmark/report/BenchmarkRunReportService.java",
-          "sed -n '1,320p' benchmark/frontend/src/views/Runs.vue",
-          "rg -n \"comparisonDelta|formatDeltas\\(|qpsSuccessful|p50Ms|percentChange|absoluteDelta\" benchmark/frontend benchmark/src/main/java benchmark/src/test/java",
-          "mvn -q -f benchmark/pom.xml -Dtest=BenchmarkAsyncRunnerExecutionModeIntegrationTest,RunControllerContextTest test",
-          "mvn -q -f benchmark/pom.xml test",
-          "npm --prefix benchmark/frontend run build",
-          "git status --short",
-          "git diff -- benchmark/src/test/java/com/smartbi/benchmark/run/BenchmarkAsyncRunnerExecutionModeIntegrationTest.java benchmark/src/test/java/com/smartbi/benchmark/web/RunControllerContextTest.java benchmark/frontend/src/views/Runs.vue",
-          "find benchmark/frontend/dist -maxdepth 2 -type f | sort"
+        "evidence": [
+          "`benchmark/src/test/java/com/smartbi/benchmark/run/BenchmarkAsyncRunnerExecutionModeIntegrationTest.java` now exercises both a clean mixed-mode success run and a routed/prepared failure run through the real async runner path, then asserts persisted `BenchmarkRun` fields plus parseable `jobSnapshotJson`, `evaluationJson`, and `/api/v1/runs/{id}/context` consistency.",
+          "`benchmark/src/test/java/com/smartbi/benchmark/web/RunControllerContextTest.java` now verifies both failure and clean-success context shapes, including `failureBreakdown` presence/emptiness and `comparisonDelta` data that matches the expected frontend contract.",
+          "`benchmark/frontend/src/views/Runs.vue` was adjusted narrowly so the runs drawer accepts the current backend comparison-delta field names such as `p50Ms`, `qpsSuccessful`, `baseline`, `percentChange`, and `absoluteDelta` instead of assuming only the older aliases.",
+          "Re-ran `mvn -q -f benchmark/pom.xml test` on 2026-03-30; it exited 0. The suite still emitted the existing Testcontainers/Docker environment warning from migration-related coverage, but the benchmark tests completed successfully.",
+          "Re-ran `npm --prefix benchmark/frontend run build` on 2026-03-30; it exited 0 and regenerated the tracked benchmark frontend dist assets, with only the existing Vite large-chunk warning."
         ],
-        "error_log": null,
-        "files_modified": [
-          "benchmark/src/test/java/com/smartbi/benchmark/run/BenchmarkAsyncRunnerExecutionModeIntegrationTest.java",
-          "benchmark/src/test/java/com/smartbi/benchmark/web/RunControllerContextTest.java",
-          "benchmark/frontend/src/views/Runs.vue",
-          "benchmark/frontend/dist/index.html",
-          "benchmark/frontend/dist/assets/index-BjRSSOJI.css",
-          "benchmark/frontend/dist/assets/index-DfdRQtew.js",
-          "benchmark/frontend/dist/assets/index-BBQ04fVE.css",
-          "benchmark/frontend/dist/assets/index-DctQjuwI.js"
-        ],
-        "status": "implemented",
-        "summary": "Strengthened benchmark E2E-style coverage by extending the async runner integration test to execute a clean mixed-mode success run and a routed/prepared failure run, then assert persisted `BenchmarkRun` fields, parseable `jobSnapshotJson` and `evaluationJson`, and `/api/v1/runs/{id}/context` consistency including failure breakdown details. Expanded `RunControllerContextTest` to verify both failure and clean-success context shapes with comparison delta data, and updated `benchmark/frontend/src/views/Runs.vue` so the Runs view accepts the current backend `comparisonDelta` field names (`p50Ms`, `qpsSuccessful`, `baseline`, `percentChange`/`absoluteDelta`). Frontend build regenerated the tracked `benchmark/frontend/dist` bundle files.",
+        "next_action": "Proceed to the next benchmark queue item, `BENCH-ACTIVE-001`, now that the E2E artifact-coverage baseline is in place.",
+        "severity": "low",
+        "summary": "Approved. The benchmark module now has stronger integration-style E2E coverage for both success and failure run outcomes, and those tests explicitly assert the structured artifacts and context payloads that operators consume instead of stopping at terminal status checks.",
         "task_id": "BENCH-E2E-001",
-        "test_results": "Targeted `BenchmarkAsyncRunnerExecutionModeIntegrationTest` and `RunControllerContextTest` passed. Full `mvn -q -f benchmark/pom.xml test` passed. `npm --prefix benchmark/frontend run build` passed. Maven output included an existing non-fatal Testcontainers Docker-environment warning during the suite, but the command completed successfully with exit code 0.",
-        "tests_executed": [
-          "mvn -q -f benchmark/pom.xml -Dtest=BenchmarkAsyncRunnerExecutionModeIntegrationTest,RunControllerContextTest test",
-          "mvn -q -f benchmark/pom.xml test",
-          "npm --prefix benchmark/frontend run build"
-        ]
+        "validation_status": "approved"
       },
-      "updated_at": "2026-03-30T07:52:03Z"
+      "updated_at": "2026-03-30T08:05:19Z"
     },
     {
       "id": "DOC-LOOP-001",
