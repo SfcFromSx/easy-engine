@@ -16,7 +16,7 @@
       "module": "benchmark",
       "type": "test",
       "priority": 1,
-      "status": "todo",
+      "status": "implemented",
       "depends_on": [],
       "context_files": [
         "benchmark/src/test/java/com/smartbi/benchmark",
@@ -37,8 +37,46 @@
         "npm --prefix benchmark/frontend run build"
       ],
       "attempts": 0,
-      "last_result": null,
-      "updated_at": "2026-03-30T07:41:30Z"
+      "last_result": {
+        "commands_run": [
+          "sed -n '1,220p' docs/README.md",
+          "sed -n '1,260p' docs/modules/benchmark.md",
+          "sed -n '1,260p' benchmark/src/test/java/com/smartbi/benchmark/run/BenchmarkAsyncRunnerExecutionModeIntegrationTest.java",
+          "sed -n '1,260p' benchmark/src/test/java/com/smartbi/benchmark/web/RunControllerContextTest.java",
+          "sed -n '1,320p' benchmark/src/main/java/com/smartbi/benchmark/run/BenchmarkAsyncRunner.java",
+          "sed -n '1,320p' benchmark/src/main/java/com/smartbi/benchmark/web/RunController.java",
+          "sed -n '1,360p' benchmark/src/main/java/com/smartbi/benchmark/report/BenchmarkRunReportService.java",
+          "sed -n '1,320p' benchmark/frontend/src/views/Runs.vue",
+          "rg -n \"comparisonDelta|formatDeltas\\(|qpsSuccessful|p50Ms|percentChange|absoluteDelta\" benchmark/frontend benchmark/src/main/java benchmark/src/test/java",
+          "mvn -q -f benchmark/pom.xml -Dtest=BenchmarkAsyncRunnerExecutionModeIntegrationTest,RunControllerContextTest test",
+          "mvn -q -f benchmark/pom.xml test",
+          "npm --prefix benchmark/frontend run build",
+          "git status --short",
+          "git diff -- benchmark/src/test/java/com/smartbi/benchmark/run/BenchmarkAsyncRunnerExecutionModeIntegrationTest.java benchmark/src/test/java/com/smartbi/benchmark/web/RunControllerContextTest.java benchmark/frontend/src/views/Runs.vue",
+          "find benchmark/frontend/dist -maxdepth 2 -type f | sort"
+        ],
+        "error_log": null,
+        "files_modified": [
+          "benchmark/src/test/java/com/smartbi/benchmark/run/BenchmarkAsyncRunnerExecutionModeIntegrationTest.java",
+          "benchmark/src/test/java/com/smartbi/benchmark/web/RunControllerContextTest.java",
+          "benchmark/frontend/src/views/Runs.vue",
+          "benchmark/frontend/dist/index.html",
+          "benchmark/frontend/dist/assets/index-BjRSSOJI.css",
+          "benchmark/frontend/dist/assets/index-DfdRQtew.js",
+          "benchmark/frontend/dist/assets/index-BBQ04fVE.css",
+          "benchmark/frontend/dist/assets/index-DctQjuwI.js"
+        ],
+        "status": "implemented",
+        "summary": "Strengthened benchmark E2E-style coverage by extending the async runner integration test to execute a clean mixed-mode success run and a routed/prepared failure run, then assert persisted `BenchmarkRun` fields, parseable `jobSnapshotJson` and `evaluationJson`, and `/api/v1/runs/{id}/context` consistency including failure breakdown details. Expanded `RunControllerContextTest` to verify both failure and clean-success context shapes with comparison delta data, and updated `benchmark/frontend/src/views/Runs.vue` so the Runs view accepts the current backend `comparisonDelta` field names (`p50Ms`, `qpsSuccessful`, `baseline`, `percentChange`/`absoluteDelta`). Frontend build regenerated the tracked `benchmark/frontend/dist` bundle files.",
+        "task_id": "BENCH-E2E-001",
+        "test_results": "Targeted `BenchmarkAsyncRunnerExecutionModeIntegrationTest` and `RunControllerContextTest` passed. Full `mvn -q -f benchmark/pom.xml test` passed. `npm --prefix benchmark/frontend run build` passed. Maven output included an existing non-fatal Testcontainers Docker-environment warning during the suite, but the command completed successfully with exit code 0.",
+        "tests_executed": [
+          "mvn -q -f benchmark/pom.xml -Dtest=BenchmarkAsyncRunnerExecutionModeIntegrationTest,RunControllerContextTest test",
+          "mvn -q -f benchmark/pom.xml test",
+          "npm --prefix benchmark/frontend run build"
+        ]
+      },
+      "updated_at": "2026-03-30T07:52:03Z"
     },
     {
       "id": "DOC-LOOP-001",
@@ -385,6 +423,34 @@
       "updated_at": "2026-03-30T07:36:30Z"
     },
     {
+      "id": "BENCH-RUNS-API-001",
+      "title": "Fix benchmark runs list contract so global run queries do not fail with 500",
+      "module": "benchmark",
+      "type": "backend",
+      "priority": 43,
+      "status": "todo",
+      "depends_on": [],
+      "context_files": [
+        "benchmark/src/main/java/com/smartbi/benchmark/web/RunController.java",
+        "benchmark/src/main/java/com/smartbi/benchmark/repo/BenchmarkRunRepository.java",
+        "benchmark/frontend/src/views/Runs.vue",
+        "benchmark/frontend/src/views/Dashboard.vue",
+        "docs/modules/benchmark.md"
+      ],
+      "acceptance_criteria": [
+        "Calling the benchmark runs list endpoint without `jobId` no longer fails with HTTP 500",
+        "The backend contract for `/api/v1/runs` is explicit and consistent with current frontend assumptions, whether that means supporting global listing or rejecting unsupported requests in a controlled, documented way",
+        "Benchmark-side automated tests cover the chosen `/api/v1/runs` contract so the global-listing or explicit-validation behavior does not regress"
+      ],
+      "validation_commands": [
+        "mvn -q -f benchmark/pom.xml test",
+        "npm --prefix benchmark/frontend run build"
+      ],
+      "attempts": 0,
+      "last_result": null,
+      "updated_at": "2026-03-30T07:47:30Z"
+    },
+    {
       "id": "LIST-FILTER-001",
       "title": "Add practical search and filter controls to manager and benchmark list views",
       "module": "frontend",
@@ -605,6 +671,9 @@
       "priority": 999,
       "status": "todo",
       "depends_on": [
+        "BENCH-E2E-001",
+        "BENCH-ACTIVE-001",
+        "BENCH-RUNS-API-001",
         "LIST-FILTER-001",
         "MGR-CSS-001",
         "QUERY-DOC-001",
