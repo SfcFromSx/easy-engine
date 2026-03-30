@@ -2,6 +2,8 @@
   "version": 1,
   "branch_prefix": "codex/autoloop",
   "commit_message_template": "autoloop: {task_id} {title}",
+  "push_remote": "origin",
+  "auto_push_after_commit": true,
   "max_iterations": 8,
   "max_task_attempts": 3,
   "doc_gardening_interval": 2,

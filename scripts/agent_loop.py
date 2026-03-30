@@ -671,6 +671,28 @@ class Harness:
         run_command(["git", "commit", "-m", message], self.root, check=True)
         return message
 
+    def current_branch(self) -> str:
+        completed = run_command(["git", "rev-parse", "--abbrev-ref", "HEAD"], self.root, check=True)
+        branch = completed.stdout.strip()
+        if not branch:
+            raise HarnessError("failed to determine current branch name")
+        return branch
+
+    def auto_push_enabled(self) -> bool:
+        return bool(self.config.get("auto_push_after_commit", False))
+
+    def push_remote(self) -> str:
+        remote = self.config.get("push_remote", "origin")
+        if not isinstance(remote, str) or not remote:
+            raise HarnessError("push_remote must be a non-empty string")
+        return remote
+
+    def push_current_branch(self) -> Optional[str]:
+        branch = self.current_branch()
+        remote = self.push_remote()
+        run_command(["git", "push", remote, branch], self.root, check=True)
+        return branch
+
     def task_context_payload(self, task: Dict[str, Any], extra: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         payload: Dict[str, Any] = {
             "task": task,
@@ -773,7 +795,6 @@ class Harness:
                 except HarnessError as exc:
                     return self.handle_stage_failure(tasks_payload, task["id"], "doc-gardener", exc)
                 self.log_event({"role": "doc-gardener", "task_id": task["id"], "payload": doc_output})
-            commit_message = self.commit_verified_task(task)
             self.update_task(
                 tasks_payload,
                 task["id"],
@@ -782,7 +803,12 @@ class Harness:
                 last_result=verifier_output,
             )
             self.save_tasks(tasks_payload)
-            return {"status": "done", "task_id": task["id"], "commit": commit_message}
+            commit_message = self.commit_verified_task(task)
+            pushed_branch = None
+            if commit_message and self.auto_push_enabled():
+                pushed_branch = self.push_current_branch()
+                self.log_event({"role": "git-push", "task_id": task["id"], "branch": pushed_branch})
+            return {"status": "done", "task_id": task["id"], "commit": commit_message, "pushed_branch": pushed_branch}
         finally:
             self.release_lock()
 

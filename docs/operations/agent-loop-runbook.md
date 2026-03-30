@@ -24,7 +24,8 @@ Each iteration follows:
 5. run the verifier prompt
 6. update task state
 7. commit verified work if Git is ready
-8. trigger doc gardening when required
+8. push the current branch when auto-push is enabled
+9. trigger doc gardening when required
 
 ## Halt Conditions
 
@@ -52,4 +53,5 @@ Each iteration follows:
 - Codex currently runs in best-effort mode for production work on unstable networks: long stage timeouts, automatic retries, backoff, and explicit runner logs are enabled by default.
 - For Codex on unstable provider paths, prefer fewer but longer attempts over many short retries. The default profile uses long single-stage windows before giving up.
 - The Codex verifier stage uses a longer timeout window than orchestrator and implementer, because the verification payload is larger and provider latency is higher in practice.
+- When `auto_push_after_commit` is enabled, successful task commits are pushed to the configured remote immediately after the task is marked `done`.
 - Prefer `smoke-runner` and `step` before multi-iteration Codex runs. For Codex, `run --max-iterations 1` is the safe default until the provider proves stable.

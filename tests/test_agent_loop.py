@@ -32,6 +32,8 @@ ROOT_FIXTURE_FILES = {
             "version": 1,
             "branch_prefix": "codex/autoloop",
             "commit_message_template": "autoloop: {task_id} {title}",
+            "push_remote": "origin",
+            "auto_push_after_commit": True,
             "max_iterations": 8,
             "max_task_attempts": 3,
             "doc_gardening_interval": 2,
@@ -346,6 +348,7 @@ class AgentLoopTests(unittest.TestCase):
             with mock.patch.object(self.harness, "doctor", return_value=mock.Mock(ok=True, issues=[], warnings=[])), \
                 mock.patch.object(self.harness, "ensure_loop_branch", return_value=f"{runner_name}/branch"), \
                 mock.patch.object(self.harness, "commit_verified_task", return_value="commit"), \
+                mock.patch.object(self.harness, "push_current_branch", return_value=f"{runner_name}/branch"), \
                 mock.patch.object(
                     self.harness,
                     "invoke_runner",
@@ -356,6 +359,53 @@ class AgentLoopTests(unittest.TestCase):
             refreshed = self.harness.load_tasks()
             task = next(task for task in refreshed["tasks"] if task["id"] == selected_id)
             self.assertEqual("done", task["status"])
+
+    def test_step_marks_done_before_commit_and_push(self) -> None:
+        orchestrator = {
+            "task_id": "C",
+            "rationale": "work on C",
+            "instructions": "do it",
+            "context_files": [],
+            "acceptance_criteria": [],
+            "halt_reason": None,
+        }
+        implementer = {
+            "task_id": "C",
+            "status": "implemented",
+            "summary": "implemented",
+            "files_modified": ["README.md"],
+            "commands_run": [],
+            "tests_executed": [],
+            "test_results": "ok",
+            "error_log": None,
+        }
+        verifier = {
+            "task_id": "C",
+            "validation_status": "approved",
+            "summary": "approved",
+            "evidence": ["ok"],
+            "severity": "low",
+            "next_action": "none",
+        }
+        seen = {}
+
+        def fake_commit(task):
+            current = self.harness.load_tasks()
+            task_c = next(item for item in current["tasks"] if item["id"] == "C")
+            seen["status_at_commit"] = task_c["status"]
+            return "commit"
+
+        with mock.patch.object(self.harness, "doctor", return_value=mock.Mock(ok=True, issues=[], warnings=[])), \
+            mock.patch.object(self.harness, "ensure_loop_branch", return_value="codex/autoloop/test"), \
+            mock.patch.object(self.harness, "should_run_doc_gardener", return_value=False), \
+            mock.patch.object(self.harness, "commit_verified_task", side_effect=fake_commit), \
+            mock.patch.object(self.harness, "push_current_branch", return_value="codex/autoloop/test"), \
+            mock.patch.object(self.harness, "invoke_runner", side_effect=[orchestrator, implementer, verifier]):
+            outcome = self.harness.step("codex")
+
+        self.assertEqual("done", outcome["status"])
+        self.assertEqual("done", seen["status_at_commit"])
+        self.assertEqual("codex/autoloop/test", outcome["pushed_branch"])
 
     def test_invoke_runner_builds_codex_command_with_schema(self) -> None:
         def fake_run_command(cmd, cwd, check=False, capture_output=True, timeout=None):
