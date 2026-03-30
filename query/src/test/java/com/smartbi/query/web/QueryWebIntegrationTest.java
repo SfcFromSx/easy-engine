@@ -1,5 +1,7 @@
 package com.smartbi.query.web;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartbi.query.EngineQueryApplication;
 import com.smartbi.query.support.InMemoryQueryInfrastructure;
 import com.smartbi.query.support.QueryTestConfiguration;
@@ -43,6 +45,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Import(QueryTestConfiguration.class)
 class QueryWebIntegrationTest {
+
+    private static final ObjectMapper JSON = new ObjectMapper();
 
     @Autowired
     private MockMvc mockMvc;
@@ -115,6 +119,35 @@ class QueryWebIntegrationTest {
     }
 
     @Test
+    void shouldPublishStatementExecutionModeInTracePayload() throws Exception {
+        String body = "{\"sql\":\"SELECT NAME FROM SALES ORDER BY ID\",\"project\":\"demo\"}";
+
+        mockMvc.perform(post("/kylin/api/query")
+                        .header("Authorization", authHeader())
+                        .contentType("application/json")
+                        .content(body))
+                .andExpect(status().isOk());
+
+        JsonNode trace = lastTrace();
+        org.junit.jupiter.api.Assertions.assertEquals("STATEMENT", trace.path("executionMode").asText());
+    }
+
+    @Test
+    void shouldPublishPreparedExecutionModeInTracePayload() throws Exception {
+        String body = "{\"sql\":\"SELECT NAME FROM SALES WHERE ID = ?\",\"project\":\"demo\",\"params\":[{\"className\":\"java.lang.Integer\",\"value\":\"1\"}]}";
+
+        mockMvc.perform(post("/kylin/api/query")
+                        .header("Authorization", authHeader())
+                        .contentType("application/json")
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.results[0][0]").value("alpha"));
+
+        JsonNode trace = lastTrace();
+        org.junit.jupiter.api.Assertions.assertEquals("PREPARED_STATEMENT", trace.path("executionMode").asText());
+    }
+
+    @Test
     void shouldRouteByPreservedMetadataHint() throws Exception {
         String body = "{\"sql\":\"/* YH_TARGET_ENGINE=presto_local */ SELECT NAME FROM NATION WHERE NATIONKEY = 1\",\"project\":\"demo\"}";
 
@@ -128,5 +161,11 @@ class QueryWebIntegrationTest {
 
     private static String authHeader() {
         return "Basic " + Base64.getEncoder().encodeToString("ADMIN:KYLIN".getBytes());
+    }
+
+    private JsonNode lastTrace() throws Exception {
+        java.util.List<String> traces = infrastructure.publishedTraces();
+        org.junit.jupiter.api.Assertions.assertFalse(traces.isEmpty());
+        return JSON.readTree(traces.get(traces.size() - 1));
     }
 }

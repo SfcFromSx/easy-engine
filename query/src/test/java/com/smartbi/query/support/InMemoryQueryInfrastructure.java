@@ -38,4 +38,8 @@ public class InMemoryQueryInfrastructure implements QueryCacheStore, TraceQueueP
     public synchronized int traceCount() {
         return traces.size();
     }
+
+    public synchronized List<String> publishedTraces() {
+        return new ArrayList<String>(traces);
+    }
 }

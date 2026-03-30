@@ -8,6 +8,7 @@
 - Preserve compatibility with `PreparedQueryRequest` and `SQLResponseStub` expectations.
 - Align routing, caching, and trace semantics with `kylin-jdbc-cache`.
 - Prefer preserved routing metadata such as `YH_TARGET_ENGINE` over driver-consumed engine hints.
+- Publish trace payloads with explicit `executionMode` values so downstream operators can distinguish `STATEMENT` from `PREPARED_STATEMENT` without SQL-text inspection.
 
 ## Routing Notes
 

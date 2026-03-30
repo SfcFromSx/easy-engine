@@ -8,11 +8,13 @@ import com.smartbi.benchmark.domain.BenchmarkJob;
 import com.smartbi.benchmark.domain.BenchmarkRun;
 import com.smartbi.benchmark.domain.BenchmarkStrategy;
 import com.smartbi.benchmark.domain.RunStatus;
+import com.smartbi.benchmark.domain.SqlExecutionMode;
 import com.smartbi.benchmark.repo.BenchmarkDataSourceRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +46,8 @@ public class BenchmarkRunReportService {
         }
     }
 
-    public String buildJobSnapshotJson(BenchmarkJob job, int sqlSourceCount, String testSetName) {
+    public String buildJobSnapshotJson(BenchmarkJob job, int sqlSourceCount, String testSetName,
+                                       List<SqlExecutionMode> executionModes) {
         Map<String, Object> snap = new LinkedHashMap<>();
         snap.put("jobId", job.getId());
         snap.put("jobName", job.getName());
@@ -67,10 +70,12 @@ public class BenchmarkRunReportService {
         snap.put("testSetName", testSetName);
         snap.put("sqlSourceKind", job.getTestSetId() != null ? "test_set" : "global_templates");
         snap.put("sqlSourceCount", sqlSourceCount);
+        snap.put("executionModeSummary", summarizeExecutionModes(executionModes));
         return toJson(snap);
     }
 
-    public String buildFailureEvaluation(String phase, String message, BenchmarkJob job) {
+    public String buildFailureEvaluation(String phase, String message, BenchmarkJob job,
+                                         List<SqlExecutionMode> executionModes) {
         Map<String, Object> root = baseEnvelope(job);
         root.put("verdict", "FAIL");
         root.put("summary", "压测未正常完成：" + truncate(message, 200));
@@ -82,10 +87,12 @@ public class BenchmarkRunReportService {
         issues.add(message);
         root.put("issues", issues);
         root.put("jdbcComparisonHints", jdbcHintsPlaceholder());
+        root.put("meta", Collections.singletonMap("executionModeSummary", summarizeExecutionModes(executionModes)));
         return toJson(root);
     }
 
-    public String buildCompletedEvaluation(BenchmarkJob job, BenchmarkRun run, int sqlSourceCount) {
+    public String buildCompletedEvaluation(BenchmarkJob job, BenchmarkRun run, int sqlSourceCount,
+                                           List<SqlExecutionMode> executionModes) {
         Map<String, Object> root = baseEnvelope(job);
         long total = nullToZero(run.getTotalQueries());
         long ok = nullToZero(run.getSuccessCount());
@@ -161,9 +168,34 @@ public class BenchmarkRunReportService {
         Map<String, Object> meta = new LinkedHashMap<>();
         meta.put("sqlSourceCount", sqlSourceCount);
         meta.put("status", run.getStatus() != null ? run.getStatus().name() : null);
+        meta.put("executionModeSummary", summarizeExecutionModes(executionModes));
         root.put("meta", meta);
 
         return toJson(root);
+    }
+
+    Map<String, Object> summarizeExecutionModes(List<SqlExecutionMode> executionModes) {
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        if (executionModes != null) {
+            for (SqlExecutionMode mode : executionModes) {
+                SqlExecutionMode resolved = mode == null ? SqlExecutionMode.STATEMENT : mode;
+                counts.put(resolved.name(), counts.getOrDefault(resolved.name(), 0) + 1);
+            }
+        }
+
+        List<String> values = new ArrayList<>();
+        for (SqlExecutionMode mode : SqlExecutionMode.values()) {
+            if (counts.containsKey(mode.name())) {
+                values.add(mode.name());
+            }
+        }
+
+        Map<String, Object> summary = new LinkedHashMap<>();
+        summary.put("values", values);
+        summary.put("mixed", values.size() > 1);
+        summary.put("primary", values.size() == 1 ? values.get(0) : null);
+        summary.put("sourceCountByMode", counts);
+        return summary;
     }
 
     public Map<String, Object> buildComparisonDelta(BenchmarkRun current, BenchmarkRun previous) {

@@ -32,6 +32,9 @@ public class SqlExecutionRecord {
     @Column(name = "param_fingerprint")
     private String paramFingerprint;
 
+    @Column(name = "execution_mode", length = 32)
+    private String executionMode;
+
     private Boolean success;
 
     @Column(name = "cache_hit")
@@ -114,6 +117,14 @@ public class SqlExecutionRecord {
 
     public void setParamFingerprint(String paramFingerprint) {
         this.paramFingerprint = paramFingerprint;
+    }
+
+    public String getExecutionMode() {
+        return executionMode;
+    }
+
+    public void setExecutionMode(String executionMode) {
+        this.executionMode = executionMode;
     }
 
     public Boolean getSuccess() {

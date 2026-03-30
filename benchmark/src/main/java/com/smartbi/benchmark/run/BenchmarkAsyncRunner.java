@@ -85,7 +85,8 @@ public class BenchmarkAsyncRunner {
 
         BenchmarkJob job = jobRepository.findById(run.getJobId()).orElse(null);
         if (job == null) {
-            failRun(run, "Job configuration missing (ID=" + run.getJobId() + ")", null);
+            failRun(run, "Job configuration missing (ID=" + run.getJobId() + ")", null,
+                    Collections.<SqlExecutionMode>emptyList());
             return;
         }
 
@@ -93,14 +94,15 @@ public class BenchmarkAsyncRunner {
             runInternal(run, job);
         } catch (Exception e) {
             log.error("Fatal error executing benchmark run {}", runId, e);
-            failRun(run, "Execution failed: " + e.getMessage(), job);
+            failRun(run, "Execution failed: " + e.getMessage(), job, Collections.<SqlExecutionMode>emptyList());
         }
     }
 
     private void runInternal(BenchmarkRun run, BenchmarkJob job) throws Exception {
         List<WeightedSql> sources = loadSources(job);
+        List<SqlExecutionMode> executionModes = extractExecutionModes(sources);
         if (sources.isEmpty()) {
-            failRun(run, "No SQL sources available for this job", job);
+            failRun(run, "No SQL sources available for this job", job, executionModes);
             return;
         }
 
@@ -177,7 +179,11 @@ public class BenchmarkAsyncRunner {
             }
 
             long wall = System.currentTimeMillis() - wallStart;
-            finalizeRun(run, job, wall, total, successes.get(), errors.get(), latencies, firstError.get(), sources.size());
+            finalizeRun(run, job, wall, total, successes.get(), errors.get(), latencies, firstError.get(),
+                    sources.size(), executionModes);
+        } catch (Exception e) {
+            log.error("Fatal error executing benchmark run {}", run.getId(), e);
+            failRun(run, "Execution failed: " + e.getMessage(), job, executionModes);
         }
     }
 
@@ -191,7 +197,7 @@ public class BenchmarkAsyncRunner {
 
     private void finalizeRun(BenchmarkRun run, BenchmarkJob job, long wall, int total,
                              int successes, int errors, List<Long> latencies,
-                             String errorSample, int sourceCount) {
+                             String errorSample, int sourceCount, List<SqlExecutionMode> executionModes) {
         run.setEndedAt(Instant.now());
         run.setCurrentProgress(total);
         run.setTotalTarget(total);
@@ -216,8 +222,8 @@ public class BenchmarkAsyncRunner {
         run.setStatus(errors == total ? RunStatus.FAILED : RunStatus.COMPLETED);
 
         String testSetName = resolveTestSetName(job.getTestSetId());
-        run.setJobSnapshotJson(reportService.buildJobSnapshotJson(job, sourceCount, testSetName));
-        run.setEvaluationJson(reportService.buildCompletedEvaluation(job, run, sourceCount));
+        run.setJobSnapshotJson(reportService.buildJobSnapshotJson(job, sourceCount, testSetName, executionModes));
+        run.setEvaluationJson(reportService.buildCompletedEvaluation(job, run, sourceCount, executionModes));
 
         runRepository.save(run);
         log.info("Benchmark run {} completed: success={} errors={} wallMs={}",
@@ -252,15 +258,24 @@ public class BenchmarkAsyncRunner {
         return list;
     }
 
-    private void failRun(BenchmarkRun run, String msg, BenchmarkJob job) {
+    private void failRun(BenchmarkRun run, String msg, BenchmarkJob job, List<SqlExecutionMode> executionModes) {
         run.setStatus(RunStatus.FAILED);
         run.setEndedAt(Instant.now());
         run.setErrorSample(msg);
         if (job != null) {
-            run.setJobSnapshotJson(reportService.buildJobSnapshotJson(job, 0, resolveTestSetName(job.getTestSetId())));
+            run.setJobSnapshotJson(reportService.buildJobSnapshotJson(job, 0, resolveTestSetName(job.getTestSetId()),
+                    executionModes));
         }
-        run.setEvaluationJson(reportService.buildFailureEvaluation("SETUP", msg, job));
+        run.setEvaluationJson(reportService.buildFailureEvaluation("SETUP", msg, job, executionModes));
         runRepository.save(run);
+    }
+
+    private static List<SqlExecutionMode> extractExecutionModes(List<WeightedSql> sources) {
+        List<SqlExecutionMode> executionModes = new ArrayList<SqlExecutionMode>();
+        for (WeightedSql source : sources) {
+            executionModes.add(source.executionMode);
+        }
+        return executionModes;
     }
 
     private String resolveTestSetName(Long testSetId) {

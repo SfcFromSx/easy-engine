@@ -166,7 +166,7 @@
       "module": "query",
       "type": "backend",
       "priority": 31,
-      "status": "todo",
+      "status": "done",
       "depends_on": [],
       "context_files": [
         "query/src/main/java/com/smartbi/query/service/TraceReportingService.java",
@@ -187,9 +187,22 @@
         "mvn -q -f manager/pom.xml test",
         "mvn -q -f benchmark/pom.xml test"
       ],
-      "attempts": 0,
-      "last_result": null,
-      "updated_at": "2026-03-30T09:00:00Z"
+      "attempts": 1,
+      "last_result": {
+        "evidence": [
+          "`query/src/test/java/com/smartbi/query/web/QueryWebIntegrationTest.java:121-148` already proves published trace JSON carries explicit `executionMode` values for both JDBC paths: `STATEMENT` without params and `PREPARED_STATEMENT` with params.",
+          "`manager/src/test/java/com/smartbi/engine/trace/TraceFlywayExecutionModeIntegrationTest.java:31-114` runs with `spring.flyway.enabled=true` and `spring.jpa.hibernate.ddl-auto=validate`, boots from the pre-V5 schema in `manager/src/test/resources/db/manager-v4-baseline.sql:1-50`, verifies Flyway adds `execution_mode` from `manager/src/main/resources/db/migration/V5__add_execution_mode_to_sql_execution_record.sql:1-2`, ingests both current and legacy payloads, and confirms `/api/v1/traces` exposes the stored value.",
+          "`benchmark/src/test/java/com/smartbi/benchmark/run/BenchmarkAsyncRunnerExecutionModeIntegrationTest.java:102-170` drives a real persisted run through `BenchmarkAsyncRunner`, using mixed-mode test-set items, and asserts both `jobSnapshotJson` and `evaluationJson` preserve `STATEMENT` plus `PREPARED_STATEMENT` counts instead of collapsing to one mode.",
+          "Canonical docs already describe the operator-visible backend contract and remain aligned: `docs/modules/manager.md:13-18` documents `/api/v1/traces.executionMode`, and `docs/modules/benchmark.md:29-34` documents execution-mode summaries in run diagnostics.",
+          "I re-ran the required validation commands and all exited 0 on 2026-03-30: `mvn -q -f query/pom.xml test`, `mvn -q -f manager/pom.xml test`, and `mvn -q -f benchmark/pom.xml test`. The manager suite emitted H2 shutdown warnings and the benchmark suite emitted existing Testcontainers Docker-detection warnings, but neither caused failures."
+        ],
+        "next_action": "Approve TRACE-MODE-001 and move it to the next workflow state.",
+        "severity": "low",
+        "summary": "Approved. The follow-up closes the prior verification gaps without widening scope: query trace publication is already covered, manager now proves the Flyway-plus-validate persistence path and `/api/v1/traces` exposure, benchmark now proves the real runner persistence path with mixed execution modes, and the required module test suites pass.",
+        "task_id": "TRACE-MODE-001",
+        "validation_status": "approved"
+      },
+      "updated_at": "2026-03-30T05:54:31Z"
     },
     {
       "id": "TRACE-PARAM-001",

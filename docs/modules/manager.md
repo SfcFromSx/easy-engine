@@ -15,6 +15,7 @@
 - The traces and patterns list views expose a route-backed SQL fingerprint filter.
 - Applying or clearing the fingerprint filter resets the current page to page 1 and reloads the existing `/traces` or `/patterns/top` data with the same `fingerprint` request parameter.
 - The acceleration list remains pagination-only because the current backend only supports `page` and `size`.
+- `/api/v1/traces` now exposes an explicit `executionMode` field from ingested trace payloads, backed by `sql_execution_record.execution_mode`, so operators do not need to inspect `rawPayload` to distinguish statement versus prepared execution.
 
 ## Run
 

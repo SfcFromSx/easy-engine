@@ -34,6 +34,7 @@ class TraceControllerTest {
         row.setParseStatus(ParseStatus.OK);
         row.setSqlFingerprint("fingerprint-1");
         row.setOriginalSql("SELECT count(*) FROM KYLIN_SALES");
+        row.setExecutionMode("PREPARED_STATEMENT");
 
         when(recordRepository.findAllBySqlFingerprintOrderByReceivedAtDesc(Mockito.eq("fingerprint-1"), any(PageRequest.class)))
                 .thenReturn(new PageImpl<>(Collections.singletonList(row), PageRequest.of(0, 20), 1));
@@ -44,6 +45,7 @@ class TraceControllerTest {
         assertEquals(1, page.getTotalElements());
         assertEquals("learn_kylin", page.getContent().get(0).getDatasourceName());
         assertEquals("SELECT count(*) FROM KYLIN_SALES", page.getContent().get(0).getOriginalSql());
+        assertEquals("PREPARED_STATEMENT", page.getContent().get(0).getExecutionMode());
         assertEquals(ParseStatus.OK, page.getContent().get(0).getParseStatus());
         assertEquals("SEED", page.getContent().get(0).getSourceFlag());
     }

@@ -30,7 +30,7 @@ class TraceIngestionTest {
 
     @Test
     void shouldIngestAndSummarizeTrace() {
-        String json = "{\"datasourceName\":\"default\",\"datasourceType\":\"h2\",\"originalSql\":\"SELECT 1\",\"success\":true,\"durationMs\":10}";
+        String json = "{\"datasourceName\":\"default\",\"datasourceType\":\"h2\",\"originalSql\":\"SELECT 1\",\"executionMode\":\"STATEMENT\",\"success\":true,\"durationMs\":10}";
         
         ingestionService.ingestJson(json);
 
@@ -38,6 +38,7 @@ class TraceIngestionTest {
         assertFalse(records.isEmpty());
         SqlExecutionRecord record = records.get(0);
         assertEquals("SELECT 1", record.getOriginalSql());
+        assertEquals("STATEMENT", record.getExecutionMode());
         assertEquals(ParseStatus.OK, record.getParseStatus());
         assertNotNull(record.getSqlFingerprint());
 

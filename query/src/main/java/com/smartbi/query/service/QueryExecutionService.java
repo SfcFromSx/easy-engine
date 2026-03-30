@@ -50,6 +50,7 @@ public class QueryExecutionService {
     public SqlResponseStubDto execute(PreparedQueryRequestDto request) {
         long startedAt = System.nanoTime();
         String originalSql = request == null ? null : request.getSql();
+        String executionMode = resolveExecutionMode(request == null ? null : request.getParams());
         SqlCommentParser.ParsedSql parsed = SqlCommentParser.safeParse(originalSql);
         RoutedSql routed = sqlRouteService.routeAndRewrite(originalSql, parsed);
         CachePolicy cachePolicy = queryCacheService.getCachePolicy();
@@ -68,7 +69,8 @@ public class QueryExecutionService {
             long durationMs = elapsedMs(startedAt);
             SqlResponseStubDto response = queryResultMapper.exceptionResponse(routed.datasourceName, durationMs,
                     "Only query SQL is supported by engine-query");
-            traceReportingService.report(routed, parsed, paramFingerprint, false, false, durationMs, response.getExceptionMessage());
+            traceReportingService.report(routed, parsed, paramFingerprint, executionMode, false, false, durationMs,
+                    response.getExceptionMessage());
             return response;
         }
 
@@ -78,7 +80,8 @@ public class QueryExecutionService {
             if (cached != null) {
                 cached.setStorageCacheUsed(true);
                 cached.setDuration(elapsedMs(startedAt));
-                traceReportingService.report(routed, parsed, paramFingerprint, true, true, cached.getDuration(), null);
+                traceReportingService.report(routed, parsed, paramFingerprint, executionMode, true, true,
+                        cached.getDuration(), null);
                 return cached;
             }
         }
@@ -88,12 +91,14 @@ public class QueryExecutionService {
             if (!parsed.metadata.noCache && parameterCacheable) {
                 queryCacheService.put(parsed, paramFingerprint, routed.datasourceName, response);
             }
-            traceReportingService.report(routed, parsed, paramFingerprint, true, false, response.getDuration(), null);
+            traceReportingService.report(routed, parsed, paramFingerprint, executionMode, true, false,
+                    response.getDuration(), null);
             return response;
         } catch (Exception ex) {
             long durationMs = elapsedMs(startedAt);
             SqlResponseStubDto response = queryResultMapper.exceptionResponse(routed.datasourceName, durationMs, ex.getMessage());
-            traceReportingService.report(routed, parsed, paramFingerprint, false, false, durationMs, ex.getMessage());
+            traceReportingService.report(routed, parsed, paramFingerprint, executionMode, false, false, durationMs,
+                    ex.getMessage());
             return response;
         }
     }
@@ -172,5 +177,9 @@ public class QueryExecutionService {
 
     private static long elapsedMs(long startedAt) {
         return (System.nanoTime() - startedAt) / 1_000_000L;
+    }
+
+    private static String resolveExecutionMode(List<StatementParameterDto> params) {
+        return params == null || params.isEmpty() ? "STATEMENT" : "PREPARED_STATEMENT";
     }
 }

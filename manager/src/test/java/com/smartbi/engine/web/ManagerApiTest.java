@@ -39,6 +39,7 @@ class ManagerApiTest {
         record.setReceivedAt(Instant.now());
         record.setParseStatus(com.smartbi.engine.domain.ParseStatus.OK);
         record.setSqlFingerprint("fp1");
+        record.setExecutionMode("STATEMENT");
         recordRepository.save(record);
 
         SqlPatternStats stats = new SqlPatternStats();
@@ -69,6 +70,7 @@ class ManagerApiTest {
     void shouldReturnTraces() throws Exception {
         mockMvc.perform(get("/api/v1/traces"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].originalSql").value("SELECT 1"));
+                .andExpect(jsonPath("$.content[0].originalSql").value("SELECT 1"))
+                .andExpect(jsonPath("$.content[0].executionMode").value("STATEMENT"));
     }
 }
