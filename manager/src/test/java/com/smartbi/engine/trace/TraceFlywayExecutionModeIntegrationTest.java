@@ -75,14 +75,19 @@ class TraceFlywayExecutionModeIntegrationTest {
     }
 
     @Test
-    void shouldApplyFlywayExecutionModeColumnAndExposeStoredValues() throws Exception {
-        Integer columnCount = jdbcTemplate.queryForObject(
+    void shouldApplyFlywayTraceColumnsAndExposeStoredValues() throws Exception {
+        Integer executionModeColumnCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
                         "WHERE LOWER(table_name) = 'sql_execution_record' AND LOWER(column_name) = 'execution_mode'",
                 Integer.class);
-        assertEquals(Integer.valueOf(1), columnCount);
+        Integer parameterPayloadColumnCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
+                        "WHERE LOWER(table_name) = 'sql_execution_record' AND LOWER(column_name) = 'parameter_payload'",
+                Integer.class);
+        assertEquals(Integer.valueOf(1), executionModeColumnCount);
+        assertEquals(Integer.valueOf(1), parameterPayloadColumnCount);
 
-        ingestionService.ingestJson("{\"datasourceName\":\"default\",\"datasourceType\":\"h2\",\"originalSql\":\"SELECT 1\",\"executionMode\":\"PREPARED_STATEMENT\",\"success\":true,\"durationMs\":12}");
+        ingestionService.ingestJson("{\"datasourceName\":\"default\",\"datasourceType\":\"h2\",\"originalSql\":\"SELECT 1\",\"parameterPayload\":\"[{\\\"position\\\":1,\\\"className\\\":\\\"java.lang.Integer\\\",\\\"value\\\":\\\"7\\\"}]\",\"executionMode\":\"PREPARED_STATEMENT\",\"success\":false,\"durationMs\":12}");
         ingestionService.ingestJson("{\"datasourceName\":\"default\",\"datasourceType\":\"h2\",\"originalSql\":\"SELECT 2\",\"success\":true,\"durationMs\":8}");
 
         SqlExecutionRecord prepared = recordRepository.findAll().stream()
@@ -95,6 +100,9 @@ class TraceFlywayExecutionModeIntegrationTest {
                 .orElseThrow(() -> new AssertionError("Legacy trace not persisted"));
 
         assertEquals("PREPARED_STATEMENT", prepared.getExecutionMode());
+        assertEquals("[{\"position\":1,\"className\":\"java.lang.Integer\",\"value\":\"7\"}]",
+                prepared.getParameterPayload());
+        assertNull(legacy.getParameterPayload());
         assertNull(legacy.getExecutionMode());
         assertNotNull(prepared.getSqlFingerprint());
         assertNotNull(legacy.getSqlFingerprint());
@@ -110,6 +118,9 @@ class TraceFlywayExecutionModeIntegrationTest {
         JsonNode legacyTrace = findTrace(content, "SELECT 2");
 
         assertEquals("PREPARED_STATEMENT", preparedTrace.path("executionMode").asText());
+        assertEquals("[{\"position\":1,\"className\":\"java.lang.Integer\",\"value\":\"7\"}]",
+                preparedTrace.path("parameterPayload").asText());
+        assertTrue(legacyTrace.path("parameterPayload").isMissingNode() || legacyTrace.path("parameterPayload").isNull());
         assertTrue(legacyTrace.path("executionMode").isMissingNode() || legacyTrace.path("executionMode").isNull());
     }
 

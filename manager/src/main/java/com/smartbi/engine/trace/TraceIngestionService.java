@@ -90,6 +90,7 @@ public class TraceIngestionService {
         row.setOriginalSql(text(root, "originalSql"));
         row.setCleanSql(text(root, "cleanSql"));
         row.setParamFingerprint(text(root, "paramFingerprint"));
+        row.setParameterPayload(text(root, "parameterPayload"));
         row.setExecutionMode(text(root, "executionMode"));
         if (root.has("success") && !root.get("success").isNull()) {
             row.setSuccess(root.get("success").asBoolean());

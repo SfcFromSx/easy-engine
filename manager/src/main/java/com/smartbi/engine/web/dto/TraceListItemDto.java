@@ -15,6 +15,7 @@ public class TraceListItemDto {
     private ParseStatus parseStatus;
     private String sqlFingerprint;
     private String originalSql;
+    private String parameterPayload;
     private String executionMode;
     private String parseError;
     private String sourceFlag;
@@ -89,6 +90,14 @@ public class TraceListItemDto {
 
     public void setOriginalSql(String originalSql) {
         this.originalSql = originalSql;
+    }
+
+    public String getParameterPayload() {
+        return parameterPayload;
+    }
+
+    public void setParameterPayload(String parameterPayload) {
+        this.parameterPayload = parameterPayload;
     }
 
     public String getExecutionMode() {

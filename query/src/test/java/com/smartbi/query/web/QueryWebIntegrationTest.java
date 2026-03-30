@@ -130,6 +130,8 @@ class QueryWebIntegrationTest {
 
         JsonNode trace = lastTrace();
         org.junit.jupiter.api.Assertions.assertEquals("STATEMENT", trace.path("executionMode").asText());
+        org.junit.jupiter.api.Assertions.assertTrue(trace.path("parameterPayload").isMissingNode()
+                || trace.path("parameterPayload").isNull());
     }
 
     @Test
@@ -145,6 +147,26 @@ class QueryWebIntegrationTest {
 
         JsonNode trace = lastTrace();
         org.junit.jupiter.api.Assertions.assertEquals("PREPARED_STATEMENT", trace.path("executionMode").asText());
+        org.junit.jupiter.api.Assertions.assertTrue(trace.path("parameterPayload").isMissingNode()
+                || trace.path("parameterPayload").isNull());
+    }
+
+    @Test
+    void shouldPublishReadableParameterPayloadForFailedPreparedExecution() throws Exception {
+        String body = "{\"sql\":\"SELECT NAME FROM SALES WHERE ID = ?\",\"project\":\"demo\",\"params\":[{\"className\":\"java.lang.Integer\",\"value\":\"not-a-number\"}]}";
+
+        mockMvc.perform(post("/kylin/api/query")
+                        .header("Authorization", authHeader())
+                        .contentType("application/json")
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isException").value(true));
+
+        JsonNode trace = lastTrace();
+        org.junit.jupiter.api.Assertions.assertEquals("PREPARED_STATEMENT", trace.path("executionMode").asText());
+        org.junit.jupiter.api.Assertions.assertEquals(
+                "[{\"position\":1,\"className\":\"java.lang.Integer\",\"value\":\"not-a-number\"}]",
+                trace.path("parameterPayload").asText());
     }
 
     @Test

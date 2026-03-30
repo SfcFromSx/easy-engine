@@ -16,6 +16,9 @@
 - Applying or clearing the fingerprint filter resets the current page to page 1 and reloads the existing `/traces` or `/patterns/top` data with the same `fingerprint` request parameter.
 - The acceleration list remains pagination-only because the current backend only supports `page` and `size`.
 - `/api/v1/traces` now exposes an explicit `executionMode` field from ingested trace payloads, backed by `sql_execution_record.execution_mode`, so operators do not need to inspect `rawPayload` to distinguish statement versus prepared execution.
+- `/api/v1/traces` also exposes `parameterPayload`, backed by `sql_execution_record.parameter_payload`, so failed prepared executions can be debugged from the normal API response instead of accidental stack-trace leakage.
+- Legacy traces that do not send `parameterPayload` still ingest successfully and surface `null` or a missing field for backward compatibility.
+- This task only stores the readable payload supplied by `query`; it does not change JDBC binding or reconstruct parameters from driver state.
 
 ## Run
 

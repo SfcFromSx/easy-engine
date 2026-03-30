@@ -32,6 +32,9 @@ public class SqlExecutionRecord {
     @Column(name = "param_fingerprint")
     private String paramFingerprint;
 
+    @Column(name = "parameter_payload", columnDefinition = "TEXT")
+    private String parameterPayload;
+
     @Column(name = "execution_mode", length = 32)
     private String executionMode;
 
@@ -117,6 +120,14 @@ public class SqlExecutionRecord {
 
     public void setParamFingerprint(String paramFingerprint) {
         this.paramFingerprint = paramFingerprint;
+    }
+
+    public String getParameterPayload() {
+        return parameterPayload;
+    }
+
+    public void setParameterPayload(String parameterPayload) {
+        this.parameterPayload = parameterPayload;
     }
 
     public String getExecutionMode() {

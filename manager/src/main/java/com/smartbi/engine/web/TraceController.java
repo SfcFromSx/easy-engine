@@ -44,6 +44,7 @@ public class TraceController {
         dto.setParseStatus(row.getParseStatus());
         dto.setSqlFingerprint(row.getSqlFingerprint());
         dto.setOriginalSql(row.getOriginalSql());
+        dto.setParameterPayload(row.getParameterPayload());
         dto.setExecutionMode(row.getExecutionMode());
         dto.setParseError(row.getParseError());
         dto.setSourceFlag(resolveSourceFlag(row));

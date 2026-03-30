@@ -210,7 +210,7 @@
       "module": "query",
       "type": "backend",
       "priority": 32,
-      "status": "todo",
+      "status": "done",
       "depends_on": [],
       "context_files": [
         "query/src/main/java/com/smartbi/query/service/TraceReportingService.java",
@@ -230,8 +230,21 @@
         "mvn -q -f manager/pom.xml test"
       ],
       "attempts": 0,
-      "last_result": null,
-      "updated_at": "2026-03-30T09:00:00Z"
+      "last_result": {
+        "evidence": [
+          "`query` now carries request `params` into trace reporting, and `TraceReportingService` emits `parameterPayload` only for failed `PREPARED_STATEMENT` traces using `StatementParameterDto` values, without changing JDBC binding (`query/src/main/java/com/smartbi/query/service/QueryExecutionService.java:50`, `query/src/main/java/com/smartbi/query/service/TraceReportingService.java:35`).",
+          "`manager` intentionally ingests, persists, and returns the new field: `parameterPayload` is read from trace JSON, stored on `SqlExecutionRecord`, exposed by `/api/v1/traces`, and backed by Flyway migration `V6` (`manager/src/main/java/com/smartbi/engine/trace/TraceIngestionService.java:87`, `manager/src/main/java/com/smartbi/engine/domain/SqlExecutionRecord.java:35`, `manager/src/main/java/com/smartbi/engine/web/TraceController.java:36`, `manager/src/main/resources/db/migration/V6__add_parameter_payload_to_sql_execution_record.sql:1`).",
+          "Coverage matches the acceptance criteria: query verifies failed prepared execution publishes a readable payload while successful statement/prepared traces leave it null or missing, and manager verifies storage/API exposure plus legacy-trace compatibility (`query/src/test/java/com/smartbi/query/web/QueryWebIntegrationTest.java:122`, `query/src/test/java/com/smartbi/query/web/QueryWebIntegrationTest.java:154`, `manager/src/test/java/com/smartbi/engine/trace/TraceFlywayExecutionModeIntegrationTest.java:78`).",
+          "Canonical module docs were updated to document the contract and explicitly state that JDBC binding/driver code is unchanged (`docs/modules/query.md:11`, `docs/modules/manager.md:18`).",
+          "I reran the required validation commands successfully: `mvn -q -f query/pom.xml test` exited 0 and `mvn -q -f manager/pom.xml test` exited 0; the manager run still showed the known H2 shutdown warnings after completion, but not a test failure."
+        ],
+        "next_action": "Approve TRACE-PARAM-001 and move it to the next review/commit step.",
+        "severity": "low",
+        "summary": "Approved. The implementation adds an intentional end-to-end `parameterPayload` field for failed prepared executions, preserves backward compatibility for legacy traces, documents the scope correctly, and passes the required query and manager test suites.",
+        "task_id": "TRACE-PARAM-001",
+        "validation_status": "approved"
+      },
+      "updated_at": "2026-03-30T06:08:33Z"
     },
     {
       "id": "BENCH-REG-001",

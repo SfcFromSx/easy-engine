@@ -9,6 +9,13 @@
 - Align routing, caching, and trace semantics with `kylin-jdbc-cache`.
 - Prefer preserved routing metadata such as `YH_TARGET_ENGINE` over driver-consumed engine hints.
 - Publish trace payloads with explicit `executionMode` values so downstream operators can distinguish `STATEMENT` from `PREPARED_STATEMENT` without SQL-text inspection.
+- Publish a dedicated `parameterPayload` field for failed prepared executions, derived from the submitted `params` DTOs as readable JSON text so operators can debug bindings without stack-trace scraping or `rawPayload` inspection.
+
+## Trace Contract Notes
+
+- `parameterPayload` is only emitted for failed `PREPARED_STATEMENT` traces in this task; statement executions and successful prepared executions keep it `null` or omit it.
+- The payload is sourced from `PreparedQueryRequestDto.getParams()` / `StatementParameterDto` values only.
+- This task does not change JDBC binding, SQL interpolation, or driver code.
 
 ## Routing Notes
 

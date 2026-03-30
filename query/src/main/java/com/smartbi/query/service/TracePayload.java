@@ -11,6 +11,7 @@ public class TracePayload {
     public final String originalSql;
     public final String cleanSql;
     public final String paramFingerprint;
+    public final String parameterPayload;
     public final String executionMode;
     public final boolean success;
     public final Boolean cacheHit;
@@ -23,6 +24,7 @@ public class TracePayload {
                         String originalSql,
                         String cleanSql,
                         String paramFingerprint,
+                        String parameterPayload,
                         String executionMode,
                         boolean success,
                         Boolean cacheHit,
@@ -34,6 +36,7 @@ public class TracePayload {
         this.originalSql = originalSql;
         this.cleanSql = cleanSql;
         this.paramFingerprint = paramFingerprint;
+        this.parameterPayload = parameterPayload;
         this.executionMode = executionMode;
         this.success = success;
         this.cacheHit = cacheHit;

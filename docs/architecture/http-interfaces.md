@@ -23,7 +23,7 @@ Base service: `manager`
 | `POST` | `/api/v1/acceleration-tables` | `Implemented` | Create manual acceleration table definition | Saves draft metadata. |
 | `POST` | `/api/v1/acceleration-tables/from-pattern` | `Implemented` | Create draft from pattern stats | Generates DDL and refresh SQL. |
 | `PATCH` | `/api/v1/acceleration-tables/{id}/status` | `Implemented` | Change acceleration status | Activation executes DDL and refresh SQL. |
-| `GET` | `/api/v1/traces` | `Implemented` | Page trace history | Supports pagination and fingerprint filters. |
+| `GET` | `/api/v1/traces` | `Implemented` | Page trace history | Supports pagination and fingerprint filters; returns `executionMode` and optional `parameterPayload` for failed prepared traces. |
 | `POST` | `/api/v1/jdbc/sql-rewrite` | `Implemented` | Ask manager for JDBC rewrite advice | Does not execute SQL. |
 | `GET` | `/api/v1/acceleration-tables/{id}` | `Planned` | Table detail | Not exposed today. |
 | `PUT` | `/api/v1/acceleration-tables/{id}` | `Planned` | Update acceleration definition | Not exposed today. |
