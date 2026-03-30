@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import os
+import signal
 import time
 import shutil
 import subprocess
@@ -109,6 +110,7 @@ class Harness:
         self.history_dir = self.agent_dir / "history"
         self.runtime_dir = self.agent_dir / "runtime"
         self.runner_logs_dir = self.runtime_dir / "runner-logs"
+        self.loop_process_path = self.runtime_dir / "loop-process.json"
         self.lock_path = self.agent_dir / "lock.json"
         self.config_path = self.agent_dir / "config.json"
         self.pause_path = self.agent_dir / "PAUSE"
@@ -333,6 +335,20 @@ class Harness:
     def write_lock_state(self, payload: Dict[str, Any]) -> None:
         write_json(self.lock_path, payload)
 
+    def read_loop_process_state(self) -> Optional[Dict[str, Any]]:
+        if not self.loop_process_path.exists():
+            return None
+        payload = read_json(self.loop_process_path)
+        if not isinstance(payload, dict):
+            raise HarnessError(".agent/runtime/loop-process.json must be an object")
+        return payload
+
+    def write_loop_process_state(self, payload: Dict[str, Any]) -> None:
+        write_json(self.loop_process_path, payload)
+
+    def clear_loop_process_state(self) -> None:
+        self.loop_process_path.unlink(missing_ok=True)
+
     def acquire_lock(self, runner: str, task_id: Optional[str]) -> None:
         state = self.read_lock_state()
         if state.get("locked"):
@@ -357,6 +373,15 @@ class Harness:
         if not isinstance(value, int) or value <= 0:
             raise HarnessError("lock_poll_seconds must be a positive integer")
         return value
+
+    def pid_is_alive(self, pid: int) -> bool:
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return False
+        except PermissionError:
+            return True
+        return True
 
     def other_harness_processes(self) -> List[Dict[str, Any]]:
         completed = run_command(["ps", "-eo", "pid=,args="], self.root)
@@ -383,6 +408,101 @@ class Harness:
         if state.get("locked"):
             return []
         return self.other_harness_processes()
+
+    def stale_lock_without_process(self) -> bool:
+        state = self.read_lock_state()
+        if not state.get("locked"):
+            return False
+        return not self.other_harness_processes()
+
+    def clear_stale_lock_if_safe(self) -> bool:
+        if self.stale_lock_without_process():
+            self.release_lock()
+            self.log_event({"role": "lock-recovery", "status": "released_stale_lock"})
+            return True
+        return False
+
+    def managed_loop_status(self) -> Dict[str, Any]:
+        process_state = self.read_loop_process_state()
+        lock_state = self.read_lock_state()
+        active = False
+        if process_state and isinstance(process_state.get("pid"), int):
+            active = self.pid_is_alive(int(process_state["pid"]))
+        if process_state and not active:
+            process_state = {**process_state, "active": False}
+        return {
+            "active": active,
+            "process": process_state,
+            "lock": lock_state,
+            "stray_processes": self.stray_harness_processes(lock_state),
+        }
+
+    def start_managed_run(
+        self,
+        runner: str,
+        max_iterations: Optional[int],
+        *,
+        live_runner_check: bool = False,
+    ) -> Dict[str, Any]:
+        process_state = self.read_loop_process_state()
+        if process_state and isinstance(process_state.get("pid"), int) and self.pid_is_alive(int(process_state["pid"])):
+            raise HarnessError(f"managed loop is already running with pid {process_state['pid']}")
+        if process_state and isinstance(process_state.get("pid"), int) and not self.pid_is_alive(int(process_state["pid"])):
+            self.clear_loop_process_state()
+        self.clear_stale_lock_if_safe()
+        doctor_report = self.doctor(live_runner_check=live_runner_check)
+        if not doctor_report.ok:
+            raise HarnessError("cannot start managed loop because doctor failed")
+        self.runtime_dir.mkdir(parents=True, exist_ok=True)
+        log_path = self.runtime_dir / f"loop-{runner}.log"
+        cmd = [sys.executable, str(self.root / "scripts" / "agent_loop.py"), "run", "--runner", runner]
+        if max_iterations is not None:
+            cmd.extend(["--max-iterations", str(max_iterations)])
+        if live_runner_check:
+            cmd.append("--live-runner-check")
+        log_handle = log_path.open("a", encoding="utf-8")
+        process = subprocess.Popen(  # noqa: S603
+            cmd,
+            cwd=str(self.root),
+            stdin=subprocess.DEVNULL,
+            stdout=log_handle,
+            stderr=subprocess.STDOUT,
+            start_new_session=True,
+            text=True,
+        )
+        log_handle.close()
+        payload = {
+            "pid": process.pid,
+            "runner": runner,
+            "started_at": utc_now(),
+            "cwd": str(self.root),
+            "log_path": str(log_path),
+            "max_iterations": max_iterations,
+            "live_runner_check": live_runner_check,
+        }
+        self.write_loop_process_state(payload)
+        self.log_event({"role": "loop-start", "runner": runner, "pid": process.pid, "log_path": str(log_path)})
+        return payload
+
+    def stop_managed_run(self) -> Dict[str, Any]:
+        process_state = self.read_loop_process_state()
+        if not process_state or not isinstance(process_state.get("pid"), int):
+            released = self.clear_stale_lock_if_safe()
+            return {"stopped": False, "released_stale_lock": released}
+        pid = int(process_state["pid"])
+        was_alive = self.pid_is_alive(pid)
+        if was_alive:
+            os.kill(pid, signal.SIGTERM)
+            for _ in range(10):
+                if not self.pid_is_alive(pid):
+                    break
+                time.sleep(1)
+            if self.pid_is_alive(pid):
+                os.kill(pid, signal.SIGKILL)
+        self.clear_loop_process_state()
+        released = self.clear_stale_lock_if_safe()
+        self.log_event({"role": "loop-stop", "pid": pid, "was_alive": was_alive, "released_stale_lock": released})
+        return {"stopped": was_alive, "released_stale_lock": released, "pid": pid}
 
     def select_next_task(self, tasks_payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         tasks = tasks_payload["tasks"]
@@ -1165,6 +1285,14 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--max-iterations", type=int, default=None)
     run.add_argument("--live-runner-check", action="store_true", help="invoke the configured runners during doctor")
 
+    start = subparsers.add_parser("start", help="launch a detached managed run loop")
+    start.add_argument("--runner", choices=("codex", "claude"), required=True)
+    start.add_argument("--max-iterations", type=int, default=None)
+    start.add_argument("--live-runner-check", action="store_true", help="invoke the configured runners during doctor")
+
+    subparsers.add_parser("status", help="show detached loop process and lock status")
+    subparsers.add_parser("stop", help="stop the detached managed run loop")
+
     sync_doc_cn = subparsers.add_parser("sync-doc-cn", help="refresh Chinese mirror metadata")
     sync_doc_cn.add_argument("--check", action="store_true", help="fail if mirror metadata is stale")
 
@@ -1186,6 +1314,20 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         return 0 if outcome["status"] == "done" else 1
     if args.command == "run":
         return harness.run(args.runner, args.max_iterations, live_runner_check=args.live_runner_check)
+    if args.command == "start":
+        payload = harness.start_managed_run(
+            args.runner,
+            args.max_iterations,
+            live_runner_check=args.live_runner_check,
+        )
+        print(json.dumps(payload, indent=2, ensure_ascii=True))
+        return 0
+    if args.command == "status":
+        print(json.dumps(harness.managed_loop_status(), indent=2, ensure_ascii=True))
+        return 0
+    if args.command == "stop":
+        print(json.dumps(harness.stop_managed_run(), indent=2, ensure_ascii=True))
+        return 0
     if args.command == "sync-doc-cn":
         return harness.sync_doc_cn(check=args.check)
     if args.command == "smoke-runner":

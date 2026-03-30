@@ -597,6 +597,65 @@ class AgentLoopTests(unittest.TestCase):
         step_mock.assert_not_called()
         self.assertIn('"reason": "stale_process"', stdout.getvalue())
 
+    def test_start_managed_run_clears_stale_lock_and_writes_process_state(self) -> None:
+        self.harness.write_lock_state(
+            {"locked": True, "owner": "x", "started_at": "2026-03-30T00:00:00Z", "runner": "codex", "task_id": "C"}
+        )
+        process = mock.Mock(pid=999)
+        with mock.patch.object(self.harness, "doctor", return_value=mock.Mock(ok=True, issues=[], warnings=[])), \
+            mock.patch.object(self.harness, "other_harness_processes", return_value=[]), \
+            mock.patch.object(self.harness, "log_event"), \
+            mock.patch("scripts.agent_loop.subprocess.Popen", return_value=process):
+            payload = self.harness.start_managed_run("codex", None)
+        self.assertEqual(999, payload["pid"])
+        self.assertFalse(self.harness.read_lock_state()["locked"])
+        self.assertEqual(999, self.harness.read_loop_process_state()["pid"])
+
+    def test_managed_loop_status_reports_process_and_lock(self) -> None:
+        self.harness.write_loop_process_state(
+            {
+                "pid": 1234,
+                "runner": "codex",
+                "started_at": "2026-03-30T00:00:00Z",
+                "cwd": str(self.root),
+                "log_path": str(self.root / ".agent" / "runtime" / "loop-codex.log"),
+                "max_iterations": None,
+                "live_runner_check": False,
+            }
+        )
+        with mock.patch.object(self.harness, "pid_is_alive", return_value=True), \
+            mock.patch.object(self.harness, "stray_harness_processes", return_value=[]):
+            status = self.harness.managed_loop_status()
+        self.assertTrue(status["active"])
+        self.assertEqual(1234, status["process"]["pid"])
+
+    def test_stop_managed_run_terminates_process_and_clears_state(self) -> None:
+        self.harness.write_loop_process_state(
+            {
+                "pid": 1234,
+                "runner": "codex",
+                "started_at": "2026-03-30T00:00:00Z",
+                "cwd": str(self.root),
+                "log_path": str(self.root / ".agent" / "runtime" / "loop-codex.log"),
+                "max_iterations": None,
+                "live_runner_check": False,
+            }
+        )
+        self.harness.write_lock_state(
+            {"locked": True, "owner": "x", "started_at": "2026-03-30T00:00:00Z", "runner": "codex", "task_id": "C"}
+        )
+        alive_states = iter([True, False, False])
+        with mock.patch.object(self.harness, "pid_is_alive", side_effect=lambda pid: next(alive_states)), \
+            mock.patch.object(self.harness, "other_harness_processes", return_value=[]), \
+            mock.patch.object(self.harness, "log_event"), \
+            mock.patch("scripts.agent_loop.os.kill") as kill_mock:
+            result = self.harness.stop_managed_run()
+        self.assertTrue(result["stopped"])
+        self.assertTrue(result["released_stale_lock"])
+        self.assertFalse((self.root / ".agent" / "runtime" / "loop-process.json").exists())
+        self.assertFalse(self.harness.read_lock_state()["locked"])
+        kill_mock.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()

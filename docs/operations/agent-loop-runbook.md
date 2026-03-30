@@ -8,6 +8,9 @@ The autonomous loop is driven by [scripts/agent_loop.py](/Users/sfc/Documents/pr
 python3 scripts/agent_loop.py doctor
 python3 scripts/agent_loop.py smoke-runner --runner codex
 python3 scripts/agent_loop.py step --runner codex
+python3 scripts/agent_loop.py start --runner codex
+python3 scripts/agent_loop.py status
+python3 scripts/agent_loop.py stop
 python3 scripts/agent_loop.py run --runner codex
 python3 scripts/agent_loop.py run --runner codex --max-iterations 8
 python3 scripts/agent_loop.py run --runner claude --max-iterations 8
@@ -16,7 +19,9 @@ python3 scripts/agent_loop.py sync-doc-cn
 
 ## Loop Shape
 
-`step` is the single-task primitive. `run` is the default long-lived mode and keeps draining the next eligible `todo` task until the queue is empty, `.agent/PAUSE` exists, or a hard failure occurs. An explicit `--max-iterations` value acts as a temporary cap for debugging.
+`step` is the single-task primitive. `run` is the foreground loop for debugging. `start` is the supported long-lived mode for unattended work: it launches `run` as a detached managed process, writes `.agent/runtime/loop-process.json`, and appends output to `.agent/runtime/loop-<runner>.log`. Use `status` and `stop` to inspect or control that managed process.
+
+The earlier auto-drive stoppage was traced to process supervision rather than queue selection: running `run` inside a transient interactive session is not reliable for unattended execution. Use `start` for production autonomous runs.
 
 Each successful polling cycle follows:
 
@@ -50,6 +55,7 @@ If another valid loop currently holds `.agent/lock.json`, `run` waits and polls 
 - `.agent/config.json`: runtime policy
 - `.agent/lock.json`: active-loop lock
 - `.agent/history/*.jsonl`: iteration logs
+- `.agent/runtime/loop-process.json`: detached loop PID and log metadata
 - `.agent/runtime/quarantine/`: parked patch bundles and manifests for interrupted mixed task work
 
 ## Safety Notes
@@ -68,4 +74,5 @@ If another valid loop currently holds `.agent/lock.json`, `run` waits and polls 
 - When the todo queue drops to the configured warning threshold, the harness emits a warning with the remaining task IDs so humans can decide whether to add more work.
 - When a mixed task worktree must be parked before harness maintenance, capture the patches and manifest under `.agent/runtime/quarantine/` before restoring the repo to a clean `HEAD`.
 - `doctor` and `run` now treat an unlocked `.agent/lock.json` plus another live `agent_loop.py` process as a recovery error. Resolve or quarantine that stale process state before starting a new loop.
-- Prefer `smoke-runner` and `step` for debugging one stage in isolation. For normal autonomous work, `run --runner codex` is the supported default.
+- `start` also recovers a stale lock automatically when `.agent/lock.json` is still marked locked but no harness process remains alive.
+- Prefer `smoke-runner` and `step` for debugging one stage in isolation. For normal autonomous work, `start --runner codex` is the supported default.
