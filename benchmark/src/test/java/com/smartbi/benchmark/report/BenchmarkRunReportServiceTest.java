@@ -13,6 +13,9 @@ import org.mockito.Mockito;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -32,7 +35,8 @@ class BenchmarkRunReportServiceTest {
         JsonNode snapshot = JSON.readTree(service.buildJobSnapshotJson(
                 job, 1, null, Collections.singletonList(SqlExecutionMode.STATEMENT)));
         JsonNode evaluation = JSON.readTree(service.buildCompletedEvaluation(
-                job, run, 1, Collections.singletonList(SqlExecutionMode.STATEMENT)));
+                job, run, 1, Collections.singletonList(SqlExecutionMode.STATEMENT),
+                Collections.<Map<String, Object>>emptyList()));
 
         assertEquals("STATEMENT",
                 snapshot.path("executionModeSummary").path("primary").asText());
@@ -54,6 +58,35 @@ class BenchmarkRunReportServiceTest {
         assertEquals(2, summary.path("values").size());
         assertEquals(1, summary.path("sourceCountByMode").path("STATEMENT").asInt());
         assertEquals(1, summary.path("sourceCountByMode").path("PREPARED_STATEMENT").asInt());
+    }
+
+    @Test
+    void shouldIncludeGroupedFailureBreakdownInEvaluation() throws Exception {
+        BenchmarkJob job = job("Failures");
+        BenchmarkRun run = completedRun();
+        run.setStatus(RunStatus.FAILED);
+        run.setSuccessCount(0L);
+        run.setErrorCount(4L);
+        run.setErrorSample("presto route failed");
+
+        JsonNode evaluation = JSON.readTree(service.buildCompletedEvaluation(
+                job,
+                run,
+                2,
+                Arrays.asList(SqlExecutionMode.STATEMENT, SqlExecutionMode.PREPARED_STATEMENT),
+                Arrays.asList(
+                        failureGroup("presto_stmt_fail", "STATEMENT", "presto_local", 2, "presto route failed"),
+                        failureGroup("prepared_fail", "PREPARED_STATEMENT", "default", 2, "prepared failed")
+                )));
+
+        JsonNode breakdown = evaluation.path("diagnostics").path("failureBreakdown");
+        assertEquals(4, breakdown.path("totalFailures").asInt());
+        assertEquals(2, breakdown.path("groupCount").asInt());
+        assertEquals("presto_local", findGroup(breakdown.path("groups"), "presto_stmt_fail").path("routedTarget").asText());
+        assertEquals("PREPARED_STATEMENT",
+                findGroup(breakdown.path("groups"), "prepared_fail").path("executionMode").asText());
+        assertTrue(evaluation.path("summary").asText().contains("失败诊断"));
+        assertEquals(2, evaluation.path("issues").size());
     }
 
     private static BenchmarkJob job(String name) {
@@ -78,5 +111,29 @@ class BenchmarkRunReportServiceTest {
         run.setP95Ms(5.0);
         run.setP99Ms(5.0);
         return run;
+    }
+
+    private static Map<String, Object> failureGroup(String label,
+                                                    String executionMode,
+                                                    String routedTarget,
+                                                    int failureCount,
+                                                    String sampleMessage) {
+        Map<String, Object> group = new LinkedHashMap<>();
+        group.put("groupKey", label + "|" + executionMode + "|" + routedTarget);
+        group.put("sqlLabel", label);
+        group.put("executionMode", executionMode);
+        group.put("routedTarget", routedTarget);
+        group.put("failureCount", failureCount);
+        group.put("sampleMessage", sampleMessage);
+        return group;
+    }
+
+    private static JsonNode findGroup(JsonNode groups, String label) {
+        for (JsonNode group : groups) {
+            if (label.equals(group.path("sqlLabel").asText())) {
+                return group;
+            }
+        }
+        throw new AssertionError("Failure group missing: " + label);
     }
 }

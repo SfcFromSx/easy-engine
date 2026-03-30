@@ -59,7 +59,7 @@ This file summarizes the current functional surface of the Easy Engine services.
 | Start benchmark run | `Implemented` | Async run creation and execution are supported. |
 | Run progress polling | `Implemented` | Active run and per-run progress are exposed. |
 | Run completion metrics | `Implemented` | Latency and success/error metrics are persisted. |
-| Structured evaluation report | `Implemented` | `evaluationJson` and comparison context are produced. |
+| Structured evaluation report | `Implemented` | `evaluationJson` and comparison context are produced, including grouped failure diagnostics by SQL label, execution mode, and routed target. |
 | Previous-run comparison delta | `Implemented` | Context endpoint compares with prior completed runs. |
 | Stale running-run recovery on startup | `Implemented` | Orphan `RUNNING` rows are reconciled to `FAILED`. |
 | PreparedStatement benchmark execution | `Implemented` | Templates and test sets can drive prepared execution. |

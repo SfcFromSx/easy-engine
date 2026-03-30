@@ -252,7 +252,7 @@
       "module": "benchmark",
       "type": "diagnostics",
       "priority": 33,
-      "status": "todo",
+      "status": "done",
       "depends_on": [],
       "context_files": [
         "benchmark/src/main/java/com/smartbi/benchmark/report/BenchmarkRunReportService.java",
@@ -270,8 +270,21 @@
         "npm --prefix benchmark/frontend run build"
       ],
       "attempts": 0,
-      "last_result": null,
-      "updated_at": "2026-03-30T09:00:00Z"
+      "last_result": {
+        "evidence": [
+          "`BenchmarkAsyncRunner` now records failures per `sqlLabel|executionMode|routedTarget` during execution and passes the grouped breakdown into final run evaluation persistence, so mixed routed/prepared failures are no longer collapsed to `errorSample` alone (`benchmark/src/main/java/com/smartbi/benchmark/run/BenchmarkAsyncRunner.java:149`, `benchmark/src/main/java/com/smartbi/benchmark/run/BenchmarkAsyncRunner.java:198`, `benchmark/src/main/java/com/smartbi/benchmark/run/BenchmarkAsyncRunner.java:336`).",
+          "`BenchmarkRunReportService` persists `diagnostics.failureBreakdown` with total failures, group count, per-group failure counts, routed target, execution mode, and sample message, and `RunController` exposes the parsed breakdown from `/api/v1/runs/{id}/context` (`benchmark/src/main/java/com/smartbi/benchmark/report/BenchmarkRunReportService.java:98`, `benchmark/src/main/java/com/smartbi/benchmark/report/BenchmarkRunReportService.java:151`, `benchmark/src/main/java/com/smartbi/benchmark/report/BenchmarkRunReportService.java:186`, `benchmark/src/main/java/com/smartbi/benchmark/web/RunController.java:45`).",
+          "The operator UI now renders a first-class failure diagnostics table in the run drawer instead of forcing users to inspect raw JSON (`benchmark/frontend/src/views/Runs.vue:105`, `benchmark/frontend/src/views/Runs.vue:222`).",
+          "Focused tests cover grouped evaluation shaping, routed Presto plus prepared failure retention, and context endpoint exposure (`benchmark/src/test/java/com/smartbi/benchmark/report/BenchmarkRunReportServiceTest.java:63`, `benchmark/src/test/java/com/smartbi/benchmark/run/BenchmarkAsyncRunnerExecutionModeIntegrationTest.java:173`, `benchmark/src/test/java/com/smartbi/benchmark/web/RunControllerContextTest.java:51`).",
+          "Validation was rerun successfully: `mvn -q -f benchmark/pom.xml test` exited 0 (with existing Testcontainers/Docker warnings only) and `npm --prefix benchmark/frontend run build` exited 0."
+        ],
+        "next_action": "Approve the task and, during commit prep, ensure the regenerated `benchmark/frontend/dist` asset changes are included intentionally alongside the source changes.",
+        "severity": "low",
+        "summary": "Approved. The benchmark module now persists and surfaces grouped failure diagnostics for routed and prepared execution failures, the UI exposes them directly, docs were updated, and the required benchmark/frontend validations passed.",
+        "task_id": "BENCH-REG-001",
+        "validation_status": "approved"
+      },
+      "updated_at": "2026-03-30T06:22:34Z"
     },
     {
       "id": "BENCH-UX-001",

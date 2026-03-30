@@ -87,7 +87,7 @@ Base service: `benchmark`
 |---|---|---|---|---|
 | `POST` | `/api/v1/runs/start` | `Implemented` | Start a benchmark run | Validates job sources before launch. |
 | `GET` | `/api/v1/runs/{id}` | `Implemented` | Get run detail | Includes metrics and progress fields. |
-| `GET` | `/api/v1/runs/{id}/context` | `Implemented` | Get run detail plus comparison context | Includes previous-run delta payload. |
+| `GET` | `/api/v1/runs/{id}/context` | `Implemented` | Get run detail plus comparison context | Includes previous-run delta payload and parsed failure breakdown from `evaluationJson`. |
 | `GET` | `/api/v1/runs` | `Implemented` | List runs for a job | Paged by `jobId`. |
 | `GET` | `/api/v1/runs/active` | `Implemented` | Return current active run if any | Stale rows are reconciled on startup. |
 | `POST` | `/api/v1/runs/{id}/cancel` | `Planned` | Cancel an active run | Not exposed today. |

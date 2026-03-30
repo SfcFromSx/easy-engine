@@ -32,6 +32,7 @@ benchmark -> kylin-jdbc-cache -> query -> Kylin or Presto
 - Templates keep their existing request-backed keyword search and pagination behavior.
 - Runs keep job selection as the primary request-backed filter; changing the selected job resets pagination to page 1 before reloading `/runs`.
 - Benchmark run diagnostics now record an explicit execution-mode summary in `jobSnapshotJson` and `evaluationJson`, including mixed-mode source sets when a run combines `STATEMENT` and `PREPARED_STATEMENT` SQL sources.
+- Failed or partially failed benchmark runs now persist a grouped `failureBreakdown` in `evaluationJson` and `/api/v1/runs/{id}/context`, with SQL label, execution mode, routed target, failure count, and a bounded sample message for each diagnostic group.
 
 ## Run
 

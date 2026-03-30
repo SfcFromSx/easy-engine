@@ -169,4 +169,85 @@ class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
         assertEquals(1, evaluationSummary.path("sourceCountByMode").path("PREPARED_STATEMENT").asInt());
         assertFalse(evaluation.path("issues").elements().hasNext());
     }
+
+    @Test
+    void shouldRetainSeparateFailureGroupsForRoutedAndPreparedFailures() throws Exception {
+        BenchmarkDataSource dataSource = new BenchmarkDataSource();
+        dataSource.setName("runner-ds");
+        dataSource.setDriverClass("org.h2.Driver");
+        dataSource.setJdbcUrl(TARGET_JDBC_URL);
+        dataSource.setJdbcUser("sa");
+        dataSource.setJdbcPassword("");
+        dataSource = dataSourceRepository.save(dataSource);
+
+        BenchmarkTestSet testSet = new BenchmarkTestSet();
+        testSet.setName("failure-groups");
+        testSet = testSetRepository.save(testSet);
+
+        BenchmarkTestSetItem routedStatement = new BenchmarkTestSetItem();
+        routedStatement.setTestSetId(testSet.getId());
+        routedStatement.setSortOrder(1);
+        routedStatement.setLabel("presto_stmt_fail");
+        routedStatement.setSqlText("/* YH_TARGET_ENGINE=presto_local */ SELECT NAME FROM MISSING_PRESTO");
+        routedStatement.setExecutionMode("STATEMENT");
+        testSetItemRepository.save(routedStatement);
+
+        BenchmarkTestSetItem preparedFailure = new BenchmarkTestSetItem();
+        preparedFailure.setTestSetId(testSet.getId());
+        preparedFailure.setSortOrder(2);
+        preparedFailure.setLabel("prepared_fail");
+        preparedFailure.setSqlText("SELECT NAME FROM MISSING_PREPARED WHERE ID = ?");
+        preparedFailure.setExecutionMode("PREPARED_STATEMENT");
+        preparedFailure.setParamJson("[{\"type\":\"INTEGER\",\"value\":1}]");
+        testSetItemRepository.save(preparedFailure);
+
+        BenchmarkJob job = new BenchmarkJob();
+        job.setName("failure-group-job");
+        job.setDataSourceId(dataSource.getId());
+        job.setConcurrentThreads(1);
+        job.setRounds(4);
+        job.setStrategy(BenchmarkStrategy.ROUND_ROBIN);
+        job.setTestSetId(testSet.getId());
+        job = jobRepository.save(job);
+
+        BenchmarkRun run = new BenchmarkRun();
+        run.setJobId(job.getId());
+        run.setStatus(RunStatus.RUNNING);
+        run = runRepository.save(run);
+
+        runner.executeRun(run.getId());
+
+        BenchmarkRun persisted = runRepository.findById(run.getId())
+                .orElseThrow(() -> new AssertionError("Benchmark run not persisted"));
+        assertEquals(RunStatus.FAILED, persisted.getStatus());
+        assertEquals(Long.valueOf(4L), persisted.getTotalQueries());
+        assertEquals(Long.valueOf(0L), persisted.getSuccessCount());
+        assertEquals(Long.valueOf(4L), persisted.getErrorCount());
+
+        JsonNode evaluation = JSON.readTree(persisted.getEvaluationJson());
+        JsonNode breakdown = evaluation.path("diagnostics").path("failureBreakdown");
+        assertEquals(4, breakdown.path("totalFailures").asInt());
+        assertEquals(2, breakdown.path("groupCount").asInt());
+
+        JsonNode prestoGroup = findGroup(breakdown.path("groups"), "presto_stmt_fail");
+        JsonNode preparedGroup = findGroup(breakdown.path("groups"), "prepared_fail");
+        assertEquals("STATEMENT", prestoGroup.path("executionMode").asText());
+        assertEquals("presto_local", prestoGroup.path("routedTarget").asText());
+        assertEquals(2, prestoGroup.path("failureCount").asInt());
+
+        assertEquals("PREPARED_STATEMENT", preparedGroup.path("executionMode").asText());
+        assertEquals("default", preparedGroup.path("routedTarget").asText());
+        assertEquals(2, preparedGroup.path("failureCount").asInt());
+        assertTrue(evaluation.path("summary").asText().contains("失败诊断"));
+        assertEquals(2, evaluation.path("issues").size());
+    }
+
+    private static JsonNode findGroup(JsonNode groups, String label) {
+        for (JsonNode group : groups) {
+            if (label.equals(group.path("sqlLabel").asText())) {
+                return group;
+            }
+        }
+        throw new AssertionError("Failure group missing: " + label);
+    }
 }

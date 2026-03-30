@@ -47,6 +47,7 @@ public class RunController {
         BenchmarkRun run = runRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("not found"));
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("run", run);
+        body.put("failureBreakdown", reportService.extractFailureBreakdown(run.getEvaluationJson()));
         BenchmarkRun previous = runRepository
                 .findFirstByJobIdAndStartedAtLessThanOrderByStartedAtDesc(run.getJobId(), run.getStartedAt())
                 .orElse(null);

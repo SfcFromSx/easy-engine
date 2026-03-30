@@ -1,5 +1,7 @@
 package com.smartbi.benchmark.report;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -75,7 +77,8 @@ public class BenchmarkRunReportService {
     }
 
     public String buildFailureEvaluation(String phase, String message, BenchmarkJob job,
-                                         List<SqlExecutionMode> executionModes) {
+                                         List<SqlExecutionMode> executionModes,
+                                         List<Map<String, Object>> failureGroups) {
         Map<String, Object> root = baseEnvelope(job);
         root.put("verdict", "FAIL");
         root.put("summary", "压测未正常完成：" + truncate(message, 200));
@@ -88,16 +91,21 @@ public class BenchmarkRunReportService {
         root.put("issues", issues);
         root.put("jdbcComparisonHints", jdbcHintsPlaceholder());
         root.put("meta", Collections.singletonMap("executionModeSummary", summarizeExecutionModes(executionModes)));
+        root.put("diagnostics", buildDiagnostics(failureGroups, message, 1));
         return toJson(root);
     }
 
     public String buildCompletedEvaluation(BenchmarkJob job, BenchmarkRun run, int sqlSourceCount,
-                                           List<SqlExecutionMode> executionModes) {
+                                           List<SqlExecutionMode> executionModes,
+                                           List<Map<String, Object>> failureGroups) {
         Map<String, Object> root = baseEnvelope(job);
         long total = nullToZero(run.getTotalQueries());
         long ok = nullToZero(run.getSuccessCount());
         long err = nullToZero(run.getErrorCount());
         double successRate = total > 0 ? (double) ok / (double) total : 0D;
+        Map<String, Object> diagnostics = buildDiagnostics(failureGroups, run.getErrorSample(), err);
+        Map<String, Object> failureBreakdown = diagnosticsMap(diagnostics);
+        int failureGroupCount = intValue(failureBreakdown.get("groupCount"));
 
         String verdict;
         String summary;
@@ -106,10 +114,13 @@ public class BenchmarkRunReportService {
             summary = String.format("全部 %d 次查询成功，可作为基线与其他 Run 对比。", total);
         } else if (ok > 0) {
             verdict = "PARTIAL";
-            summary = String.format("成功 %d / %d，存在失败样本，对比时请同时看 successRate 与 errorSample。", ok, total);
+            summary = String.format("成功 %d / %d，存在 %d 组失败诊断，请同时查看 successRate 与 failureBreakdown。",
+                    ok, total, Math.max(1, failureGroupCount));
         } else {
             verdict = "FAIL";
-            summary = "全部失败，请先修复 SQL/引擎连通性后再做性能对比。";
+            summary = failureGroupCount > 0
+                    ? String.format("全部失败，共识别 %d 组失败诊断，请先修复 SQL/引擎连通性后再做性能对比。", failureGroupCount)
+                    : "全部失败，请先修复 SQL/引擎连通性后再做性能对比。";
         }
 
         root.put("verdict", verdict);
@@ -137,11 +148,9 @@ public class BenchmarkRunReportService {
         metrics.put("observedSampleCount", ok);
         root.put("metrics", metrics);
 
-        List<String> issues = new ArrayList<>();
-        if (err > 0 && run.getErrorSample() != null) {
-            issues.add(truncate(run.getErrorSample(), 500));
-        }
+        List<String> issues = buildFailureIssues(failureBreakdown, run.getErrorSample());
         root.put("issues", issues);
+        root.put("diagnostics", diagnostics);
 
         Map<String, Object> jdbcHints = new LinkedHashMap<>();
         List<String> dimensions = new ArrayList<>();
@@ -172,6 +181,21 @@ public class BenchmarkRunReportService {
         root.put("meta", meta);
 
         return toJson(root);
+    }
+
+    public Map<String, Object> extractFailureBreakdown(String evaluationJson) {
+        if (evaluationJson == null || evaluationJson.trim().isEmpty()) {
+            return Collections.emptyMap();
+        }
+        try {
+            JsonNode diagnostics = json.readTree(evaluationJson).path("diagnostics").path("failureBreakdown");
+            if (diagnostics.isMissingNode() || diagnostics.isNull() || !diagnostics.isObject()) {
+                return Collections.emptyMap();
+            }
+            return json.convertValue(diagnostics, new TypeReference<Map<String, Object>>() { });
+        } catch (Exception ex) {
+            return Collections.emptyMap();
+        }
     }
 
     Map<String, Object> summarizeExecutionModes(List<SqlExecutionMode> executionModes) {
@@ -273,6 +297,89 @@ public class BenchmarkRunReportService {
         return m;
     }
 
+    private Map<String, Object> buildDiagnostics(List<Map<String, Object>> failureGroups,
+                                                 String errorSample,
+                                                 long totalFailures) {
+        Map<String, Object> diagnostics = new LinkedHashMap<>();
+        diagnostics.put("failureBreakdown", buildFailureBreakdown(failureGroups, errorSample, totalFailures));
+        return diagnostics;
+    }
+
+    private Map<String, Object> buildFailureBreakdown(List<Map<String, Object>> failureGroups,
+                                                      String errorSample,
+                                                      long totalFailures) {
+        List<Map<String, Object>> groups = new ArrayList<>();
+        if (failureGroups != null) {
+            for (Map<String, Object> group : failureGroups) {
+                groups.add(normalizeFailureGroup(group));
+            }
+        }
+
+        if (groups.isEmpty() && totalFailures > 0 && errorSample != null && !errorSample.trim().isEmpty()) {
+            Map<String, Object> fallback = new LinkedHashMap<>();
+            fallback.put("groupKey", "unclassified");
+            fallback.put("sqlLabel", "(unclassified)");
+            fallback.put("executionMode", null);
+            fallback.put("routedTarget", "default");
+            fallback.put("failureCount", totalFailures);
+            fallback.put("sampleMessage", truncate(errorSample, 240));
+            groups.add(fallback);
+        }
+
+        Map<String, Object> breakdown = new LinkedHashMap<>();
+        breakdown.put("totalFailures", totalFailures);
+        breakdown.put("groupCount", groups.size());
+        breakdown.put("groups", groups);
+        return breakdown;
+    }
+
+    private static Map<String, Object> normalizeFailureGroup(Map<String, Object> group) {
+        Map<String, Object> normalized = new LinkedHashMap<>();
+        normalized.put("groupKey", stringValue(group.get("groupKey")));
+        normalized.put("sqlLabel", stringValue(group.get("sqlLabel")));
+        normalized.put("executionMode", stringValue(group.get("executionMode")));
+        normalized.put("routedTarget", stringValueOrDefault(group.get("routedTarget"), "default"));
+        normalized.put("failureCount", intValue(group.get("failureCount")));
+        normalized.put("sampleMessage", truncate(stringValue(group.get("sampleMessage")), 240));
+        return normalized;
+    }
+
+    private static List<String> buildFailureIssues(Map<String, Object> failureBreakdown, String errorSample) {
+        List<String> issues = new ArrayList<>();
+        Object groupsValue = failureBreakdown.get("groups");
+        if (groupsValue instanceof List) {
+            List<?> groups = (List<?>) groupsValue;
+            for (Object groupValue : groups) {
+                if (!(groupValue instanceof Map) || issues.size() >= 5) {
+                    continue;
+                }
+                Map<?, ?> group = (Map<?, ?>) groupValue;
+                String label = stringValue(group.get("sqlLabel"));
+                String executionMode = stringValue(group.get("executionMode"));
+                String routedTarget = stringValue(group.get("routedTarget"));
+                String sampleMessage = stringValue(group.get("sampleMessage"));
+                String prefix = label == null ? "(unclassified)" : label;
+                String mode = executionMode == null ? "UNKNOWN_MODE" : executionMode;
+                String target = routedTarget == null ? "default" : routedTarget;
+                issues.add(prefix + " [" + mode + " @ " + target + "]: " + sampleMessage);
+            }
+        }
+        if (issues.isEmpty() && errorSample != null) {
+            issues.add(truncate(errorSample, 500));
+        }
+        return issues;
+    }
+
+    private static Map<String, Object> diagnosticsMap(Map<String, Object> diagnostics) {
+        Object failureBreakdown = diagnostics.get("failureBreakdown");
+        if (failureBreakdown instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> mapped = (Map<String, Object>) failureBreakdown;
+            return mapped;
+        }
+        return Collections.emptyMap();
+    }
+
     private static String interpretTail(Double p50, Double p95) {
         if (p50 == null || p95 == null) {
             return "无足够成功样本的延迟分位数据。";
@@ -306,6 +413,33 @@ public class BenchmarkRunReportService {
             return null;
         }
         return s.length() <= max ? s : s.substring(0, max) + "…";
+    }
+
+    private static int intValue(Object value) {
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        if (value == null) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
+    }
+
+    private static String stringValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String text = String.valueOf(value).trim();
+        return text.isEmpty() ? null : text;
+    }
+
+    private static String stringValueOrDefault(Object value, String fallback) {
+        String text = stringValue(value);
+        return text == null ? fallback : text;
     }
 
     /**

@@ -102,6 +102,32 @@
           </el-descriptions-item>
         </el-descriptions>
 
+        <template v-if="failureGroups.length">
+          <h4 class="section-title">失败诊断分组</h4>
+          <div class="failure-summary">
+            <el-tag type="danger" effect="light">
+              共 {{ failureBreakdown?.totalFailures || 0 }} 次失败
+            </el-tag>
+            <el-tag effect="plain">
+              {{ failureBreakdown?.groupCount || failureGroups.length }} 个诊断分组
+            </el-tag>
+          </div>
+          <el-table :data="failureGroups" size="small" border stripe class="failure-table">
+            <el-table-column prop="sqlLabel" label="SQL Label" min-width="150" />
+            <el-table-column prop="executionMode" label="执行模式" width="160" />
+            <el-table-column prop="routedTarget" label="路由目标" width="150" />
+            <el-table-column prop="failureCount" label="失败次数" width="100" />
+            <el-table-column label="样本报错" min-width="220">
+              <template #default="{ row }">
+                <span class="failure-message">{{ row.sampleMessage || '—' }}</span>
+              </template>
+            </el-table-column>
+          </el-table>
+        </template>
+        <p v-else-if="evalObj?.verdict !== 'PASS'" class="muted">
+          当前 Run 没有可分组的失败诊断明细。
+        </p>
+
         <template v-if="ctx.comparisonDelta?.available">
           <h4 class="section-title">与同任务上一次 Run 的对比分析</h4>
           <p class="delta-hint">{{ ctx.comparisonDelta.interpretationHint }}</p>
@@ -191,6 +217,15 @@ const chartData = computed(() => {
     if (m.latencyMs.p99) res.push({ name: 'P99', value: m.latencyMs.p99.toFixed(2) })
   }
   return res
+})
+
+const failureBreakdown = computed(() => {
+  return ctx.value?.failureBreakdown || evalObj.value?.diagnostics?.failureBreakdown || null
+})
+
+const failureGroups = computed(() => {
+  const groups = failureBreakdown.value?.groups
+  return Array.isArray(groups) ? groups : []
 })
 
 function parseEval(row) {
@@ -402,6 +437,19 @@ onUnmounted(() => clearInterval(timer))
 .visual-report {
   margin: 12px 0;
   border: 1px solid rgba(0, 0, 0, 0.05);
+}
+.failure-summary {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.failure-table {
+  margin-bottom: 8px;
+}
+.failure-message {
+  color: #1e293b;
+  line-height: 1.5;
 }
 .drawer-actions {
   margin-top: 32px;

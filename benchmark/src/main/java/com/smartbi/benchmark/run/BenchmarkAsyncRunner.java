@@ -34,9 +34,14 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -44,12 +49,20 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class BenchmarkAsyncRunner {
 
     private static final Logger log = LoggerFactory.getLogger(BenchmarkAsyncRunner.class);
     private static final ObjectMapper JSON = new ObjectMapper();
+    private static final Pattern ROUTED_ENGINE_BLOCK =
+            Pattern.compile("/\\*\\s*YH_TARGET_ENGINE\\s*=\\s*([A-Za-z0-9_.:-]+)\\s*\\*/",
+                    Pattern.CASE_INSENSITIVE);
+    private static final Pattern ROUTED_ENGINE_LINE =
+            Pattern.compile("(?m)^\\s*--\\s*engine\\s*=\\s*([A-Za-z0-9_.:-]+)\\s*$",
+                    Pattern.CASE_INSENSITIVE);
 
     private final BenchmarkJobRepository jobRepository;
     private final BenchmarkRunRepository runRepository;
@@ -134,6 +147,7 @@ public class BenchmarkAsyncRunner {
             AtomicInteger errors = new AtomicInteger();
             AtomicInteger completed = new AtomicInteger();
             AtomicReference<String> firstError = new AtomicReference<String>();
+            ConcurrentMap<String, FailureGroupAccumulator> failureGroups = new ConcurrentHashMap<String, FailureGroupAccumulator>();
 
             Random rnd = new Random();
             int[] cumulative = buildCumulative(sources);
@@ -157,7 +171,9 @@ public class BenchmarkAsyncRunner {
                                 successes.incrementAndGet();
                             } catch (Exception ex) {
                                 errors.incrementAndGet();
-                                firstError.compareAndSet(null, ex.getMessage());
+                                String sampleMessage = formatFailureMessage(ex);
+                                firstError.compareAndSet(null, sampleMessage);
+                                recordFailure(failureGroups, selected, sampleMessage);
                             }
                         } finally {
                             latch.countDown();
@@ -180,7 +196,7 @@ public class BenchmarkAsyncRunner {
 
             long wall = System.currentTimeMillis() - wallStart;
             finalizeRun(run, job, wall, total, successes.get(), errors.get(), latencies, firstError.get(),
-                    sources.size(), executionModes);
+                    sources.size(), executionModes, summarizeFailureGroups(failureGroups));
         } catch (Exception e) {
             log.error("Fatal error executing benchmark run {}", run.getId(), e);
             failRun(run, "Execution failed: " + e.getMessage(), job, executionModes);
@@ -197,7 +213,8 @@ public class BenchmarkAsyncRunner {
 
     private void finalizeRun(BenchmarkRun run, BenchmarkJob job, long wall, int total,
                              int successes, int errors, List<Long> latencies,
-                             String errorSample, int sourceCount, List<SqlExecutionMode> executionModes) {
+                             String errorSample, int sourceCount, List<SqlExecutionMode> executionModes,
+                             List<Map<String, Object>> failureBreakdown) {
         run.setEndedAt(Instant.now());
         run.setCurrentProgress(total);
         run.setTotalTarget(total);
@@ -223,7 +240,8 @@ public class BenchmarkAsyncRunner {
 
         String testSetName = resolveTestSetName(job.getTestSetId());
         run.setJobSnapshotJson(reportService.buildJobSnapshotJson(job, sourceCount, testSetName, executionModes));
-        run.setEvaluationJson(reportService.buildCompletedEvaluation(job, run, sourceCount, executionModes));
+        run.setEvaluationJson(reportService.buildCompletedEvaluation(
+                job, run, sourceCount, executionModes, failureBreakdown));
 
         runRepository.save(run);
         log.info("Benchmark run {} completed: success={} errors={} wallMs={}",
@@ -266,7 +284,8 @@ public class BenchmarkAsyncRunner {
             run.setJobSnapshotJson(reportService.buildJobSnapshotJson(job, 0, resolveTestSetName(job.getTestSetId()),
                     executionModes));
         }
-        run.setEvaluationJson(reportService.buildFailureEvaluation("SETUP", msg, job, executionModes));
+        run.setEvaluationJson(reportService.buildFailureEvaluation("SETUP", msg, job, executionModes,
+                Collections.<Map<String, Object>>emptyList()));
         runRepository.save(run);
     }
 
@@ -312,6 +331,76 @@ public class BenchmarkAsyncRunner {
             }
         }
         return sources.get(sources.size() - 1);
+    }
+
+    private static void recordFailure(ConcurrentMap<String, FailureGroupAccumulator> failures,
+                                      WeightedSql selected,
+                                      String sampleMessage) {
+        String label = normalizeLabel(selected.label);
+        String executionMode = resolveExecutionMode(selected.executionMode);
+        String routedTarget = extractRoutedTarget(selected.sqlText);
+        String groupKey = label + "|" + executionMode + "|" + routedTarget;
+        failures.compute(groupKey, (key, current) -> {
+            if (current == null) {
+                return new FailureGroupAccumulator(key, label, executionMode, routedTarget, sampleMessage);
+            }
+            current.increment();
+            return current;
+        });
+    }
+
+    private static List<Map<String, Object>> summarizeFailureGroups(
+            ConcurrentMap<String, FailureGroupAccumulator> failures) {
+        if (failures.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<FailureGroupAccumulator> accumulators = new ArrayList<FailureGroupAccumulator>(failures.values());
+        accumulators.sort(Comparator
+                .comparingInt(FailureGroupAccumulator::count).reversed()
+                .thenComparing(FailureGroupAccumulator::label)
+                .thenComparing(FailureGroupAccumulator::executionMode)
+                .thenComparing(FailureGroupAccumulator::routedTarget));
+
+        List<Map<String, Object>> groups = new ArrayList<Map<String, Object>>();
+        for (FailureGroupAccumulator accumulator : accumulators) {
+            groups.add(accumulator.asMap());
+        }
+        return groups;
+    }
+
+    private static String formatFailureMessage(Exception ex) {
+        String message = ex.getMessage();
+        if (message == null || message.trim().isEmpty()) {
+            return ex.getClass().getSimpleName();
+        }
+        return message.trim();
+    }
+
+    private static String normalizeLabel(String label) {
+        if (label == null || label.trim().isEmpty()) {
+            return "(unlabeled)";
+        }
+        return label.trim();
+    }
+
+    private static String resolveExecutionMode(SqlExecutionMode executionMode) {
+        SqlExecutionMode resolved = executionMode == null ? SqlExecutionMode.STATEMENT : executionMode;
+        return resolved.name();
+    }
+
+    private static String extractRoutedTarget(String sqlText) {
+        if (sqlText == null || sqlText.trim().isEmpty()) {
+            return "default";
+        }
+        Matcher blockMatcher = ROUTED_ENGINE_BLOCK.matcher(sqlText);
+        if (blockMatcher.find()) {
+            return blockMatcher.group(1);
+        }
+        Matcher lineMatcher = ROUTED_ENGINE_LINE.matcher(sqlText);
+        if (lineMatcher.find()) {
+            return lineMatcher.group(1);
+        }
+        return "default";
     }
 
     private static void executeAndDrain(Connection connection, String sql, WeightedSql selected) throws Exception {
@@ -470,6 +559,58 @@ public class BenchmarkAsyncRunner {
         PreparedParam(String type, Object value) {
             this.type = type;
             this.value = value;
+        }
+    }
+
+    private static final class FailureGroupAccumulator {
+        private final String groupKey;
+        private final String label;
+        private final String executionMode;
+        private final String routedTarget;
+        private final String sampleMessage;
+        private final AtomicInteger failureCount = new AtomicInteger(1);
+
+        FailureGroupAccumulator(String groupKey,
+                                String label,
+                                String executionMode,
+                                String routedTarget,
+                                String sampleMessage) {
+            this.groupKey = groupKey;
+            this.label = label;
+            this.executionMode = executionMode;
+            this.routedTarget = routedTarget;
+            this.sampleMessage = sampleMessage;
+        }
+
+        void increment() {
+            failureCount.incrementAndGet();
+        }
+
+        int count() {
+            return failureCount.get();
+        }
+
+        String label() {
+            return label;
+        }
+
+        String executionMode() {
+            return executionMode;
+        }
+
+        String routedTarget() {
+            return routedTarget;
+        }
+
+        Map<String, Object> asMap() {
+            Map<String, Object> out = new LinkedHashMap<String, Object>();
+            out.put("groupKey", groupKey);
+            out.put("sqlLabel", label);
+            out.put("executionMode", executionMode);
+            out.put("routedTarget", routedTarget);
+            out.put("failureCount", failureCount.get());
+            out.put("sampleMessage", sampleMessage);
+            return out;
         }
     }
 }
