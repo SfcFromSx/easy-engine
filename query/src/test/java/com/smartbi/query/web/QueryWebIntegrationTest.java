@@ -26,6 +26,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(
         classes = EngineQueryApplication.class,
         properties = {
+                "spring.datasource.url=jdbc:h2:mem:webtest_trace;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
+                "spring.datasource.username=sa",
+                "spring.datasource.password=",
+                "spring.datasource.driver-class-name=org.h2.Driver",
+                "spring.jpa.hibernate.ddl-auto=create-drop",
                 "engine.query.datasource.default.name=default",
                 "engine.query.datasource.default.type=h2",
                 "engine.query.datasource.default.driver-class=org.h2.Driver",

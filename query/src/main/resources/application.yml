@@ -1,6 +1,15 @@
 spring:
   application:
     name: query
+  datasource:
+    url: ${ENGINE_DB_JDBC_URL:jdbc:postgresql://localhost:15432/engine_db}
+    username: ${ENGINE_DB_USER:engine}
+    password: ${ENGINE_DB_PASSWORD:engine}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
   redis:
     host: ${REDIS_HOST:127.0.0.1}
     port: ${REDIS_PORT:6380}
@@ -23,8 +32,6 @@ engine:
       datasource-isolation-enabled: ${ENGINE_QUERY_CACHE_DS_ISOLATION:true}
     trace:
       enabled: ${ENGINE_QUERY_TRACE_ENABLED:true}
-      list-key: ${ENGINE_QUERY_TRACE_LIST:kylin_audit_trace}
-      max-list-length: ${ENGINE_QUERY_TRACE_MAX_LIST:50000}
     datasource:
       default:
         name: default

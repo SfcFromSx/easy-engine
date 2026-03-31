@@ -109,8 +109,6 @@ public class QueryProperties {
 
     public static class Trace {
         private boolean enabled = true;
-        private String listKey = "kylin_audit_trace";
-        private long maxListLength = 50000L;
 
         public boolean isEnabled() {
             return enabled;
@@ -118,22 +116,6 @@ public class QueryProperties {
 
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
-        }
-
-        public String getListKey() {
-            return listKey;
-        }
-
-        public void setListKey(String listKey) {
-            this.listKey = listKey;
-        }
-
-        public long getMaxListLength() {
-            return maxListLength;
-        }
-
-        public void setMaxListLength(long maxListLength) {
-            this.maxListLength = maxListLength;
         }
     }
 

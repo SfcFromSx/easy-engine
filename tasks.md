@@ -15,45 +15,6 @@ This is the canonical task ledger for Easy Engine. The foreman model reads this 
 
 ## Todo
 
-### ARCH-003
-
-- **Status:** todo
-- **Module:** query | **Type:** backend | **Priority:** 30
-- **Title:** WRITE TRACES DIRECTLY TO POSTGRESQL FROM QUERY
-- **Attempts:** 0
-- **Depends on:** ARCH-002
-
-**Context files**
-
-- `query/src/main/java/com/smartbi/query/integration/RedisTraceQueuePublisher.java`
-- `query/src/main/java/com/smartbi/query/service/TraceReportingService.java`
-- `query/src/main/resources/application.yml`
-- `query/pom.xml`
-- `manager/src/main/java/com/smartbi/engine/domain/SqlExecutionRecord.java`
-- `manager/src/main/resources/db/migration/V6__add_parameter_payload_to_sql_execution_record.sql`
-
-**Acceptance criteria**
-
-1. PostgreSQL + JPA dependencies added to `query/pom.xml`.
-2. `spring.datasource` pointing at `engine_db` added to query `application.yml`; Redis trace-list config removed.
-3. `SqlExecutionRecord` JPA entity added to `com.smartbi.query.domain` mirroring manager's schema (no new Flyway migration — manager owns the schema).
-4. `RedisTraceQueuePublisher` replaced by a `PostgresTraceWriter` that inserts records via JPA.
-5. `TraceReportingService` uses `PostgresTraceWriter`.
-6. After a query execution, a row appears in `sql_execution_record` in PostgreSQL.
-7. Query module tests pass.
-
-**Validation commands**
-
-```bash
-mvn -q -f query/pom.xml test
-```
-
-**Progress log**
-
-<!-- Foreman appends stage outcomes here during execution -->
-
----
-
 ### ARCH-004
 
 - **Status:** todo
@@ -373,6 +334,7 @@ npm --prefix manager/frontend run build
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| ARCH-003 | WRITE TRACES DIRECTLY TO POSTGRESQL FROM QUERY | query | Query writes trace rows and pattern stats directly to PostgreSQL; `mvn -q -f query/pom.xml test` passes |
 | ARCH-002 | REMOVE REDIS TRACE CONSUMER FROM MANAGER | manager | Redis consumer path removed; manager tests pass without Redis |
 | BENCH-UX-004 | STANDARDIZE TYPOGRAPHY ACROSS ALL BENCHMARK PAGES | benchmark | Typography consistent across all pages |
 | ARCH-001 | REMOVE KYLIN-JDBC-CACHE MODULE | docs | Module directory deleted; manager/query/benchmark tests pass |

@@ -1,14 +1,14 @@
 package com.smartbi.query.support;
 
 import com.smartbi.query.integration.QueryCacheStore;
-import com.smartbi.query.integration.TraceQueuePublisher;
+import com.smartbi.query.integration.TraceWriter;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class InMemoryQueryInfrastructure implements QueryCacheStore, TraceQueuePublisher {
+public class InMemoryQueryInfrastructure implements QueryCacheStore, TraceWriter {
 
     private final Map<String, String> cache = new ConcurrentHashMap<String, String>();
     private final List<String> traces = new ArrayList<String>();
@@ -24,7 +24,7 @@ public class InMemoryQueryInfrastructure implements QueryCacheStore, TraceQueueP
     }
 
     @Override
-    public synchronized void publish(String listKey, String payload) {
+    public synchronized void publish(String payload) {
         traces.add(payload);
     }
 
