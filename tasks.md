@@ -15,42 +15,6 @@ This is the canonical task ledger for Easy Engine. The foreman model reads this 
 
 ## Todo
 
-### ARCH-001
-
-- **Status:** in_progress
-- **Module:** kylin-jdbc-cache | **Type:** cleanup | **Priority:** 10
-- **Title:** REMOVE KYLIN-JDBC-CACHE MODULE
-- **Attempts:** 0
-
-**Context files**
-
-- `kylin-jdbc-cache/` (entire directory)
-- `docker-compose.yml`
-- `docs/architecture/overview.md`
-
-**Acceptance criteria**
-
-1. `kylin-jdbc-cache/` directory is deleted.
-2. Any reference to `kylin-jdbc-cache` in root `pom.xml`, `docker-compose.yml`, and `docs/architecture/overview.md` is removed.
-3. All remaining modules build without errors.
-
-**Validation commands**
-
-```bash
-mvn -q -f manager/pom.xml test
-mvn -q -f query/pom.xml test
-mvn -q -f benchmark/pom.xml test
-```
-
-**Progress log**
-
-**2026-03-31 — investigation**
-Files changed: `/Users/sfc/Documents/projects/engine/tasks.md`
-Commands run: `sed -n '1,260p' tasks.md`; `sed -n '1,220p' README.md`; `sed -n '1,220p' docs/README.md`; `sed -n '1,220p' docs/architecture/README.md`; `sed -n '1,220p' docs/operations/README.md`; `sed -n '1,220p' docs/operations/human-collaboration.md`; `sed -n '1,220p' docs/product/backlog.md`; `git status --short`; `sed -n '1,240p' docker-compose.yml`; `sed -n '1,260p' docs/architecture/overview.md`; `rg -n "kylin-jdbc-cache|kylin jdbc cache|kylin" -S .`; `find kylin-jdbc-cache -maxdepth 3 -type f | sort | sed -n '1,200p'`; `rg --files -g 'pom.xml'`; `ls -la`; `sed -n '1,220p' benchmark/pom.xml`; `sed -n '1,220p' docs/modules/kylin-jdbc-cache.md`; `sed -n '1,220p' doc-CN/architecture-overview.md`; `sed -n '1,220p' doc-CN/README.md`; `rg -n "com\.kylin|CachedKylinDriver|jdbc:kylin-cached://|kylin-jdbc-cache" benchmark`; `rg -n "kylin-jdbc-cache" AGENTS.md README.md docs doc-CN docker-compose.yml benchmark query manager scripts tests .agent`; `sed -n '1,220p' docs/operations/doc-cn-policy.md`; `sed -n '1,220p' docs/operations/doc-gardening.md`; `rg -n "default-driver-class|driver_class|jdbc_url|DriverManager|getConnection|Class\.forName|driverClass" benchmark/src/main/java benchmark/src/test/java benchmark/src/main/resources/application.yml`; `sed -n '1,220p' benchmark/src/main/resources/application.yml`; `sed -n '1,260p' benchmark/src/main/java/com/smartbi/benchmark/web/BenchmarkQueryService.java`; `sed -n '1,260p' benchmark/src/main/java/com/smartbi/benchmark/web/DataSourceController.java`; `rg -n "CachedKylinDriver|jdbc:kylin-cached://|default-driver-class" benchmark/src/test/java`; `sed -n '1,220p' benchmark/src/test/java/com/smartbi/benchmark/migration/BenchmarkFlywaySeedTest.java`; `sed -n '1,220p' benchmark/src/test/java/com/smartbi/benchmark/web/BenchmarkSmokeTest.java`; `rg -n "kylin-jdbc-cache|CachedKylinDriver|jdbc:kylin-cached://" docs/operations/local-development.md doc-CN/local-development.md docs/modules/*.md benchmark/src/main/resources/db/migration benchmark/src/main/resources/application.yml AGENTS.md`; `sed -n '1,260p' docs/operations/local-development.md`; `sed -n '1,260p' doc-CN/local-development.md`
-Result: confirmed no root `pom.xml` exists; removal scope must cover `benchmark/pom.xml`, benchmark driver defaults/seeds, the module directory, and stale docs/mirrors that still reference `kylin-jdbc-cache`
-
----
-
 ### ARCH-002
 
 - **Status:** todo
@@ -370,6 +334,7 @@ Next action: commit.
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| ARCH-001 | REMOVE KYLIN-JDBC-CACHE MODULE | docs | Module directory deleted; manager/query/benchmark tests pass |
 | BENCH-UX-003 | OPTIMIZE ALL BENCHMARK PAGES FOR SINGLE-SCREEN VIEW | benchmark | All pages fit in one screen |
 | BENCH-UX-002 | OPTIMIZE BENCHMARK DASHBOARD FOR SINGLE-SCREEN VIEW | benchmark | Dashboard fits in one screen |
 | QUERY-ARCH-001 | DEFINE QUERY AS EXECUTION SOURCE OF TRUTH | query | Architecture boundaries documented |
