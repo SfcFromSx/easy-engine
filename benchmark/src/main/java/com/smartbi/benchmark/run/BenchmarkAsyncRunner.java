@@ -10,6 +10,7 @@ import com.smartbi.benchmark.domain.BenchmarkTestSetItem;
 import com.smartbi.benchmark.domain.RunStatus;
 import com.smartbi.benchmark.domain.SqlExecutionMode;
 import com.smartbi.benchmark.domain.SqlTemplate;
+import com.smartbi.benchmark.jdbc.JdbcDriverRegistry;
 import com.smartbi.benchmark.repo.BenchmarkDataSourceRepository;
 import com.smartbi.benchmark.repo.BenchmarkJobRepository;
 import com.smartbi.benchmark.repo.BenchmarkRunRepository;
@@ -72,6 +73,7 @@ public class BenchmarkAsyncRunner {
     private final BenchmarkRunReportService reportService;
 
     private final BenchmarkDataSourceRepository dataSourceRepository;
+    private final JdbcDriverRegistry driverRegistry;
 
     public BenchmarkAsyncRunner(BenchmarkJobRepository jobRepository,
                                 BenchmarkRunRepository runRepository,
@@ -79,7 +81,8 @@ public class BenchmarkAsyncRunner {
                                 BenchmarkTestSetItemRepository testSetItemRepository,
                                 BenchmarkTestSetRepository testSetRepository,
                                 BenchmarkRunReportService reportService,
-                                BenchmarkDataSourceRepository dataSourceRepository) {
+                                BenchmarkDataSourceRepository dataSourceRepository,
+                                JdbcDriverRegistry driverRegistry) {
         this.jobRepository = jobRepository;
         this.runRepository = runRepository;
         this.templateRepository = templateRepository;
@@ -87,6 +90,7 @@ public class BenchmarkAsyncRunner {
         this.testSetRepository = testSetRepository;
         this.reportService = reportService;
         this.dataSourceRepository = dataSourceRepository;
+        this.driverRegistry = driverRegistry;
     }
 
     @Async
@@ -130,10 +134,7 @@ public class BenchmarkAsyncRunner {
                 .orElseThrow(() -> new IllegalArgumentException("DataSource not found: " + job.getDataSourceId()));
 
         com.zaxxer.hikari.HikariConfig config = new com.zaxxer.hikari.HikariConfig();
-        config.setJdbcUrl(dsDetail.getJdbcUrl());
-        config.setUsername(dsDetail.getJdbcUser() != null ? dsDetail.getJdbcUser() : "");
-        config.setPassword(dsDetail.getJdbcPassword() != null ? dsDetail.getJdbcPassword() : "");
-        config.setDriverClassName(dsDetail.getDriverClass());
+        config.setDataSource(driverRegistry.createDataSource(dsDetail));
         config.setMaximumPoolSize(threads);
         config.setPoolName("BenchPool-" + run.getId());
         config.setConnectionTimeout(10000);

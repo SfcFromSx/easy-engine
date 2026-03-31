@@ -27,6 +27,7 @@ server:
 benchmark:
   jdbc:
     default-driver-class: org.apache.kylin.jdbc.Driver
+    driver-dir: ./drivers
   # 管理端「环境预检」探测地址（页面调用 /api/v1/preflight）
   preflight:
     kylin-auth-url: http://127.0.0.1:17070/kylin/api/user/authentication

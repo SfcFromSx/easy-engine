@@ -1,10 +1,14 @@
 package com.smartbi.benchmark.web;
 
 import com.smartbi.benchmark.domain.BenchmarkDataSource;
+import com.smartbi.benchmark.jdbc.JdbcDriverRegistry;
 import com.smartbi.benchmark.repo.BenchmarkDataSourceRepository;
 import org.springframework.stereotype.Service;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,9 +18,12 @@ import java.util.Map;
 public class BenchmarkQueryService {
 
     private final BenchmarkDataSourceRepository dataSourceRepository;
+    private final JdbcDriverRegistry driverRegistry;
 
-    public BenchmarkQueryService(BenchmarkDataSourceRepository dataSourceRepository) {
+    public BenchmarkQueryService(BenchmarkDataSourceRepository dataSourceRepository,
+                                 JdbcDriverRegistry driverRegistry) {
         this.dataSourceRepository = dataSourceRepository;
+        this.driverRegistry = driverRegistry;
     }
 
     public QueryResponse executeQuery(long dataSourceId, String sql) {
@@ -25,13 +32,10 @@ public class BenchmarkQueryService {
         
         long start = System.currentTimeMillis();
         try {
-            Class.forName(ds.getDriverClass());
-            try (Connection conn = DriverManager.getConnection(ds.getJdbcUrl(), 
-                    ds.getJdbcUser() != null ? ds.getJdbcUser() : "", 
-                    ds.getJdbcPassword() != null ? ds.getJdbcPassword() : "");
+            try (Connection conn = driverRegistry.openConnection(ds);
                  Statement stmt = conn.createStatement()) {
-                
-                stmt.setMaxRows(50); // Limit results for safety
+
+                stmt.setMaxRows(50);
                 boolean isResultSet = stmt.execute(sql);
                 long latency = System.currentTimeMillis() - start;
 

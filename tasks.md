@@ -15,9 +15,11 @@ This is the canonical task ledger for Easy Engine. The foreman model reads this 
 
 ## Todo
 
+---
+
 ### ARCH-007
 
-- **Status:** todo
+- **Status:** done
 - **Module:** benchmark | **Type:** backend + frontend | **Priority:** 70
 - **Title:** SUPPORT JDBC DRIVER JAR UPLOAD IN BENCHMARK
 - **Attempts:** 0
@@ -47,6 +49,20 @@ npm --prefix benchmark/frontend run build
 **Progress log**
 
 <!-- Foreman appends stage outcomes here during execution -->
+
+**2026-03-31 — implementation**
+Files changed: `benchmark/src/main/java/com/smartbi/benchmark/config/BenchmarkJdbcProperties.java`, `benchmark/src/main/java/com/smartbi/benchmark/jdbc/*`, `benchmark/src/main/java/com/smartbi/benchmark/web/DataSourceController.java`, `benchmark/src/main/java/com/smartbi/benchmark/web/DriverController.java`, `benchmark/src/main/java/com/smartbi/benchmark/web/BenchmarkQueryService.java`, `benchmark/src/main/java/com/smartbi/benchmark/run/BenchmarkAsyncRunner.java`, `benchmark/frontend/src/views/DataSources.vue`, `benchmark/frontend/src/api/endpoints.js`, `benchmark/frontend/src/i18n.js`.
+Commands run: `sed`, `rg`, `mvn -q -f benchmark/pom.xml test`, `npm --prefix benchmark/frontend run build`.
+Result: implemented driver jar storage/list APIs, `URLClassLoader` + `DriverShim` registration, driver-aware query/run connection paths, and benchmark UI upload/list support.
+
+**2026-03-31 — verification**
+Validation status: approved
+Evidence: `mvn -q -f benchmark/pom.xml test` passed, including `JdbcDriverUploadIntegrationTest`; `npm --prefix benchmark/frontend run build` passed.
+Next action: commit.
+
+**2026-03-31 — doc-gardener**
+Files changed: `docs/architecture/http-interfaces.md`, `docs/architecture/overview.md`, `docs/modules/benchmark.md`, `docs/operations/local-development.md`.
+Result: updated benchmark interface inventory and clarified that uploaded JDBC driver jars support datasource tests, debug queries, and benchmark runs.
 
 ---
 
@@ -224,15 +240,25 @@ Next action: commit.
 npm --prefix manager/frontend run build
 ```
 
-**Progress log**
+**2026-03-31 — implementation**
+Files changed: `style.css`, `Dashboard.vue`, `Traces.vue`, `Patterns.vue`, `Acceleration.vue`, `QueryDatasources.vue`.
+Result: implemented typography system and high-density layouts across all 5 manager views.
 
-<!-- Foreman appends stage outcomes here during execution -->
+**2026-03-31 — verification**
+Validation status: approved
+Evidence: visual audit at 1920x872 confirmed zero vertical scrolling and 40px row height across all views.
+Next action: complete.
+
+---
 
 ## Done
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| MGR-BUG-001 | FIX 404 ERROR ON QUERY-DATASOURCES API | manager | Backend restarted; `GET /api/v1/query-datasources` returns 200 OK |
+| MGR-UX-002 | STANDARDIZE TYPOGRAPHY AND LAYOUT ACROSS ALL MANAGER PAGES | manager | All 5 pages fit in one screen; typography standardized; rows at 40px |
 | ARCH-006 | ADD DATASOURCE CONFIG MANAGEMENT PAGE TO MANAGER UI | manager | Datasource page, route, and nav link added; `npm --prefix manager/frontend run build` passes |
+| ARCH-007 | SUPPORT JDBC DRIVER JAR UPLOAD IN BENCHMARK | benchmark | `/api/v1/drivers` upload/list added; uploaded JDBC jars now work in datasource tests, debug queries, and benchmark runs; benchmark tests and frontend build pass |
 | ARCH-005 | QUERY POLLS MANAGER FOR DATASOURCE CONFIGS | query | Manager-backed datasource loading added with static fallback; `mvn -q -f query/pom.xml test` passes |
 | ARCH-004 | EXPOSE DATASOURCE CONFIG CRUD API IN MANAGER | manager | V7 seeds query datasource configs; `/api/v1/query-datasources` CRUD added; `mvn -q -f manager/pom.xml test` passes |
 | ARCH-003 | WRITE TRACES DIRECTLY TO POSTGRESQL FROM QUERY | query | Query writes trace rows and pattern stats directly to PostgreSQL; `mvn -q -f query/pom.xml test` passes |

@@ -6,12 +6,54 @@
         <p class="subtitle">{{ $t('datasources.subtitle') }}</p>
       </div>
       <div class="actions">
+        <input
+          ref="driverFileInput"
+          type="file"
+          accept=".jar"
+          class="driver-file-input"
+          @change="handleDriverFileChange"
+        />
+        <el-button
+          type="warning"
+          plain
+          class="premium-btn"
+          :loading="uploadingDriver"
+          @click="openDriverPicker"
+        >
+          <el-icon><upload /></el-icon>
+          <span>{{ $t('datasources.uploadBtn') }}</span>
+        </el-button>
         <el-button type="primary" class="premium-btn" @click="handleAdd">
           <el-icon><plus /></el-icon>
           <span>{{ $t('datasources.addBtn') }}</span>
         </el-button>
       </div>
     </div>
+
+    <el-card class="glass-card driver-card">
+      <div class="driver-library">
+        <div class="driver-library__copy">
+          <span class="driver-library__eyebrow">{{ $t('datasources.driverLibraryEyebrow') }}</span>
+          <h2>{{ $t('datasources.driverLibraryTitle') }}</h2>
+          <p>{{ $t('datasources.driverLibraryHint') }}</p>
+        </div>
+        <div class="driver-library__meta">
+          <span>{{ $t('datasources.driverCount', { count: uploadedDrivers.length }) }}</span>
+        </div>
+      </div>
+      <div v-loading="driversLoading" class="driver-list">
+        <template v-if="uploadedDrivers.length">
+          <span
+            v-for="driver in uploadedDrivers"
+            :key="driver"
+            class="driver-pill"
+          >
+            {{ driver }}
+          </span>
+        </template>
+        <span v-else class="driver-empty">{{ $t('datasources.driverEmpty') }}</span>
+      </div>
+    </el-card>
 
     <el-card class="glass-card table-card">
       <div class="list-toolbar">
@@ -108,18 +150,28 @@
 
 <script setup>
 import { computed, ref, onMounted } from 'vue'
-import { Plus, Edit, Delete, Connection, Search } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, Connection, Search, Upload } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import client from '../api/client'
+import {
+  API_ENDPOINTS,
+  DATA_SOURCE_BY_ID,
+  DATA_SOURCE_TEST,
+  DRIVER_UPLOAD
+} from '../api/endpoints'
 
 const { t } = useI18n()
 const loading = ref(false)
 const saving = ref(false)
+const driversLoading = ref(false)
+const uploadingDriver = ref(false)
 const dataSources = ref([])
+const uploadedDrivers = ref([])
 const searchTerm = ref('')
 const dialogVisible = ref(false)
 const isEdit = ref(false)
+const driverFileInput = ref(null)
 const form = ref({
   id: null,
   name: '',
@@ -143,13 +195,29 @@ const filteredDataSources = computed(() => {
 async function fetchDataSources() {
   loading.value = true
   try {
-    const { data } = await client.get('/datasources')
+    const { data } = await client.get(API_ENDPOINTS.DATASOURCES)
     dataSources.value = data
   } catch (err) {
     ElMessage.error(t('common.error'))
   } finally {
     loading.value = false
   }
+}
+
+async function fetchDrivers() {
+  driversLoading.value = true
+  try {
+    const { data } = await client.get(API_ENDPOINTS.DRIVERS)
+    uploadedDrivers.value = data
+  } catch (err) {
+    ElMessage.error(err.response?.data?.message || t('common.error'))
+  } finally {
+    driversLoading.value = false
+  }
+}
+
+function openDriverPicker() {
+  driverFileInput.value?.click()
 }
 
 function handleAdd() {
@@ -179,9 +247,9 @@ async function saveDataSource() {
   saving.value = true
   try {
     if (isEdit.value) {
-      await client.put(`/datasources/${form.value.id}`, form.value)
+      await client.put(DATA_SOURCE_BY_ID(form.value.id), form.value)
     } else {
-      await client.post('/datasources', form.value)
+      await client.post(API_ENDPOINTS.DATASOURCES, form.value)
     }
     ElMessage.success(t('common.success'))
     dialogVisible.value = false
@@ -200,7 +268,7 @@ async function handleDelete(row) {
       t('common.warning'),
       { type: 'warning' }
     )
-    await client.delete(`/datasources/${row.id}`)
+    await client.delete(DATA_SOURCE_BY_ID(row.id))
     ElMessage.success(t('common.success'))
     fetchDataSources()
   } catch (err) {
@@ -212,7 +280,7 @@ async function handleDelete(row) {
 
 async function testConnection(row) {
   try {
-    const { data } = await client.post('/datasources/test', row)
+    const { data } = await client.post(DATA_SOURCE_TEST, row)
     if (data === 'SUCCESS') {
       ElMessage.success(t('datasources.testSuccess'))
     } else {
@@ -223,7 +291,39 @@ async function testConnection(row) {
   }
 }
 
-onMounted(fetchDataSources)
+async function handleDriverFileChange(event) {
+  const [file] = event.target.files || []
+  event.target.value = ''
+  if (!file) {
+    return
+  }
+  if (!file.name.toLowerCase().endsWith('.jar')) {
+    ElMessage.warning(t('datasources.uploadTypeError'))
+    return
+  }
+
+  const payload = new FormData()
+  payload.append('file', file)
+
+  uploadingDriver.value = true
+  try {
+    await client.post(DRIVER_UPLOAD, payload, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    ElMessage.success(t('datasources.uploadSuccess', { name: file.name }))
+    await fetchDrivers()
+  } catch (err) {
+    ElMessage.error(err.response?.data?.message || t('common.error'))
+  } finally {
+    uploadingDriver.value = false
+  }
+}
+
+onMounted(async () => {
+  await Promise.all([fetchDataSources(), fetchDrivers()])
+})
 </script>
 
 <style scoped>
@@ -231,12 +331,26 @@ onMounted(fetchDataSources)
   max-width: 100%;
 }
 
+.driver-file-input {
+  display: none;
+}
+
 .page-header {
   margin-bottom: 16px;
 }
 
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
 .glass-card {
   padding: 0;
+}
+
+.driver-card {
+  margin-bottom: 14px;
+  padding: 16px;
 }
 
 .table-card {
@@ -256,5 +370,62 @@ onMounted(fetchDataSources)
   padding: 10px 16px;
   margin-bottom: 0;
   border-bottom: 1px solid #f1f5f9;
+}
+
+.driver-library {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.driver-library__copy h2 {
+  margin: 4px 0 6px;
+  font-size: 18px;
+}
+
+.driver-library__copy p {
+  margin: 0;
+  color: #64748b;
+}
+
+.driver-library__eyebrow {
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #b45309;
+}
+
+.driver-library__meta {
+  color: #475569;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.driver-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  min-height: 32px;
+}
+
+.driver-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  color: #9a3412;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.driver-empty {
+  color: #94a3b8;
+  font-size: 13px;
 }
 </style>

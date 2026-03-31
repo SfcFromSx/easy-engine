@@ -10,6 +10,7 @@ import com.smartbi.benchmark.domain.BenchmarkStrategy;
 import com.smartbi.benchmark.domain.BenchmarkTestSet;
 import com.smartbi.benchmark.domain.BenchmarkTestSetItem;
 import com.smartbi.benchmark.domain.RunStatus;
+import com.smartbi.benchmark.jdbc.JdbcDriverRegistry;
 import com.smartbi.benchmark.repo.BenchmarkDataSourceRepository;
 import com.smartbi.benchmark.repo.BenchmarkJobRepository;
 import com.smartbi.benchmark.repo.BenchmarkRunRepository;
@@ -78,6 +79,9 @@ class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
     private BenchmarkDataSourceRepository dataSourceRepository;
 
     @Autowired
+    private JdbcDriverRegistry driverRegistry;
+
+    @Autowired
     private MockMvc mockMvc;
 
     private BenchmarkAsyncRunner runner;
@@ -98,7 +102,8 @@ class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
                 testSetItemRepository,
                 testSetRepository,
                 reportService,
-                dataSourceRepository
+                dataSourceRepository,
+                driverRegistry
         );
 
         Class.forName("org.h2.Driver");

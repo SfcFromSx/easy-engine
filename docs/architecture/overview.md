@@ -18,7 +18,7 @@ manager <-- reads PostgreSQL, manages datasource configs
 
 - `query` accepts query requests via the standard Apache Kylin JDBC protocol, parses hints and preserved metadata, routes requests to the configured backend (Kylin, Presto, Hive), reads and writes the Redis result cache, executes read-only SQL, and writes trace records directly to PostgreSQL.
 - `manager` owns datasource configuration (exposed via `/api/v1/query-datasources`), consumes trace records from PostgreSQL, parses SQL with Calcite, maintains pattern statistics, and exposes control-plane APIs for acceleration metadata.
-- `benchmark` manages benchmark datasources, templates, test sets, and runs. It connects to `query` using the standard Apache Kylin JDBC driver. It supports uploading arbitrary JDBC driver JARs for datasource testing.
+- `benchmark` manages benchmark datasources, templates, test sets, and runs. It connects to `query` using the standard Apache Kylin JDBC driver. It supports uploading arbitrary JDBC driver JARs for datasource testing and benchmark execution.
 
 ## Request Flow
 

@@ -49,7 +49,7 @@ npm --prefix benchmark/frontend run dev
 ## Operator Notes
 
 - Benchmark is the preferred control surface for benchmark runs, preflight checks, and structured run reports.
-- Benchmark connects to `query` using the standard Apache Kylin JDBC driver (`jdbc:kylin://localhost:8092/<project>`). Upload additional JDBC driver JARs via the Benchmark UI under Data Sources > Upload Driver.
+- Benchmark connects to `query` using the standard Apache Kylin JDBC driver (`jdbc:kylin://localhost:8092/<project>`). Upload additional JDBC driver JARs via the Benchmark UI under Data Sources > Upload Driver before running datasource tests or benchmark jobs that depend on them.
 - Preserved metadata comments (e.g. `YH_TARGET_ENGINE`) in SQL are used to route requests to specific backends within `query`.
 - If Flyway reports a checksum mismatch after editing an applied migration during local work, repair and migrate explicitly:
 

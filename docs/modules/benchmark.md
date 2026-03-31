@@ -16,7 +16,7 @@
 benchmark (Kylin JDBC) -> query -> Kylin / Presto / Hive
 ```
 
-Benchmark connects to `query` using the standard Apache Kylin JDBC driver (`jdbc:kylin://localhost:8092/<project>`). Additional JDBC driver JARs can be uploaded via the Benchmark UI under Data Sources > Upload Driver.
+Benchmark connects to `query` using the standard Apache Kylin JDBC driver (`jdbc:kylin://localhost:8092/<project>`). Additional JDBC driver JARs can be uploaded via the Benchmark UI under Data Sources > Upload Driver, then reused for datasource tests, debug queries, and benchmark runs.
 
 ## Prepared Execution Notes
 

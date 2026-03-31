@@ -51,6 +51,13 @@ Base service: `benchmark`
 | `POST` | `/api/v1/datasources/test` | `Implemented` | Test datasource connection | Connectivity-only validation. |
 | `POST` | `/api/v1/datasources/{id}/query` | `Implemented` | Execute debug SQL through a datasource | Statement-style debug path. |
 
+### Drivers
+
+| Method | Path | Status | Purpose | Notes |
+|---|---|---|---|---|
+| `GET` | `/api/v1/drivers` | `Implemented` | List uploaded benchmark JDBC driver JARs | Returns filenames under `./drivers/`. |
+| `POST` | `/api/v1/drivers/upload` | `Implemented` | Upload a benchmark JDBC driver JAR | Registers uploaded drivers through `URLClassLoader` + `DriverShim`. |
+
 ### Jobs
 
 | Method | Path | Status | Purpose | Notes |

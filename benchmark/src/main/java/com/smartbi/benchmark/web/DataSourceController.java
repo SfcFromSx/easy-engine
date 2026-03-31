@@ -1,13 +1,13 @@
 package com.smartbi.benchmark.web;
 
 import com.smartbi.benchmark.domain.BenchmarkDataSource;
+import com.smartbi.benchmark.jdbc.JdbcDriverRegistry;
 import com.smartbi.benchmark.repo.BenchmarkDataSourceRepository;
 import com.smartbi.benchmark.repo.BenchmarkJobRepository;
 import com.smartbi.benchmark.web.dto.QueryRequest;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.util.List;
 
 @RestController
@@ -17,13 +17,16 @@ public class DataSourceController {
     private final BenchmarkDataSourceRepository repository;
     private final BenchmarkJobRepository jobRepository;
     private final BenchmarkQueryService queryService;
+    private final JdbcDriverRegistry driverRegistry;
 
     public DataSourceController(BenchmarkDataSourceRepository repository,
                                 BenchmarkJobRepository jobRepository,
-                                BenchmarkQueryService queryService) {
+                                BenchmarkQueryService queryService,
+                                JdbcDriverRegistry driverRegistry) {
         this.repository = repository;
         this.jobRepository = jobRepository;
         this.queryService = queryService;
+        this.driverRegistry = driverRegistry;
     }
 
     @GetMapping
@@ -69,10 +72,7 @@ public class DataSourceController {
     @PostMapping("/test")
     public String testConnection(@RequestBody BenchmarkDataSource ds) {
         try {
-            Class.forName(ds.getDriverClass());
-            try (Connection conn = DriverManager.getConnection(ds.getJdbcUrl(), 
-                    ds.getJdbcUser() != null ? ds.getJdbcUser() : "", 
-                    ds.getJdbcPassword() != null ? ds.getJdbcPassword() : "")) {
+            try (Connection conn = driverRegistry.openConnection(ds)) {
                 return "SUCCESS";
             }
         } catch (Exception e) {
