@@ -4,8 +4,12 @@ import com.smartbi.benchmark.domain.BenchmarkTestSet;
 import com.smartbi.benchmark.domain.BenchmarkTestSetItem;
 import com.smartbi.benchmark.repo.BenchmarkTestSetItemRepository;
 import com.smartbi.benchmark.repo.BenchmarkTestSetRepository;
+import com.smartbi.benchmark.testset.TestSetAuthoringService;
 import com.smartbi.benchmark.testset.TestSetImportService;
+import com.smartbi.benchmark.web.dto.TestSetItemReorderRequest;
 import com.smartbi.benchmark.web.dto.TestSetListVo;
+import com.smartbi.benchmark.web.dto.TestSetItemWriteRequest;
+import com.smartbi.benchmark.web.dto.TestSetTemplateCopyRequest;
 import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -21,13 +25,16 @@ import java.util.Map;
 public class TestSetController {
 
     private final TestSetImportService importService;
+    private final TestSetAuthoringService authoringService;
     private final BenchmarkTestSetRepository testSetRepository;
     private final BenchmarkTestSetItemRepository itemRepository;
 
     public TestSetController(TestSetImportService importService,
+                             TestSetAuthoringService authoringService,
                              BenchmarkTestSetRepository testSetRepository,
                              BenchmarkTestSetItemRepository itemRepository) {
         this.importService = importService;
+        this.authoringService = authoringService;
         this.testSetRepository = testSetRepository;
         this.itemRepository = itemRepository;
     }
@@ -72,9 +79,10 @@ public class TestSetController {
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Map<String, Object> upload(
             @RequestPart("file") MultipartFile file,
-            @RequestParam(value = "name", required = false) String name) {
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "description", required = false) String description) {
         try {
-            BenchmarkTestSet set = importService.importFromExcel(file, name);
+            BenchmarkTestSet set = importService.importFromExcel(file, name, description);
             long cnt = itemRepository.countByTestSetId(set.getId());
             Map<String, Object> m = new HashMap<>();
             m.put("testSet", set);
@@ -90,6 +98,36 @@ public class TestSetController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable long id) {
         testSetRepository.deleteById(id);
+    }
+
+    @PostMapping("/{id}/items")
+    public BenchmarkTestSetItem createItem(@PathVariable long id,
+                                           @RequestBody TestSetItemWriteRequest request) {
+        return authoringService.createItem(id, request);
+    }
+
+    @PutMapping("/{id}/items/{itemId}")
+    public BenchmarkTestSetItem updateItem(@PathVariable long id,
+                                           @PathVariable long itemId,
+                                           @RequestBody TestSetItemWriteRequest request) {
+        return authoringService.updateItem(id, itemId, request);
+    }
+
+    @DeleteMapping("/{id}/items/{itemId}")
+    public void deleteItem(@PathVariable long id, @PathVariable long itemId) {
+        authoringService.deleteItem(id, itemId);
+    }
+
+    @PostMapping("/{id}/items/copy-templates")
+    public List<BenchmarkTestSetItem> copyTemplates(@PathVariable long id,
+                                                    @RequestBody TestSetTemplateCopyRequest request) {
+        return authoringService.copyTemplates(id, request);
+    }
+
+    @PutMapping("/{id}/items/reorder")
+    public List<BenchmarkTestSetItem> reorderItems(@PathVariable long id,
+                                                   @RequestBody TestSetItemReorderRequest request) {
+        return authoringService.reorderItems(id, request);
     }
 
     private static void applyEditableFields(BenchmarkTestSet target, BenchmarkTestSet source) {

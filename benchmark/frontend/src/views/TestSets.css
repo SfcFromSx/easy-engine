@@ -1,0 +1,258 @@
+.test-sets-view-container {
+  max-width: 100%;
+}
+
+.page-header {
+  margin-bottom: 16px;
+}
+
+.excel-uploader {
+  width: 100%;
+}
+
+:deep(.el-upload-dragger) {
+  padding: 10px 20px !important;
+}
+
+:deep(.el-icon--upload) {
+  font-size: 32px !important;
+  margin-bottom: 8px !important;
+}
+
+.workflow-callout {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f8fbff 0%, #eef6ff 100%);
+  color: var(--color-body);
+}
+
+.workflow-callout__title {
+  font-size: var(--font-size-subtitle);
+  font-weight: 700;
+  color: #1e3a8a;
+  margin-bottom: 4px;
+}
+
+.glass-card,
+.table-card {
+  padding: 0;
+}
+
+:deep(.el-table .cell) {
+  word-break: break-word;
+}
+
+:deep(.el-table__row) {
+  height: 40px;
+}
+
+:deep(.el-card__body) {
+  padding: 0 !important;
+}
+
+.drawer-guide {
+  margin-bottom: 12px;
+}
+
+.drawer-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.item-entry {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+  background: #fff;
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.item-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.item-actions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.item-label {
+  font-weight: 600;
+}
+
+.item-mode-hint {
+  margin: 8px 0 10px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.param-json {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.param-json pre {
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.param-json--missing {
+  color: #b45309;
+}
+
+.creation-mode-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.mode-option {
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: #f8fbff;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.mode-option strong {
+  color: #1e3a8a;
+}
+
+.mode-option span {
+  color: #475569;
+  font-size: 12px;
+}
+
+.mode-option--active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.12);
+}
+
+.dialog-upload-area {
+  margin-top: 6px;
+}
+
+.selected-upload-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 10px;
+}
+
+.item-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.template-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.template-picker-summary {
+  margin-bottom: 10px;
+  color: #475569;
+  font-size: 13px;
+}
+
+.template-picker-list {
+  max-height: 460px;
+  overflow: auto;
+}
+
+.template-picker-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  background: #fff;
+}
+
+.template-picker-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.template-picker-meta {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.template-picker-sql {
+  font-family: 'Fira Code', 'Courier New', monospace;
+  font-size: 12px;
+  color: #0f172a;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.empty-items {
+  padding: 20px 12px;
+  text-align: center;
+  color: #64748b;
+}
+
+.empty-items p {
+  margin: 0 0 6px;
+  font-weight: 600;
+  color: #334155;
+}
+
+@media (max-width: 768px) {
+  .creation-mode-switch,
+  .item-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .item-header,
+  .template-toolbar,
+  .selected-upload-file {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .item-actions {
+    justify-content: flex-start;
+  }
+}

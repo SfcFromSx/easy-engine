@@ -1,0 +1,273 @@
+  <div class="test-sets-view-container">
+    <div class="page-header">
+      <div class="title-group">
+        <h1>{{ $t('testSets.title') }}</h1>
+        <p class="subtitle">{{ $t('testSets.subtitle') }}</p>
+      </div>
+      <el-button type="primary" @click="openCreate">
+        <el-icon style="margin-right: 4px"><Plus :size="16" /></el-icon>
+        {{ $t('testSets.addBtn') }}
+      </el-button>
+    </div>
+
+    <div class="workflow-callout compact-alert">
+      <div class="workflow-callout__title">💡 {{ $t('testSets.workflowTitle') }}</div>
+      <p style="font-size: 11px; margin: 2px 0;">{{ $t('testSets.workflowOverride') }} {{ $t('testSets.workflowPrepared') }} {{ $t('testSets.workflowColumns') }}</p>
+    </div>
+
+    <div class="glass-card table-card">
+      <div class="list-toolbar">
+        <div class="toolbar-filters">
+          <el-input
+            v-model="keyword"
+            clearable
+            class="toolbar-input"
+            :placeholder="$t('testSets.filterKeywordPlaceholder')"
+          />
+          <el-select
+            v-model="sourceFilter"
+            class="toolbar-select"
+            :placeholder="$t('testSets.filterSourcePlaceholder')"
+          >
+            <el-option :label="$t('testSets.sourceAll')" value="all" />
+            <el-option :label="$t('testSets.sourceUploaded')" value="uploaded" />
+            <el-option :label="$t('testSets.sourceManual')" value="manual" />
+          </el-select>
+        </div>
+        <div class="toolbar-summary">
+          <span>{{ $t('testSets.filterSummary', { count: filteredTestSets.length, total: testSets.length }) }}</span>
+        </div>
+      </div>
+
+      <el-table :data="filteredTestSets" v-loading="loading" stripe>
+        <el-table-column prop="name" :label="$t('testSets.colName')" width="220" />
+        <el-table-column prop="sourceFilename" :label="$t('testSets.colType')" width="180">
+          <template #default="{ row }">
+            <el-tag :type="row.sourceFilename ? 'primary' : 'info'" size="small">
+              {{ row.sourceFilename || $t('testSets.manualLabel') }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('testSets.colQueries')" width="120">
+          <template #default="{ row }">
+            {{ row.itemCount ?? row.sqlCount ?? 0 }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="description" :label="$t('testSets.colDesc')" min-width="200" />
+        <el-table-column :label="$t('common.actions')" width="180" fixed="right">
+          <template #default="{ row }">
+            <el-button size="small" link @click="manageItems(row)">{{ $t('testSets.manageBtn') }}</el-button>
+            <el-button size="small" link @click="edit(row)">{{ $t('common.edit') }}</el-button>
+            <el-button size="small" type="danger" link @click="remove(row)">{{ $t('common.delete') }}</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+
+    <el-drawer
+      v-model="drawerVisible"
+      :title="$t('testSets.drawerTitle', { name: activeSet?.name || '-' })"
+      size="650px"
+      destroy-on-close
+    >
+      <div class="drawer-guide">
+        <div class="drawer-guide__title">{{ $t('testSets.drawerGuideTitle') }}</div>
+        <p>{{ $t('testSets.drawerHint') }}</p>
+      </div>
+      <div class="drawer-actions">
+        <el-button type="primary" @click="openAddItem">{{ $t('testSets.addItemBtn') }}</el-button>
+        <el-button @click="openTemplatePicker">{{ $t('testSets.addFromTemplatesBtn') }}</el-button>
+      </div>
+      <div v-loading="itemsLoading">
+        <div v-if="!items.length" class="empty-items">
+          <p>{{ $t('testSets.emptyItemsTitle') }}</p>
+          <span>{{ $t('testSets.emptyItemsHint') }}</span>
+        </div>
+        <div v-for="item in items" :key="item.id" class="item-entry">
+          <div class="item-header">
+            <div class="item-meta">
+              <el-tag size="small" type="info">#{{ item.sortOrder }}</el-tag>
+              <span class="item-label">{{ item.label || $t('testSets.itemUntitled') }}</span>
+              <el-tag size="small" effect="plain">{{ $t('testSets.itemWeightTag', { weight: item.weight }) }}</el-tag>
+              <el-tag size="small" :type="item.executionMode === 'PREPARED_STATEMENT' ? 'warning' : 'info'">
+                {{ item.executionMode || 'STATEMENT' }}
+              </el-tag>
+            </div>
+            <div class="item-actions">
+              <el-button link size="small" @click="moveItem(item, -1)">{{ $t('testSets.moveUpBtn') }}</el-button>
+              <el-button link size="small" @click="moveItem(item, 1)">{{ $t('testSets.moveDownBtn') }}</el-button>
+              <el-button link size="small" @click="editItem(item)">{{ $t('common.edit') }}</el-button>
+              <el-button link size="small" type="danger" @click="removeItem(item)">{{ $t('common.delete') }}</el-button>
+            </div>
+          </div>
+          <p class="item-mode-hint">
+            {{
+              item.executionMode === 'PREPARED_STATEMENT'
+                ? $t('testSets.itemPreparedHint')
+                : $t('testSets.itemStatementHint')
+            }}
+          </p>
+          <CodeBlock :code="item.sqlText" />
+          <div v-if="item.paramJson" class="param-json">
+            <strong>{{ $t('testSets.itemParamsLabel') }}:</strong>
+            <pre>{{ formatParamJson(item.paramJson) }}</pre>
+          </div>
+          <div v-else-if="item.executionMode === 'PREPARED_STATEMENT'" class="param-json param-json--missing">
+            <strong>{{ $t('testSets.itemParamsLabel') }}:</strong>
+            <span>{{ $t('testSets.itemParamsMissing') }}</span>
+          </div>
+        </div>
+      </div>
+    </el-drawer>
+
+    <el-dialog v-model="dlg" :title="form.id ? $t('testSets.dlgEdit') : $t('testSets.dlgAdd')" width="680px" append-to-body>
+      <div v-if="!isEditingSet" class="creation-mode-switch">
+        <button
+          type="button"
+          class="mode-option"
+          :class="{ 'mode-option--active': createMode === 'empty' }"
+          @click="createMode = 'empty'"
+        >
+          <strong>{{ $t('testSets.modeEmptyTitle') }}</strong>
+          <span>{{ $t('testSets.modeEmptyHint') }}</span>
+        </button>
+        <button
+          type="button"
+          class="mode-option"
+          :class="{ 'mode-option--active': createMode === 'upload' }"
+          @click="createMode = 'upload'"
+        >
+          <strong>{{ $t('testSets.modeUploadTitle') }}</strong>
+          <span>{{ $t('testSets.modeUploadHint') }}</span>
+        </button>
+      </div>
+
+      <el-form :model="form" label-width="120px">
+        <el-form-item :label="$t('testSets.colName')" required>
+          <el-input v-model="form.name" :placeholder="$t('testSets.colName')" />
+        </el-form-item>
+        <el-form-item :label="$t('testSets.colDesc')">
+          <el-input type="textarea" v-model="form.description" />
+        </el-form-item>
+        <div v-if="!isEditingSet && createMode === 'upload'" class="dialog-upload-area">
+          <el-upload
+            class="excel-uploader"
+            drag
+            action="#"
+            :auto-upload="false"
+            :show-file-list="false"
+            accept=".xlsx, .xls"
+            :on-change="handleCreateFileChange"
+          >
+            <el-icon class="el-icon--upload"><upload-cloud /></el-icon>
+            <div class="el-upload__text">
+              {{ $t('testSets.uploadHint') }} <em>{{ $t('testSets.uploadClick') }}</em>
+            </div>
+            <template #tip>
+              <div class="el-upload__tip">
+                {{ $t('testSets.uploadTip') }}
+                <span class="upload-tip-accent">{{ $t('testSets.uploadOptionalColumns') }}</span>
+              </div>
+            </template>
+          </el-upload>
+          <div v-if="createFileName" class="selected-upload-file">
+            <span>{{ $t('testSets.selectedFileLabel', { name: createFileName }) }}</span>
+            <el-button link type="primary" @click="clearCreateFile">{{ $t('testSets.clearSelectedFileBtn') }}</el-button>
+          </div>
+        </div>
+      </el-form>
+      <template #footer>
+        <el-button @click="dlg = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="savingSet" @click="saveTestSet">{{ $t('testSets.saveSetBtn') }}</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="itemDlg" :title="itemForm.id ? $t('testSets.itemEditTitle') : $t('testSets.itemAddTitle')" width="820px" top="8vh" append-to-body>
+      <el-form :model="itemForm" label-position="top">
+        <el-form-item :label="$t('testSets.itemLabelLabel')">
+          <el-input v-model="itemForm.label" />
+        </el-form-item>
+        <el-form-item :label="$t('testSets.itemSqlLabel')" required>
+          <el-input
+            v-model="itemForm.sqlText"
+            type="textarea"
+            :rows="10"
+            :placeholder="$t('testSets.itemSqlPlaceholder')"
+            style="font-family: 'Fira Code', 'Courier New', monospace; font-size: 13px"
+          />
+        </el-form-item>
+        <div class="item-form-grid">
+          <el-form-item :label="$t('testSets.itemWeightLabel')">
+            <el-input-number v-model="itemForm.weight" :min="1" :max="1000" style="width: 100%" />
+          </el-form-item>
+          <el-form-item :label="$t('testSets.itemModeLabel')">
+            <el-select v-model="itemForm.executionMode" style="width: 100%">
+              <el-option :label="$t('templates.modeStatementOption')" value="STATEMENT" />
+              <el-option :label="$t('templates.modePreparedOption')" value="PREPARED_STATEMENT" />
+            </el-select>
+          </el-form-item>
+        </div>
+        <el-form-item :label="$t('testSets.itemParamsDialogLabel')">
+          <el-input
+            v-model="itemForm.paramJson"
+            :disabled="!isPreparedItemMode"
+            :placeholder="$t('templates.paramPlaceholder')"
+          />
+          <div class="hint">
+            {{ isPreparedItemMode ? $t('testSets.itemPreparedHint') : $t('testSets.itemStatementHint') }}
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="itemDlg = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="itemSaving" @click="saveItem">{{ $t('testSets.saveItemBtn') }}</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="templateDlg" :title="$t('testSets.templatePickerTitle')" width="860px" top="8vh" append-to-body>
+      <div class="template-toolbar">
+        <el-input
+          v-model="templateKeyword"
+          clearable
+          class="toolbar-input"
+          :placeholder="$t('testSets.templateSearchPlaceholder')"
+          @clear="loadTemplates"
+          @keyup.enter="loadTemplates"
+        />
+        <el-select v-model="templateModeFilter" clearable class="toolbar-select" :placeholder="$t('templates.filterModePlaceholder')" @change="loadTemplates">
+          <el-option :label="$t('templates.filterModeAll')" value="" />
+          <el-option label="STATEMENT" value="STATEMENT" />
+          <el-option label="PREPARED_STATEMENT" value="PREPARED_STATEMENT" />
+        </el-select>
+        <el-button @click="loadTemplates">{{ $t('common.refresh') }}</el-button>
+      </div>
+      <div class="template-picker-summary">
+        {{ $t('testSets.templateSelectionSummary', { count: selectedTemplateCount }) }}
+      </div>
+      <div class="template-picker-list" v-loading="templateLoading">
+        <label v-for="template in availableTemplates" :key="template.id" class="template-picker-row">
+          <input
+            type="checkbox"
+            :checked="selectedTemplateIds.includes(template.id)"
+            @change="toggleTemplateSelection(template.id, $event.target.checked)"
+          >
+          <div class="template-picker-content">
+            <div class="template-picker-meta">
+              <strong>{{ template.name }}</strong>
+              <span>{{ $t('testSets.itemWeightTag', { weight: template.weight || 1 }) }}</span>
+              <span>{{ template.executionMode || 'STATEMENT' }}</span>
+            </div>
+            <div class="template-picker-sql">{{ previewSql(template.sqlText) }}</div>
+          </div>
+        </label>
+        <div v-if="!templateLoading && !availableTemplates.length" class="empty-items">
+          <p>{{ $t('testSets.templateEmptyTitle') }}</p>
+          <span>{{ $t('testSets.templateEmptyHint') }}</span>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="templateDlg = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="copyingTemplates" @click="copySelectedTemplates">{{ $t('testSets.copyTemplatesBtn') }}</el-button>
+      </template>
+    </el-dialog>
+  </div>

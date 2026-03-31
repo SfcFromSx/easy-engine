@@ -50,10 +50,11 @@ class TestSetImportServiceTest {
                 workbookBytes(true, true)
         );
 
-        BenchmarkTestSet imported = service.importFromExcel(file, " Imported Cases ");
+        BenchmarkTestSet imported = service.importFromExcel(file, " Imported Cases ", " Imported from Excel ");
 
         assertEquals(Long.valueOf(12L), imported.getId());
         assertEquals("Imported Cases", imported.getName());
+        assertEquals("Imported from Excel", imported.getDescription());
         assertEquals("cases.xlsx", imported.getSourceFilename());
         assertEquals(2, savedItems.size());
         assertEquals("first-row", savedItems.get(0).getLabel());
@@ -79,7 +80,7 @@ class TestSetImportServiceTest {
                 "sql".getBytes(StandardCharsets.UTF_8)
         );
         IllegalArgumentException invalidType = assertThrows(IllegalArgumentException.class,
-                () -> service.importFromExcel(invalidExtension, null));
+                () -> service.importFromExcel(invalidExtension, null, null));
         assertEquals("仅支持 .xlsx 或 .xls", invalidType.getMessage());
 
         MockMultipartFile emptyWorkbook = new MockMultipartFile(
@@ -89,7 +90,7 @@ class TestSetImportServiceTest {
                 workbookBytes(false, false)
         );
         IllegalArgumentException emptySheet = assertThrows(IllegalArgumentException.class,
-                () -> service.importFromExcel(emptyWorkbook, null));
+                () -> service.importFromExcel(emptyWorkbook, null, null));
         assertEquals("未解析到任何 SQL 行（请检查第一列为 SQL 文本）", emptySheet.getMessage());
     }
 
@@ -106,7 +107,7 @@ class TestSetImportServiceTest {
                 "not-a-workbook".getBytes(StandardCharsets.UTF_8)
         );
 
-        assertThrows(Exception.class, () -> service.importFromExcel(invalidWorkbook, null));
+        assertThrows(Exception.class, () -> service.importFromExcel(invalidWorkbook, null, null));
     }
 
     private static byte[] workbookBytes(boolean includeRows, boolean withHeader) throws Exception {

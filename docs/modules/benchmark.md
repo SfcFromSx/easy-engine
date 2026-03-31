@@ -6,7 +6,7 @@
 
 - Manage benchmark datasources.
 - Manage SQL templates with statement and prepared execution modes.
-- Manage test sets and Excel imports.
+- Manage test sets through manual SQL rows, SQL-template seeding, and Excel imports.
 - Launch benchmark runs and store structured run reports.
 - Expose preflight checks for Kylin and Presto dependencies.
 
@@ -25,15 +25,18 @@ Benchmark connects to `query` using the standard Apache Kylin JDBC driver (`jdbc
 - `execution_mode` supports `STATEMENT` and `PREPARED_STATEMENT`.
 - `STATEMENT` executes raw SQL text.
 - `PREPARED_STATEMENT` expects ordered `param_json` arrays for parameter binding.
-- Template authoring and test-set import both expose `execution_mode` and `param_json` for prepared workflows.
+- Template authoring, manual test-set rows, template-copy flows, and test-set import all expose `execution_mode` and `param_json` for prepared workflows.
 - Benchmark runs support prepared execution more fully than the datasource debug endpoint.
 
 ## Operator Notes
 
 - Datasources load full lists in the frontend and expose client-side keyword search plus a dedicated driver-class filter.
 - Jobs load full lists in the frontend and expose client-side keyword search plus dedicated datasource, strategy, and test-set filters. The keyword matcher now also covers job ID, concurrency, and rounds.
-- Test sets keep the existing client-side keyword plus source filters. No dedicated SQL-count filter is exposed yet because `itemCount` is not currently a strong enough operator dimension to justify another control.
+- Test sets keep the existing client-side keyword plus source filters. Creating a test set now happens from one dialog with two paths: upload an Excel workbook immediately, or create an empty set and start authoring rows in place.
+- The test-set detail drawer is now an authoring surface rather than a read-only preview: operators can add/edit/delete rows, reorder rows with simple move actions, and copy global SQL templates into the active test set for later editing.
+- Uploaded/imported rows are no longer locked after creation. They share the same editable item contract as manually added or template-copied rows.
 - Templates keep request-backed pagination and now support keyword search plus an `executionMode` filter. `GET /api/v1/templates` accepts optional `keyword` and `executionMode`, and the keyword matcher now covers `name`, `sqlText`, `description`, `executionMode`, and `paramJson`.
+- Test-set authoring APIs now extend beyond list/upload: `POST /api/v1/test-sets/{id}/items`, `PUT /api/v1/test-sets/{id}/items/{itemId}`, `DELETE /api/v1/test-sets/{id}/items/{itemId}`, `POST /api/v1/test-sets/{id}/items/copy-templates`, and `PUT /api/v1/test-sets/{id}/items/reorder` all persist against the existing test-set item table without adding a new schema.
 - Runs keep request-backed pagination and now support optional `jobId` plus optional `status`. The job filter is clearable so operators can return to global history, and changing either filter resets pagination to page 1 before reloading `/runs`.
 - `GET /api/v1/runs` now supports both filtered and global history reads: pass `jobId` for the existing per-job list, or omit it to fetch the newest benchmark runs across all jobs without a backend error.
 - `GET /api/v1/preflight` only performs live probes for Kylin REST and Presto. The returned `mysql.status=OK` row is currently a UI shortcut based on the benchmark service already starting with its configured MySQL datasource; it is not a live socket/query probe and should not be treated as standalone database liveness evidence.

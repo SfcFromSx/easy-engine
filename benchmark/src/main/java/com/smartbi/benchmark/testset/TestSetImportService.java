@@ -30,7 +30,7 @@ public class TestSetImportService {
     }
 
     @Transactional
-    public BenchmarkTestSet importFromExcel(MultipartFile file, String nameOverride) throws Exception {
+    public BenchmarkTestSet importFromExcel(MultipartFile file, String nameOverride, String descriptionOverride) throws Exception {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("文件为空");
         }
@@ -58,6 +58,7 @@ public class TestSetImportService {
 
         BenchmarkTestSet set = new BenchmarkTestSet();
         set.setName(StringUtils.hasText(nameOverride) ? nameOverride.trim() : stripExtension(orig));
+        set.setDescription(StringUtils.hasText(descriptionOverride) ? descriptionOverride.trim() : null);
         set.setSourceFilename(orig);
         set = testSetRepository.save(set);
 
