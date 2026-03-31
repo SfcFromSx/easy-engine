@@ -23,6 +23,7 @@ If a task changes structured telemetry, reports, traces, or operator-visible JSO
 - When a scenario produces structured records, query them after execution and assert they exist with the expected shape and values.
 - When a task changes frontend operator behavior, validate both backend data shape and frontend rendering assumptions.
 - Record validation evidence in the task result using concrete commands, files, and artifacts.
+- For `query` test changes, keep [docs/modules/query-test-matrix.md](/Users/sfc/Documents/projects/engine/docs/modules/query-test-matrix.md) aligned with the production function inventory and add a short adjacent comment above each `@Test` naming the mapped production function as `ClassName#methodName`.
 
 ## Current Automated Commands
 
@@ -78,6 +79,7 @@ Benchmark-specific checklist:
 
 Current backend test inventory:
 
+- [modules/query-test-matrix.md](/Users/sfc/Documents/projects/engine/docs/modules/query-test-matrix.md): canonical query function inventory and branch-to-test traceability map.
 - [`query/src/test/java/com/smartbi/query/parsing/SqlCommentParserTest.java`](/Users/sfc/Documents/projects/engine/query/src/test/java/com/smartbi/query/parsing/SqlCommentParserTest.java): parsing-level unit checks.
 - [`query/src/test/java/com/smartbi/query/service/QueryCacheServiceTest.java`](/Users/sfc/Documents/projects/engine/query/src/test/java/com/smartbi/query/service/QueryCacheServiceTest.java): cache-service unit checks.
 - [`query/src/test/java/com/smartbi/query/web/QueryWebIntegrationTest.java`](/Users/sfc/Documents/projects/engine/query/src/test/java/com/smartbi/query/web/QueryWebIntegrationTest.java): end-to-end query web and trace publication behavior.
@@ -85,9 +87,12 @@ Current backend test inventory:
 
 Query-specific checklist:
 
+- Update [docs/modules/query-test-matrix.md](/Users/sfc/Documents/projects/engine/docs/modules/query-test-matrix.md) whenever a non-trivial query function or branch changes.
+- Add a short adjacent comment above each query `@Test` that states what it covers and names the mapped production function as `ClassName#methodName`.
 - For routing, cache, prepared execution, or trace changes, prefer extending `QueryWebIntegrationTest` so the executed request path is realistic.
 - Assert both the direct query response and the published trace payload when trace or execution metadata changes.
 - If the change affects downstream manager ingestion contracts, verify the manager-side persistence/API path too, not only query-side output.
+- When running `mvn -q -f query/pom.xml test`, record the JaCoCo report path under `query/target/site/jacoco/` and summarize any remaining uncovered inventoried branches or explicit exclusions from the matrix.
 
 ### Manager
 

@@ -43,6 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 "engine.query.datasource.default.jdbc-url=jdbc:h2:mem:trace_query;MODE=MySQL;DB_CLOSE_DELAY=-1",
                 "engine.query.datasource.default.username=sa",
                 "engine.query.datasource.default.password=",
+                "engine.query.manager-url=",
                 "engine.query.auth.username=ADMIN",
                 "engine.query.auth.password=KYLIN"
         }
@@ -74,6 +75,7 @@ class QueryTracePersistenceIntegrationTest {
         }
     }
 
+    // Covers JdbcTraceWriter#publish and JdbcTraceWriter#upsertPatternStats through the persisted HTTP trace path.
     @Test
     void shouldPersistTraceRowsDirectlyToTraceDatabase() throws Exception {
         String body = "{\"sql\":\"SELECT NAME FROM SALES ORDER BY ID\",\"project\":\"demo\"}";

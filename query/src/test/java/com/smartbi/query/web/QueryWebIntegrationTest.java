@@ -43,6 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 "engine.query.datasource.named.presto_local.jdbc-url=jdbc:h2:mem:webtest_presto;MODE=MySQL;DB_CLOSE_DELAY=-1",
                 "engine.query.datasource.named.presto_local.username=sa",
                 "engine.query.datasource.named.presto_local.password=",
+                "engine.query.manager-url=",
                 "engine.query.auth.username=ADMIN",
                 "engine.query.auth.password=KYLIN"
         }
@@ -77,6 +78,7 @@ class QueryWebIntegrationTest {
         }
     }
 
+    // Covers QueryController#query and QueryWebIntegrationTest's removed-endpoint contract guard.
     @Test
     void shouldRejectRemovedNonQueryEndpoints() throws Exception {
         mockMvc.perform(post("/kylin/api/user/authentication")
@@ -89,6 +91,7 @@ class QueryWebIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+    // Covers QueryExecutionService#execute cache-hit behavior through the HTTP path.
     @Test
     void shouldServeCacheHitOnSecondQuery() throws Exception {
         String body = "{\"sql\":\"SELECT NAME FROM SALES ORDER BY ID\",\"project\":\"demo\"}";
@@ -110,6 +113,7 @@ class QueryWebIntegrationTest {
                 .andExpect(jsonPath("$.results[1][0]").value("beta"));
     }
 
+    // Covers QueryExecutionService#execute non-query rejection through the HTTP path.
     @Test
     void shouldReturnKylinStyleExceptionPayloadForNonQuerySql() throws Exception {
         String body = "{\"sql\":\"DELETE FROM SALES WHERE ID = 1\",\"project\":\"demo\"}";
@@ -123,6 +127,7 @@ class QueryWebIntegrationTest {
                 .andExpect(jsonPath("$.exceptionMessage").exists());
     }
 
+    // Covers QueryExecutionService#resolveExecutionMode and TraceReportingService#report statement traces through the HTTP path.
     @Test
     void shouldPublishStatementExecutionModeInTracePayload() throws Exception {
         String body = "{\"sql\":\"SELECT NAME FROM SALES ORDER BY ID\",\"project\":\"demo\"}";
@@ -139,6 +144,7 @@ class QueryWebIntegrationTest {
                 || trace.path("parameterPayload").isNull());
     }
 
+    // Covers QueryExecutionService#bindParameters and TraceReportingService#report prepared traces through the HTTP path.
     @Test
     void shouldPublishPreparedExecutionModeInTracePayload() throws Exception {
         String body = "{\"sql\":\"SELECT NAME FROM SALES WHERE ID = ?\",\"project\":\"demo\",\"params\":[{\"className\":\"java.lang.Integer\",\"value\":\"1\"}]}";
@@ -156,6 +162,7 @@ class QueryWebIntegrationTest {
                 || trace.path("parameterPayload").isNull());
     }
 
+    // Covers TraceReportingService#resolveParameterPayload failed-prepared branch through the HTTP path.
     @Test
     void shouldPublishReadableParameterPayloadForFailedPreparedExecution() throws Exception {
         String body = "{\"sql\":\"SELECT NAME FROM SALES WHERE ID = ?\",\"project\":\"demo\",\"params\":[{\"className\":\"java.lang.Integer\",\"value\":\"not-a-number\"}]}";
@@ -174,6 +181,7 @@ class QueryWebIntegrationTest {
                 trace.path("parameterPayload").asText());
     }
 
+    // Covers SqlRouteService#routeAndRewrite preserved-metadata routing through the HTTP path.
     @Test
     void shouldRouteByPreservedMetadataHint() throws Exception {
         String body = "{\"sql\":\"/* YH_TARGET_ENGINE=presto_local */ SELECT NAME FROM NATION WHERE NATIONKEY = 1\",\"project\":\"demo\"}";
