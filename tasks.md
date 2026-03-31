@@ -68,7 +68,7 @@ Result: updated benchmark interface inventory and clarified that uploaded JDBC d
 
 ### ARCH-008
 
-- **Status:** todo
+- **Status:** done
 - **Module:** docs | **Type:** docs | **Priority:** 80
 - **Title:** UPDATE ARCHITECTURE DOCUMENTATION FOR NEW DESIGN
 - **Attempts:** 0
@@ -94,6 +94,16 @@ _(none — documentation task)_
 **Progress log**
 
 <!-- Foreman appends stage outcomes here during execution -->
+
+**2026-03-31 — implementation**
+Files changed: `README.md`, `docs/architecture/overview.md`, `docs/operations/local-development.md`, `docs/operations/git-workflow.md`, `docs/product/backlog.md`, `docs/product/roadmap.md`, `tasks.md`.
+Commands run: `sed`, `rg`.
+Result: architecture overview rewritten around the current `benchmark -> query -> backend engines` flow, control-plane ownership clarified, and stale `kylin-jdbc-cache` references removed from docs.
+
+**2026-03-31 — verification**
+Validation status: approved
+Evidence: `rg -n "kylin-jdbc-cache" README.md docs -g'*.md'` returned no matches; updated runbooks now describe the three-service startup flow with no standalone JDBC adapter service.
+Next action: commit.
 
 ---
 

@@ -25,21 +25,21 @@ cd /Users/sfc/Documents/projects/engine/query
 mvn spring-boot:run
 ```
 
-3. Start `manager`:
+2. Start `manager`:
 
 ```bash
 cd /Users/sfc/Documents/projects/engine/manager
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-4. Start `benchmark`:
+3. Start `benchmark`:
 
 ```bash
 cd /Users/sfc/Documents/projects/engine/benchmark
 mvn spring-boot:run
 ```
 
-5. Start frontends as needed:
+4. Start frontends as needed:
 
 ```bash
 npm --prefix manager/frontend run dev -- --host 127.0.0.1 --port 4173
@@ -48,6 +48,7 @@ npm --prefix benchmark/frontend run dev
 
 ## Operator Notes
 
+- There is no standalone JDBC adapter service in the active architecture. JDBC clients connect directly to `query`.
 - Benchmark is the preferred control surface for benchmark runs, preflight checks, and structured run reports.
 - Benchmark connects to `query` using the standard Apache Kylin JDBC driver (`jdbc:kylin://localhost:8092/<project>`). Upload additional JDBC driver JARs via the Benchmark UI under Data Sources > Upload Driver before running datasource tests or benchmark jobs that depend on them.
 - Preserved metadata comments (e.g. `YH_TARGET_ENGINE`) in SQL are used to route requests to specific backends within `query`.

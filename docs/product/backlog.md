@@ -30,7 +30,7 @@ This file merges the durable backlog signals from the previous root `todo.md` an
 
 - `QUERY-DOC-001`: keep routed-query documentation aligned with preserved metadata behavior.
 - `QUERY-FUNC-001`: audit and harden prepared-statement cache semantics in `query`.
-- `ARCH-001` through `ARCH-008`: see tasks.md for the full architecture redesign task set (remove kylin-jdbc-cache, direct PG trace, manager datasource config API, benchmark JDBC upload).
+- Continue hardening the post-redesign split between `benchmark`, `query`, and `manager` after the ARCH task set recorded in [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md).
 - `QUERY-ARCH-001`: define `query` as the execution source of truth and document the migration boundary from `jdbc`.
 - `QUERY-ARCH-002`: inventory execution semantics still owned by `jdbc` and rank migration priority for future extraction.
 
@@ -45,10 +45,6 @@ This file merges the durable backlog signals from the previous root `todo.md` an
 - Add stronger browser-level end-to-end validation for operator flows.
 - `TEST-01`: reduce cross-service E2E validation to a single reproducible command for `benchmark`, `query`, and `manager`.
 - `TEST-02`: add seed-level assertions for renamed branding, doc assumptions, and runtime contracts in benchmark tests.
-
-## Structural Risks
-
-- `kylin-jdbc-cache` is being removed (ARCH-001); any archived nested Git history under `.agent/runtime/archived-git/` can be cleaned up after ARCH-001 is completed.
 
 ## Issue Intake
 

@@ -10,7 +10,7 @@
 ## Phase 2
 
 - keep the root Git boundary stable,
-- remove `kylin-jdbc-cache` and migrate its responsibilities into `query` and `manager` (see ARCH-001 through ARCH-008 in tasks.md),
+- stabilize the current three-service split across `benchmark`, `query`, and `manager`,
 - run pilot autonomous tasks on documentation and small module-scoped fixes.
 
 ## Phase 3

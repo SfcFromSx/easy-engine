@@ -2,6 +2,12 @@
 
 Easy Engine is an agent-first workspace for query execution, control-plane analysis, and benchmark orchestration.
 
+The active runtime is a three-service system:
+
+- `query`: JDBC-facing execution service and trace emitter.
+- `manager`: control-plane API for datasource configs, traces, patterns, and acceleration metadata.
+- `benchmark`: benchmark orchestration service and operator UI.
+
 Canonical English documentation lives under [docs/README.md](/Users/sfc/Documents/projects/engine/docs/README.md).
 
 Use these entrypoints:

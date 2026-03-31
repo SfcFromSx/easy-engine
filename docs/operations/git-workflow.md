@@ -10,7 +10,7 @@ The foreman workflow uses the repository root as the canonical Git boundary.
 
 ## Archived Metadata Notes
 
-- The previous nested `kylin-jdbc-cache/.git` metadata has been archived under `.agent/runtime/archived-git/`. The `kylin-jdbc-cache` module is being removed (ARCH-001); the archived metadata can be cleaned up after that task completes.
+- Previous nested Git metadata, if archived under `.agent/runtime/archived-git/`, should remain outside active module paths.
 - Keep archived Git metadata outside active module paths.
 - Do not recreate nested `.git` directories without an explicit structural decision.
 
