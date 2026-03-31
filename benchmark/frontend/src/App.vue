@@ -279,7 +279,7 @@ onMounted(() => {
 }
 
 .main-content {
-  padding: 32px;
+  padding: 20px;
   background: #f8fafc;
 }
 

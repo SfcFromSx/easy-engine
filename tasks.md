@@ -287,10 +287,49 @@ _(none — documentation task)_
 
 ---
 
+### BENCH-UX-002
+
+- **Status:** done
+- **Module:** benchmark | **Type:** frontend | **Priority:** 85
+- **Title:** OPTIMIZE BENCHMARK DASHBOARD FOR SINGLE-SCREEN VIEW
+- **Attempts:** 1
+
+**Context files**
+
+- `benchmark/frontend/src/views/Dashboard.vue`
+- `benchmark/frontend/src/components/PerformanceCharts.vue`
+- `benchmark/frontend/src/App.vue`
+
+**Acceptance criteria**
+
+1. Dashboard fits in a single screen (1920x1080) without scrolling.
+2. Preflight and Execution sections are side-by-side.
+3. Chart heights reduced to 300px.
+4. Main layout padding reduced.
+
+**Validation commands**
+
+```bash
+npm --prefix benchmark/frontend run build
+```
+
+**Progress log**
+
+**2026-03-31 — implementation**
+Files changed: `App.vue`, `PerformanceCharts.vue`, `Dashboard.vue`.
+Result: implemented. Side-by-side layout, reduced heights/padding.
+
+**2026-03-31 — verification**
+Validation status: approved
+Evidence: Verified with vision browser at 1920x872 viewport. No scrolling required.
+
+---
+
 ## Done
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| BENCH-UX-002 | OPTIMIZE BENCHMARK DASHBOARD FOR SINGLE-SCREEN VIEW | benchmark | Dashboard fits in one screen |
 | QUERY-ARCH-001 | DEFINE QUERY AS EXECUTION SOURCE OF TRUTH | query | Architecture boundaries documented |
 | QUERY-DOC-001 | EXPAND QUERY ROUTING DOCUMENTATION | query | YH_TARGET_ENGINE precedence documented |
 | TRACE-MODE-001 | RECORD EXECUTION MODE FOR EVERY SQL TRACE | query | Execution mode added to trace and benchmark records |

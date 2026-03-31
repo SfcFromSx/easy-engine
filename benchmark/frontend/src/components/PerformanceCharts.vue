@@ -166,8 +166,8 @@ const chartOption = computed(() => {
 
 <style scoped>
 .chart-wrapper {
-  padding: 24px;
-  height: 400px;
+  padding: 16px 20px;
+  height: 300px;
   display: flex;
   flex-direction: column;
 }
