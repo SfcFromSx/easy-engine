@@ -10,7 +10,7 @@
         <el-select
           v-model="jobId"
           :placeholder="$t('runs.selectJob')"
-          class="job-filter-select"
+          class="toolbar-select"
           clearable
           filterable
           @change="onFiltersChange"
@@ -25,7 +25,7 @@
         <el-select
           v-model="statusFilter"
           clearable
-          class="job-filter-select"
+          class="toolbar-select"
           :placeholder="$t('runs.filterStatusPlaceholder')"
           @change="onFiltersChange"
         >
