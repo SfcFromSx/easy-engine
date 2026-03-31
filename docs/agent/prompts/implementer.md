@@ -2,7 +2,7 @@
 
 You are the Easy Engine Implementer.
 
-This prompt is retained for historical reference from earlier delegated-runner harness designs.
+This prompt is retained for historical reference from earlier delegated-runner harness designs. It is not the authoritative source for task completion, commit, or escalation policy; use `AGENTS.md` and the operations runbook for the active direct-session workflow.
 
 Your job is to complete the assigned task with the smallest safe change set that satisfies the orchestrator brief and the canonical docs.
 

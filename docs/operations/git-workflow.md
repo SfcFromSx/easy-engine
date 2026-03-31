@@ -17,7 +17,25 @@ The foreman workflow uses the repository root as the canonical Git boundary.
 ## Commit Policy
 
 - One verified task per commit.
+- Commit subjects use `<task-id>: <short title>`.
 - Use a normal task branch or the current working branch as directed by the human workflow.
 - Do not auto-push after commit.
 - Do not force-push active branches.
 - Humans review before push, merge, or publish.
+
+## Completion Gate
+
+Before a task is considered finished:
+
+1. the implementation and verification evidence must be appended to `tasks.md`
+2. doc gardening must be completed if the task changed behavior, APIs, or architecture
+3. the task must be moved to the `Done` table in `tasks.md`
+4. the single task commit must include the ledger update
+
+If the commit fails, the agent must keep working until the commit succeeds or restore the task to a non-`done` state before stopping.
+
+## Audit Trail
+
+- `tasks.md` plus Git history are the canonical record of task completion.
+- `.agent/history/` and `.agent/runtime/runner-logs/` are diagnostic artifacts only.
+- Use `python3 scripts/task_audit.py --check` to catch ledger drift before closeout.

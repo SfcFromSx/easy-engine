@@ -72,6 +72,7 @@ Validation status: rejected
 Evidence: `mvn -f tests/pom.xml test` still fails with `QueryHttpE2ETest#testPreparedStatementQuerySuccess` (`isException=true`) plus 5 `KylinJdbcE2ETest` errors returning HTTP `404` from `/kylin/api/user/authentication`; direct `curl -X POST http://127.0.0.1:17070/kylin/api/user/authentication` now returns `200` and `docker compose ps --all` shows `kylin` `healthy`, so the original container-readiness blocker is cleared but E2E validation still fails on the query/Kylin path.
 Next action: investigate the Kylin JDBC/query integration mismatch and rerun `mvn -f tests/pom.xml test` after that path is fixed.
 
+Escalation: none
 ---
 
 ### MGR-TEST-001
@@ -193,6 +194,7 @@ npm --prefix benchmark/frontend run build
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| HARNESS-GOV-001 | ENFORCE TASK FINALIZATION, COMMIT HYGIENE, AND BLOCKED-ISSUE ESCALATION | platform | Completion and escalation rules are now aligned across `AGENTS.md`, the operations runbook, git workflow, and `INBOX.md`; `.agent/config.json` now uses the `<task-id>: <short title>` commit template; `scripts/task_audit.py --check` now catches done-task drift, duplicate IDs, non-grandfathered missing commit links, and blocked-task entries that omit `Next action:` or `Escalation:`; `ARCH-010` now records `Escalation: none`; legacy harness drift is documented in `INBOX-20260331-001`; and `python3 scripts/task_audit.py --check`, the contract grep check, and the git-history check all pass. |
 | QUERY-TEST-001 | INVENTORY QUERY FUNCTIONS AND MAP TEST CASES TO LOGIC BRANCHES | query | `docs/modules/query-test-matrix.md` now maps the non-trivial query function inventory to concrete automated tests, every query `@Test` carries an adjacent `ClassName#methodName` traceability comment, JaCoCo artifacts are emitted under `query/target/site/jacoco/`, and `mvn -q -f query/pom.xml test` passes; remaining report misses are limited to excluded boilerplate/wiring classes and non-meaningful defensive branches documented in the matrix |
 | ARCH-014 | RESTORE LOCAL KYLIN CONTAINER READINESS FOR E2E | platform | Fresh `kylin` image rebuild now returns `200` from `/kylin/api/user/authentication`, `docker compose ps --all` reports `healthy`, and in-container YARN shows `Total Nodes:1` with no `sparder_on_docker` app stuck in `ACCEPTED`; remaining benchmark/query failures are now app-layer follow-up instead of container readiness |
 | ARCH-013 | VERIFY MYSQL STACK HEALTH FOR LOCAL E2E | platform | MySQL, Redis, Presto, manager, query, and benchmark were verified on local ports; benchmark startup required the forward `V16__benchmark_job_data_source_id_bigint.sql` migration; the remaining Kylin blocker was recorded for follow-up |

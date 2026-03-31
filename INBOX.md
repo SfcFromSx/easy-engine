@@ -7,14 +7,27 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Record items here only when they are not already tracked in `tasks.md`.
 - Keep entries evidence-based and concise.
 - Use this inbox for defects, harness/process concerns, and improvement suggestions that need human judgment.
+- Task-specific failures that are already fully captured in a task's progress log do not need a duplicate inbox entry.
+- Systemic harness, tooling, process, or documentation issues discovered while working another task must still be logged here, even if the triggering task is already tracked in `tasks.md`.
+- When a task blocks at max attempts, its latest rejected or revalidation note in `tasks.md` must include `Escalation: none` or `Escalation: INBOX-...` so humans can tell whether the issue stayed task-local or was escalated here.
 - Do not convert inbox entries directly into implementation tasks without explicit human confirmation.
 - For tooling or infrastructure changes, prefer logging the issue here before changing the harness.
+
+### INBOX-20260331-001
+- Area: Harness governance and audit trail
+- Related task(s): `HARNESS-GOV-001`, `ARCH-010`
+- Summary: Task completion and escalation hygiene drifted from the documented contract: some completed tasks stayed under `## Todo`, multiple `Done` rows have no matching task-id commit subject in Git history, blocked tasks were not recording `Escalation: ...`, and legacy harness artifacts (`.agent/history/`, prompt docs, stale `agent_loop.pyc` files) could be mistaken for authoritative state even though the in-repo loop source is absent.
+- Evidence: `tasks.md` previously carried completed items in `## Todo`; `git log --all --format=%s` currently misses task-id commit subjects for `BENCH-REVIEW-001`, `MGR-DASH-002`, `MGR-UX-003`, `BENCH-DATA-001`, `BENCH-ACTIVE-001`, `BENCH-RUNS-API-001`, `BENCH-UX-005`, `BENCH-TEST-001`, `ARCH-014`, `ARCH-013`, `ARCH-012`, `ARCH-011`, `MGR-TEST-001`, `MGR-BUG-001`, `MGR-REVIEW-001`, and `QUERY-REVIEW-001`; `.agent/history/` stops at `20260330.jsonl` while `tasks.md` contains `2026-03-31` progress entries; the repo no longer contains `scripts/agent_loop.py` even though older artifacts reference it.
+- Impact/Risk: Humans cannot reliably infer whether a task is actually complete, committed, or merely verified; blocked-task escalation is ambiguous; legacy diagnostics can be mistaken for the source of truth during recovery.
+- Suggested next step: Keep `tasks.md` plus Git history as the canonical audit trail, grandfather the known legacy missing-commit IDs in the audit script, and enforce the stricter rules for all new completions.
+- Human decision: pending
 
 ## Template
 
 ```md
 ### INBOX-YYYYMMDD-001
 - Area:
+- Related task(s):
 - Summary:
 - Evidence:
 - Impact/Risk:

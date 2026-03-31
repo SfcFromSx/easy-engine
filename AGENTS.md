@@ -12,7 +12,7 @@ The foreman reads `tasks.md`, receives a task assignment from the human, does th
 - `tasks.md`: canonical task ledger — human-readable, foreman-writable.
 - `INBOX.md`: repo-root inbox for agent-found issues and suggestions awaiting human review.
 - `.agent/config.json`: harness policy, validation commands, mirror policy, and service health checks.
-- `.agent/history/`: append-only JSONL stage history; detailed runner logs live under `.agent/runtime/runner-logs/`.
+- `.agent/history/`: best-effort JSONL diagnostics from earlier loop tooling; detailed runner logs live under `.agent/runtime/runner-logs/`.
 
 ## Read This First
 
@@ -49,7 +49,7 @@ Run the task's validation commands when feasible, inspect the changed behavior, 
 
 Run after a task that changes behavior, APIs, or architecture. The foreman performs doc gardening itself and records any doc updates or remaining drift in the task log.
 
-### 5. Commit
+### 5. Close the task and commit
 
 One verified task = one commit.
 
@@ -57,6 +57,18 @@ One verified task = one commit.
 git add -p   # stage only task-related changes
 git commit -m "<task-id>: <short title>"
 ```
+
+Completion order is mandatory:
+
+1. implement
+2. verify
+3. doc-garden if needed
+4. append progress evidence to `tasks.md`
+5. update the task to `done` and move it to the Done table
+6. create the single task commit, including the ledger update
+7. treat the task as finished only after the commit succeeds
+
+If the commit fails, keep working until it succeeds or restore the task to a non-`done` state before stopping.
 
 ## Writing Progress Back to tasks.md
 
@@ -72,18 +84,19 @@ Result: implemented / failed
 Validation status: approved / rejected
 Evidence: ...
 Next action: ...
+Escalation: none / INBOX-...
 ```
 
-When a task is completed, update its **Status** line to `done` and move it to the Done table at the bottom of `tasks.md`.
+When a task is completed, update its **Status** line to `done`, move it to the Done table at the bottom of `tasks.md`, and include that ledger update in the task's commit.
 
 ## Hard Rules
 
 - Do the work directly in the current session.
 - Do not switch between external coding runners by stage or by task.
-- Do not edit `.agent/config.json` during active task execution.
+- Do not edit `.agent/config.json` during non-harness task execution. Harness-policy changes must be their own explicit task.
 - Do not make broad multi-module changes in one task unless the task explicitly says so.
 - Do not remove human review checkpoints from Git workflows.
-- Collect harness or tooling issues into `INBOX.md` first; do not change infrastructure without explicit human approval.
+- Collect harness or tooling issues into `INBOX.md` first, even when they are discovered during another tracked task; do not change infrastructure without explicit human approval.
 - Always read `AGENTS.md` first when picking up a new task to ensure alignment with the latest project contract.
 - All task state lives in `tasks.md`. Do not create JSON, YAML, or other machine state files for task tracking.
 
@@ -92,7 +105,13 @@ When a task is completed, update its **Status** line to `done` and move it to th
 - Root repository is the intended canonical Git boundary.
 - Nested `.git` directories are hazards unless explicitly resolved.
 - One verified task maps to one commit.
+- Commit subjects use `<task-id>: <short title>`.
 - Do not force-push or rewrite published history.
+
+## Audit Trail
+
+- `tasks.md` plus Git history are the canonical audit trail for task state and completion.
+- `.agent/history/` and `.agent/runtime/runner-logs/` are best-effort diagnostics only unless an in-repo loop implementation is restored.
 
 ## Validation Commands Reference
 

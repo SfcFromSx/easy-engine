@@ -1,7 +1,7 @@
 {
   "version": 1,
   "branch_prefix": "foreman/",
-  "commit_message_template": "foreman: {task_id} {title}",
+  "commit_message_template": "{task_id}: {title}",
   "push_remote": "origin",
   "auto_push_after_commit": false,
   "todo_warning_threshold": 3,

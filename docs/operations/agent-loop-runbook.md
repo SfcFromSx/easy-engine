@@ -6,18 +6,21 @@ See [AGENTS.md](../../AGENTS.md) for the full foreman workflow contract, and [hu
 
 ## Stage Shape
 
-Each task runs through up to four stages:
+Each task runs through up to five stages:
 
 1. **Plan / inspect** — understand the task, code paths, and constraints.
 2. **Implement** — make the required code or documentation changes.
 3. **Verify** — run validation commands and inspect the changed behavior.
 4. **Doc gardening** — update canonical docs when behavior or APIs changed. Optional.
+5. **Ledger closeout + commit** — append progress evidence, move the task to `Done`, and create the task commit.
 
-After verification approval: commit, then optionally run doc gardening.
+Completion order is mandatory: implement, verify, doc-garden if needed, append progress evidence, update `tasks.md`, then commit. A task is not finished until that commit succeeds.
 
 ## Progress Logging
 
 After each stage, or after each major milestone, the foreman appends a dated entry to the task's **Progress log** in `tasks.md`. See AGENTS.md for the log format.
+
+If a task is blocked at max attempts, the latest rejected or revalidation entry must include both `Next action:` and `Escalation:`. Use `Escalation: none` for task-local blockers that are already fully captured in the task log, or `Escalation: INBOX-...` when the blocker exposed a systemic harness, tooling, process, or documentation issue that also needs human review.
 
 ## Commit
 
@@ -29,6 +32,8 @@ git commit -m "<task-id>: <short title>"
 ```
 
 Do not push automatically. The human reviews and merges.
+
+Run `python3 scripts/task_audit.py --check` before closeout when task-ledger or harness-governance files changed.
 
 ## Validation Commands Reference
 
@@ -59,4 +64,4 @@ Run the doc-gardener stage after any task that changes behavior, APIs, or archit
 
 ## History Logs
 
-Stage history is recorded in `.agent/history/` as append-only JSONL files. Detailed runner transcripts live under `.agent/runtime/runner-logs/`.
+`tasks.md` plus Git history are the canonical audit trail. `.agent/history/` and `.agent/runtime/runner-logs/` are best-effort diagnostics from earlier loop tooling and must not be treated as authoritative completion state unless an in-repo loop implementation is restored. The repository does not currently ship `scripts/agent_loop.py`.
