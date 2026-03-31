@@ -26,17 +26,14 @@
     </div>
     <DebuggerDialog v-model="debugVisible" :sql="debugSql" />
 
-    <div class="flow-callout">
-      <div class="flow-callout__title">{{ $t('templates.executionGuideTitle') }}</div>
-      <p>{{ $t('templates.executionGuideGlobal') }}</p>
-      <p>{{ $t('templates.executionGuideOverride') }}</p>
-      <div class="flow-callout__mode">
-        <span class="mode-chip">STATEMENT</span>
-        <span>{{ $t('templates.executionGuideStatement') }}</span>
-      </div>
-      <div class="flow-callout__mode">
-        <span class="mode-chip mode-chip--prepared">PREPARED_STATEMENT</span>
-        <span>{{ $t('templates.executionGuidePrepared') }}</span>
+    <div class="flow-callout compact-alert">
+      <div class="flow-callout__title">⚡ {{ $t('templates.executionGuideTitle') }}</div>
+      <p style="font-size: 11px; margin: 2px 0;">{{ $t('templates.executionGuideGlobal') }} {{ $t('templates.executionGuideOverride') }}</p>
+      <div class="flow-callout__mode" style="margin-top: 4px;">
+        <span class="mode-chip">STMT</span>
+        <span style="font-size: 11px;">{{ $t('templates.executionGuideStatement') }}</span>
+        <span class="mode-chip mode-chip--prepared" style="margin-left: 8px;">PREP</span>
+        <span style="font-size: 11px;">{{ $t('templates.executionGuidePrepared') }}</span>
       </div>
     </div>
 
@@ -309,137 +306,69 @@ onMounted(load)
 </script>
 
 <style scoped>
-.hint { font-size: 12px; color: #94a3b8; margin-top: 4px; }
-.hint-inline {
-  margin-left: 6px;
+.templates-view-container {
+  max-width: 100%;
 }
-.actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: flex-end;
-}
-.flow-callout {
+
+.page-header {
   margin-bottom: 16px;
-  padding: 16px 18px;
+}
+
+.page-header h1 {
+  font-size: 20px;
+}
+
+.subtitle {
+  font-size: 13px;
+}
+
+.flow-callout {
+  margin-bottom: 12px;
+  padding: 8px 12px;
   border: 1px solid #dbeafe;
-  border-radius: 14px;
+  border-radius: 10px;
   background: linear-gradient(135deg, #f8fbff 0%, #eef6ff 100%);
   color: #334155;
 }
-.flow-callout p {
-  margin: 6px 0;
-}
+
 .flow-callout__title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: #1e3a8a;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
-.flow-callout__mode {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 10px;
-  flex-wrap: wrap;
-}
+
 .mode-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 8px;
-  border-radius: 999px;
+  padding: 2px 6px;
+  border-radius: 4px;
   background: #e0f2fe;
   color: #075985;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
 }
-.mode-chip--prepared {
-  background: #fef3c7;
-  color: #92400e;
-}
-.inline-code {
-  margin-left: 6px;
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 11px;
-  color: #475569;
-}
-.mode-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 4px;
-}
-.mode-summary-card {
-  padding: 14px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #f8fafc;
-}
-.mode-summary-card--active {
-  border-color: #93c5fd;
-  background: #eff6ff;
-}
-.mode-summary-card__label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: #1e293b;
-  margin-bottom: 6px;
-}
-.mode-summary-card p {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #475569;
-}
-.pagination-container {
-  padding: 16px;
-  display: flex;
-  justify-content: flex-end;
-  background: rgba(255, 255, 255, 0.05);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+
+.glass-card {
+  padding: 0;
 }
 
-.sql-preview-text {
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 13px;
-  line-height: 1.4;
-  color: #1e293b;
-  white-space: pre-wrap;
-  word-break: break-all;
-  max-height: 2.8em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: 8px 0;
-  cursor: text;
-}
-
-.mini-code {
-  display: inline-block;
-  max-width: 100%;
-  white-space: pre-wrap;
-  word-break: break-all;
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 11px;
-  background: #f8fafc;
-  padding: 4px 6px;
-  border-radius: 6px;
-  color: #475569;
+.table-card {
+  padding: 0;
 }
 
 :deep(.el-table__row) {
-  height: 48px;
+  height: 40px;
 }
 
-:deep(.el-table .cell) {
-  line-height: inherit;
+.toolbar-input {
+  width: 200px;
 }
 
-@media (max-width: 960px) {
-  .actions {
-    width: 100%;
-    justify-content: flex-start;
-  }
+.pagination-container {
+  padding: 8px 16px;
+}
+
+.sql-preview-text {
+  font-size: 12px;
+  padding: 4px 0;
 }
 </style>

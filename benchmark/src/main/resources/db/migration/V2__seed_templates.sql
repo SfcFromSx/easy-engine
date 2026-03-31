@@ -5,10 +5,10 @@ INSERT INTO benchmark_sql_template (name, sql_text, weight, description) VALUES
 INSERT INTO benchmark_job (name, jdbc_url, jdbc_user, jdbc_password, driver_class, concurrent_threads, rounds, strategy)
 VALUES (
     'default-kylin-cached',
-    'jdbc:kylin-cached://localhost:17070/learn_kylin?redis.host=127.0.0.1&redis.port=6380&sql.trace.enabled=true&sql.trace.redis.enabled=true',
+    'jdbc:kylin://127.0.0.1:8092/learn_kylin',
     'ADMIN',
     'KYLIN',
-    'com.kylin.CachedKylinDriver',
+    'org.apache.kylin.jdbc.Driver',
     4,
     20,
     'RANDOM_WEIGHT'

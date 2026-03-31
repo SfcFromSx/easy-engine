@@ -126,10 +126,10 @@ WHERE name = 'default-kylin-cached';
 
 INSERT INTO benchmark_job (name, jdbc_url, jdbc_user, jdbc_password, driver_class, concurrent_threads, rounds, strategy, test_set_id)
 SELECT 'benchmark-smoke-global',
-       'jdbc:kylin-cached://localhost:17070/learn_kylin?redis.host=127.0.0.1&redis.port=6380&sql.trace.enabled=true&sql.trace.redis.enabled=true',
+       'jdbc:kylin://127.0.0.1:8092/learn_kylin',
        'ADMIN',
        'KYLIN',
-       'com.kylin.CachedKylinDriver',
+       'org.apache.kylin.jdbc.Driver',
        2,
        24,
        'RANDOM_WEIGHT',
@@ -138,10 +138,10 @@ WHERE NOT EXISTS (SELECT 1 FROM benchmark_job WHERE name = 'benchmark-smoke-glob
 
 INSERT INTO benchmark_job (name, jdbc_url, jdbc_user, jdbc_password, driver_class, concurrent_threads, rounds, strategy, test_set_id)
 SELECT 'benchmark-testset-round-robin',
-       'jdbc:kylin-cached://localhost:17070/learn_kylin?redis.host=127.0.0.1&redis.port=6380&sql.trace.enabled=true&sql.trace.redis.enabled=true',
+       'jdbc:kylin://127.0.0.1:8092/learn_kylin',
        'ADMIN',
        'KYLIN',
-       'com.kylin.CachedKylinDriver',
+       'org.apache.kylin.jdbc.Driver',
        3,
        48,
        'ROUND_ROBIN',
@@ -150,10 +150,10 @@ WHERE NOT EXISTS (SELECT 1 FROM benchmark_job WHERE name = 'benchmark-testset-ro
 
 INSERT INTO benchmark_job (name, jdbc_url, jdbc_user, jdbc_password, driver_class, concurrent_threads, rounds, strategy, test_set_id)
 SELECT 'benchmark-cache-penetration',
-       'jdbc:kylin-cached://localhost:17070/learn_kylin?redis.host=127.0.0.1&redis.port=6380&sql.trace.enabled=true&sql.trace.redis.enabled=true',
+       'jdbc:kylin://127.0.0.1:8092/learn_kylin',
        'ADMIN',
        'KYLIN',
-       'com.kylin.CachedKylinDriver',
+       'org.apache.kylin.jdbc.Driver',
        3,
        40,
        'CACHE_PENETRATION',

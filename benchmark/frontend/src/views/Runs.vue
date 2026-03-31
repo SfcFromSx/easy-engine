@@ -399,117 +399,43 @@ onUnmounted(() => clearInterval(timer))
 
 <style scoped>
 .runs-container {
-  padding-bottom: 40px;
-}
-.page-header {
-  margin-bottom: 24px;
-}
-.toolbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  max-width: 100%;
 }
 
-.job-filter-select {
-  width: 240px;
+.page-header {
+  margin-bottom: 16px;
 }
-.label {
-  color: #64748b;
-  font-size: 14px;
-  font-weight: 500;
+
+.page-header h1 {
+  font-size: 20px;
 }
-.section-title {
-  margin: 24px 0 12px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #0f172a;
-  border-left: 4px solid #3b82f6;
-  padding-left: 12px;
+
+.subtitle {
+  font-size: 13px;
 }
+
+.glass-card {
+  padding: 0;
+}
+
+.table-card {
+  padding: 0;
+}
+
+:deep(.el-table__row) {
+  height: 40px;
+}
+
 .json-block {
   background: #0f172a;
   color: #94a3b8;
-  padding: 16px;
-  border-radius: 12px;
-  font-size: 13px;
-  line-height: 1.5;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.4;
   border: 1px solid rgba(255, 255, 255, 0.1);
   font-family: 'Fira Code', monospace;
-  max-height: 300px;
+  max-height: 200px;
   overflow-y: auto;
-}
-.visual-report {
-  margin: 12px 0;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-.failure-summary {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-}
-.failure-table {
-  margin-bottom: 8px;
-}
-.failure-message {
-  color: #1e293b;
-  line-height: 1.5;
-}
-.drawer-actions {
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid #f1f5f9;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.muted {
-  color: #64748b; /* Better contrast */
-  font-size: 13px;
-  margin-bottom: 8px;
-}
-.delta-hint {
-  font-size: 13px;
-  color: #1e293b; /* High contrast */
-  background: rgba(59, 130, 246, 0.05); /* Soft background */
-  padding: 10px 14px;
-  border-radius: 8px;
-  margin-bottom: 12px;
-  line-height: 1.5;
-}
-.progress-mini {
-  font-family: 'Fira Code', monospace;
-  font-size: 11px;
-  color: #3b82f6;
-  font-weight: 600;
-  margin-left: 6px;
-}
-.delta-value {
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.delta-value.up {
-  color: #10b981;
-}
-.delta-value.down {
-  color: #ef4444;
-}
-
-@media (max-width: 960px) {
-  .page-header {
-    margin-bottom: 20px;
-  }
-
-  .toolbar-actions {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .job-filter-select {
-    width: 100%;
-  }
 }
 </style>

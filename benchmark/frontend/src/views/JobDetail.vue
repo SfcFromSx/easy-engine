@@ -202,67 +202,44 @@ onMounted(load)
 
 <style scoped>
 .job-detail {
-  padding: 8px;
+  padding: 0;
 }
 
 .header-section {
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .title-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 16px;
+  margin-top: 8px;
 }
 
 .title-row h1 {
+  font-size: 20px;
   margin: 0;
 }
 
+.subtitle {
+  font-size: 13px;
+}
+
 .detail-card {
-  padding: 24px;
+  padding: 12px 16px;
 }
 
 .card-title {
-  font-weight: 700;
-  font-size: 15px;
-  color: #0f172a;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.card-title .el-icon {
-  color: #3b82f6;
-  font-size: 18px;
-}
-
-.subtitle {
-  color: #64748b;
   font-size: 13px;
-  margin: 4px 0 0;
+  margin-bottom: 12px;
 }
 
-.driver-code {
-  color: #0369a1;
-  background: #f0f9ff;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 12px;
+.chart-container {
+  height: 240px;
 }
 
-.url-code {
-  display: block;
-  word-break: break-all;
-  white-space: pre-wrap;
-  background: #f8fafc;
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  color: #475569;
-  font-size: 12px;
-  line-height: 1.5;
+.run-history {
+  max-height: 300px;
+  overflow-y: auto;
 }
 </style>

@@ -37,8 +37,8 @@ SELECT (SELECT id FROM benchmark_test_set WHERE name = 'Presto-Lake-Exploration'
 INSERT INTO benchmark_job (name, jdbc_url, jdbc_user, jdbc_password, driver_class, concurrent_threads, rounds, strategy, test_set_id)
 VALUES (
   'Kylin-Golden-Baseline',
-  'jdbc:kylin-cached://localhost:17070/learn_kylin?redis.host=127.0.0.1&redis.port=6380',
-  'ADMIN', 'KYLIN', 'com.kylin.CachedKylinDriver',
+  'jdbc:kylin://127.0.0.1:8092/learn_kylin',
+  'ADMIN', 'KYLIN', 'org.apache.kylin.jdbc.Driver',
   4, 100, 'RANDOM_WEIGHT',
   (SELECT id FROM benchmark_test_set WHERE name = 'Kylin-Performance-Suite')
 );
@@ -47,8 +47,8 @@ VALUES (
 INSERT INTO benchmark_job (name, jdbc_url, jdbc_user, jdbc_password, driver_class, concurrent_threads, rounds, strategy, test_set_id)
 VALUES (
   'Presto-Direct-Stress',
-  'jdbc:kylin-cached://localhost:17070/learn_kylin?redis.host=127.0.0.1&redis.port=6380',
-  'ADMIN', 'KYLIN', 'com.kylin.CachedKylinDriver',
+  'jdbc:kylin://127.0.0.1:8092/learn_kylin',
+  'ADMIN', 'KYLIN', 'org.apache.kylin.jdbc.Driver',
   2, 20, 'ROUND_ROBIN',
   (SELECT id FROM benchmark_test_set WHERE name = 'Presto-Lake-Exploration')
 );
@@ -57,8 +57,8 @@ VALUES (
 INSERT INTO benchmark_job (name, jdbc_url, jdbc_user, jdbc_password, driver_class, concurrent_threads, rounds, strategy, test_set_id)
 VALUES (
   'Cache-Efficiency-Test',
-  'jdbc:kylin-cached://localhost:17070/learn_kylin?redis.host=127.0.0.1&redis.port=6380',
-  'ADMIN', 'KYLIN', 'com.kylin.CachedKylinDriver',
+  'jdbc:kylin://127.0.0.1:8092/learn_kylin',
+  'ADMIN', 'KYLIN', 'org.apache.kylin.jdbc.Driver',
   4, 120, 'RANDOM_WEIGHT',
   NULL -- 使用全局模板
 );

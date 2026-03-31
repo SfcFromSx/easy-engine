@@ -1,15 +1,14 @@
-<!-- MIRROR: README.md | SOURCE_SHA256: cc6fab69c2fc | SYNCED_AT: 2026-03-29T15:13:46Z -->
+<!-- MIRROR: README.md | SOURCE_SHA256: 50c084f4d761 | SYNCED_AT: 2026-03-31T08:06:10Z -->
 
 # Easy Engine
 
-Easy Engine 是一个以 agent 为中心的工程工作区，覆盖查询执行、控制面分析、基准测试编排，以及 `kylin-jdbc-cache` 适配层。仓库结构的目标是让任务驱动的监工工作流保持清晰、可审查，并保留明确的人类暂停与审批控制点。
+Easy Engine 是一个以 agent 为中心的工程工作区，覆盖查询执行、控制面分析和基准测试编排。
 
 ## 模块
 
 - `query/`：只负责查询执行的服务，包含路由、缓存和轨迹发布。
 - `manager/`：控制面服务，负责轨迹摄取、SQL 模式分析和加速元数据。
 - `benchmark/`：基准测试服务与 UI，负责数据源、模板、测试集和运行管理。
-- `kylin-jdbc-cache/`：缓存 JDBC 适配器，被 benchmark 和其他客户端使用。
 
 ## 规范文档入口
 
@@ -24,7 +23,7 @@ Easy Engine 是一个以 agent 为中心的工程工作区，覆盖查询执行�
 
 ## 任务驱动工作流
 
-任务由 [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md) 管理。监工模型读取任务，在人类指定任务后，通过命令行调用 `claude` 和 `codex` 完成各阶段工作，并将进展写回 `tasks.md`。
+任务由 [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md) 管理。监工模型读取任务，在人类指定任务后，直接在当前会话内完成工作，并将进展写回 `tasks.md`。
 
 详见 [AGENTS.md](/Users/sfc/Documents/projects/engine/AGENTS.md)。
 

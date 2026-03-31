@@ -9,19 +9,19 @@ ALTER TABLE benchmark_test_set_item
     ADD COLUMN IF NOT EXISTS param_json TEXT;
 
 UPDATE benchmark_job
-SET jdbc_url = replace(replace(jdbc_url,
-                               'jdbc:kylin-cached://localhost:17070/',
-                               'jdbc:kylin-cached://127.0.0.1:8092/'),
-                       'jdbc:kylin-cached://127.0.0.1:17070/',
-                       'jdbc:kylin-cached://127.0.0.1:8092/')
-WHERE driver_class = 'com.kylin.CachedKylinDriver';
-
-UPDATE benchmark_job
-SET jdbc_url = CASE
-    WHEN position('datasource.routing.enabled=' in jdbc_url) > 0
-        THEN regexp_replace(jdbc_url, 'datasource\.routing\.enabled=[^&]+', 'datasource.routing.enabled=false')
-    ELSE jdbc_url || '&datasource.routing.enabled=false'
-END
+SET jdbc_url = regexp_replace(
+        replace(
+            replace(jdbc_url,
+                    'jdbc:kylin-cached://localhost:17070/',
+                    'jdbc:kylin://127.0.0.1:8092/'),
+            'jdbc:kylin-cached://127.0.0.1:17070/',
+            'jdbc:kylin://127.0.0.1:8092/'
+        ),
+        '([?&])(redis\.(host|port)|sql\.trace\.(enabled|redis\.enabled)|datasource\.routing\.enabled)=[^&]*',
+        '',
+        'g'
+    ),
+    driver_class = 'org.apache.kylin.jdbc.Driver'
 WHERE driver_class = 'com.kylin.CachedKylinDriver';
 
 UPDATE benchmark_sql_template
@@ -91,10 +91,10 @@ WHERE t.name = 'smoke_kylin_only'
 
 INSERT INTO benchmark_job (name, jdbc_url, jdbc_user, jdbc_password, driver_class, concurrent_threads, rounds, strategy, test_set_id)
 SELECT 'benchmark-query-e2e-mixed',
-       'jdbc:kylin-cached://127.0.0.1:8092/learn_kylin?redis.host=127.0.0.1&redis.port=6380&sql.trace.enabled=true&sql.trace.redis.enabled=true&datasource.routing.enabled=false',
+       'jdbc:kylin://127.0.0.1:8092/learn_kylin',
        'ADMIN',
        'KYLIN',
-       'com.kylin.CachedKylinDriver',
+       'org.apache.kylin.jdbc.Driver',
        3,
        24,
        'ROUND_ROBIN',

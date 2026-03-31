@@ -9,7 +9,6 @@ The foreman reads `tasks.md`, receives a task assignment from the human, does th
 - `query/`: query execution service.
 - `manager/`: control-plane service.
 - `benchmark/`: benchmark backend and frontend.
-- `kylin-jdbc-cache/`: JDBC adapter.
 - `tasks.md`: canonical task ledger — human-readable, foreman-writable.
 - `INBOX.md`: repo-root inbox for agent-found issues and suggestions awaiting human review.
 - `.agent/config.json`: harness policy, validation commands, mirror policy, and service health checks.

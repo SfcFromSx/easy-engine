@@ -11,11 +11,9 @@
       </el-button>
     </div>
 
-    <div class="workflow-callout">
-      <div class="workflow-callout__title">{{ $t('testSets.workflowTitle') }}</div>
-      <p>{{ $t('testSets.workflowOverride') }}</p>
-      <p>{{ $t('testSets.workflowPrepared') }}</p>
-      <p>{{ $t('testSets.workflowColumns') }}</p>
+    <div class="workflow-callout compact-alert">
+      <div class="workflow-callout__title">💡 {{ $t('testSets.workflowTitle') }}</div>
+      <p style="font-size: 11px; margin: 2px 0;">{{ $t('testSets.workflowOverride') }} {{ $t('testSets.workflowPrepared') }} {{ $t('testSets.workflowColumns') }}</p>
     </div>
 
     <el-card class="glass-card mb-16" shadow="never">
@@ -282,92 +280,72 @@ function formatParamJson(value) {
 </script>
 
 <style scoped>
-.mb-16 { margin-bottom: 16px; }
-.upload-area { padding: 20px; text-align: center; }
-.excel-uploader { width: 100%; }
-.workflow-callout {
+.test-sets-view-container {
+  max-width: 100%;
+}
+
+.page-header {
   margin-bottom: 16px;
-  padding: 16px 18px;
+}
+
+.page-header h1 {
+  font-size: 20px;
+}
+
+.subtitle {
+  font-size: 13px;
+}
+
+.mb-16 { margin-bottom: 12px; }
+.upload-area { padding: 10px; text-align: center; }
+.excel-uploader { width: 100%; }
+
+:deep(.el-upload-dragger) {
+  padding: 10px 20px !important;
+}
+
+:deep(.el-icon--upload) {
+  font-size: 32px !important;
+  margin-bottom: 8px !important;
+}
+
+.workflow-callout {
+  margin-bottom: 12px;
+  padding: 8px 12px;
   border: 1px solid #dbeafe;
-  border-radius: 14px;
+  border-radius: 10px;
   background: linear-gradient(135deg, #f8fbff 0%, #eef6ff 100%);
   color: #334155;
 }
-.workflow-callout p {
-  margin: 6px 0;
-}
+
 .workflow-callout__title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: #1e3a8a;
-  margin-bottom: 8px;
-}
-.upload-tip-accent {
-  margin-left: 4px;
-  color: #475569;
-}
-.drawer-guide {
-  margin-bottom: 18px;
-  padding: 14px 16px;
-  border-radius: 12px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-}
-.drawer-guide__title {
-  font-size: 12px;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 6px;
-}
-.drawer-guide p {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #475569;
+  margin-bottom: 4px;
 }
 
-.item-entry {
-  margin-bottom: 32px;
-  border-bottom: 1px dashed #e2e8f0;
-  padding-bottom: 16px;
+.glass-card {
+  padding: 0;
 }
-.item-meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
+
+.table-card {
+  padding: 0;
 }
-.item-label {
-  font-weight: 600;
-  color: #1e293b;
-  font-size: 14px;
+
+:deep(.el-table__row) {
+  height: 40px;
 }
-.item-mode-hint {
-  margin: 0 0 10px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #64748b;
+
+:deep(.el-card__header) {
+  padding: 10px 16px !important;
 }
-.param-json {
-  margin-top: 8px;
-  font-size: 12px;
-  color: #475569;
-  word-break: break-all;
+
+:deep(.el-card__body) {
+  padding: 0 !important;
 }
-.param-json pre {
-  margin: 8px 0 0;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  white-space: pre-wrap;
-  word-break: break-all;
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 11px;
-  line-height: 1.5;
-}
-.param-json--missing {
-  color: #92400e;
+
+.upload-area :deep(.el-card__body) {
+  padding: 10px !important;
 }
 </style>

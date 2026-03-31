@@ -343,102 +343,57 @@ onMounted(load)
 
 <style scoped>
 .jobs-view-container {
-  max-width: 1400px;
-  margin: 0 auto;
+  max-width: 100%;
 }
 
 .page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .page-header h1 {
-  font-family: 'Outfit', sans-serif;
-  font-size: 32px;
-  font-weight: 700;
-  margin: 0;
-  color: #0f172a;
+  font-size: 20px;
 }
 
 .subtitle {
-  color: #64748b;
-  margin: 4px 0 0;
+  font-size: 13px;
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
-  border-radius: 16px;
-  padding: 8px;
+  padding: 0;
 }
 
 :deep(.el-table__row) {
-  height: 48px;
+  height: 40px;
 }
 
 .premium-btn {
-  border-radius: 10px;
-  font-weight: 600;
-  height: 40px;
-  padding: 0 20px;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
 }
 
-.ds-option {
-  display: flex;
-  flex-direction: column;
-  padding: 4px 0;
-}
-
-.ds-name {
-  font-weight: 600;
-  line-height: 1.2;
-}
-
-.ds-url {
-  font-size: 11px;
-  color: #94a3b8;
-  line-height: 1.2;
+.list-toolbar {
+  padding: 10px 16px;
+  margin-bottom: 0;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .hint {
-  font-size: 12px;
-  color: #94a3b8;
-  margin: 8px 0;
-  padding: 8px;
-  background: #f8fafc;
-  border-radius: 6px;
+  font-size: 11px;
+  padding: 6px 10px;
+  margin: 4px 0;
 }
 
 .config-grid {
-  background: #f8fafc;
-  padding: 16px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-  border: 1px solid #f1f5f9;
+  padding: 12px;
+  margin-bottom: 12px;
 }
 
-.premium-form :deep(.el-form-item__label) {
-  font-weight: 700;
-  color: #334155;
-  text-transform: uppercase;
-  font-size: 11px;
-  letter-spacing: 0.05em;
+:deep(.el-card__header) {
+  padding: 10px 16px !important;
 }
 
-@media (max-width: 960px) {
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-  }
-
-  .premium-btn {
-    width: 100%;
-  }
+:deep(.el-card__body) {
+  padding: 0 !important; /* Table card should have no body padding */
 }
 </style>
