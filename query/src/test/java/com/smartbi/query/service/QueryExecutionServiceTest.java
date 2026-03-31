@@ -71,7 +71,7 @@ class QueryExecutionServiceTest {
         verify(traceReportingService).report(eq(routed), any(), eq(null), eq(null), eq("STATEMENT"), eq(true), eq(false), eq(12L), eq(null));
     }
 
-    // Covers QueryExecutionService#execute prepared happy path, QueryExecutionService#bindParameters, and QueryExecutionService#resolveExecutionMode prepared branch.
+    // Covers QueryExecutionService#execute prepared happy path, QueryExecutionService#bindParameters, and QueryExecutionService#resolveExecutionMode prepared branch for non-Kylin datasources.
     @Test
     void shouldExecutePreparedQueriesAndBindConvertedParameters() throws Exception {
         QueryCacheService cacheService = spy(new QueryCacheService(new MapCacheStore(), new QueryProperties(), new ObjectMapper()));
@@ -100,6 +100,105 @@ class QueryExecutionServiceTest {
         verify(statement).setObject(1, Integer.valueOf(1));
         verify(traceReportingService).report(eq(routed), any(), eq("1=19:java.lang.Integer:1;"), eq(request.getParams()),
                 eq("PREPARED_STATEMENT"), eq(true), eq(false), eq(15L), eq(null));
+    }
+
+    // Covers QueryExecutionService#executeAgainstDatasource Kylin literalization branch, including numeric, quoted-string, date, and null parameter rendering.
+    @Test
+    void shouldLiteralizePreparedParametersForKylinDatasources() throws Exception {
+        QueryCacheService cacheService = spy(new QueryCacheService(new MapCacheStore(), new QueryProperties(), new ObjectMapper()));
+        SqlRouteService routeService = mock(SqlRouteService.class);
+        ManagedDataSourceRegistry registry = mock(ManagedDataSourceRegistry.class);
+        QueryResultMapper mapper = mock(QueryResultMapper.class);
+        TraceReportingService traceReportingService = mock(TraceReportingService.class);
+        QueryExecutionService service = new QueryExecutionService(cacheService, routeService, registry, mapper, traceReportingService, new QueryProperties());
+        PreparedQueryRequestDto request = request(
+                "SELECT * FROM SALES WHERE ID > ? AND NAME = ? AND CREATED_AT > ? AND DELETED_AT = ?",
+                param("java.lang.Integer", "1"),
+                param("java.lang.String", "O'Brien"),
+                param("java.sql.Date", "2026-03-31"),
+                param("java.lang.String", null));
+        RoutedSql routed = new RoutedSql("default", "kylin", request.getSql(), request.getSql());
+        Connection connection = mock(Connection.class);
+        Statement statement = mock(Statement.class);
+        ResultSet resultSet = mock(ResultSet.class);
+        SqlResponseStubDto response = response("default", "alpha");
+        response.setDuration(14L);
+        String expectedSql = "SELECT * FROM SALES WHERE ID > 1 AND NAME = 'O''Brien' AND CREATED_AT > '2026-03-31' AND DELETED_AT = NULL";
+
+        when(routeService.routeAndRewrite(eq(request.getSql()), any())).thenReturn(routed);
+        when(registry.getConnection("default")).thenReturn(connection);
+        when(connection.createStatement()).thenReturn(statement);
+        when(statement.executeQuery(expectedSql)).thenReturn(resultSet);
+        when(mapper.toResponse(eq(resultSet), eq("default"), anyLong())).thenReturn(response);
+
+        SqlResponseStubDto actual = service.execute(request);
+
+        assertEquals("alpha", actual.getResults().get(0)[0]);
+        verify(connection, never()).prepareStatement(any());
+        verify(statement).executeQuery(expectedSql);
+        verify(traceReportingService).report(eq(routed), any(), any(), eq(request.getParams()),
+                eq("PREPARED_STATEMENT"), eq(true), eq(false), eq(14L), eq(null));
+    }
+
+    // Covers QueryExecutionService#literalizeKylinPreparedSql placeholder-count mismatch branch before datasource execution.
+    @Test
+    void shouldRejectKylinPreparedQueriesWhenPlaceholderCountDoesNotMatch() throws Exception {
+        QueryCacheService cacheService = spy(new QueryCacheService(new MapCacheStore(), new QueryProperties(), new ObjectMapper()));
+        SqlRouteService routeService = mock(SqlRouteService.class);
+        ManagedDataSourceRegistry registry = mock(ManagedDataSourceRegistry.class);
+        QueryResultMapper mapper = mock(QueryResultMapper.class);
+        TraceReportingService traceReportingService = mock(TraceReportingService.class);
+        QueryExecutionService service = new QueryExecutionService(cacheService, routeService, registry, mapper, traceReportingService, new QueryProperties());
+        PreparedQueryRequestDto request = request("SELECT NAME FROM SALES WHERE ID = ? AND NAME = ?", param("java.lang.Integer", "1"));
+        RoutedSql routed = new RoutedSql("default", "kylin", request.getSql(), request.getSql());
+        SqlResponseStubDto response = new SqlResponseStubDto();
+        response.setIsException(true);
+        String message = "Prepared parameter count 1 does not match placeholder count 2 for Kylin SQL";
+        response.setExceptionMessage(message);
+
+        when(routeService.routeAndRewrite(eq(request.getSql()), any())).thenReturn(routed);
+        when(mapper.exceptionResponse(eq("default"), anyLong(), eq(message))).thenReturn(response);
+
+        SqlResponseStubDto actual = service.execute(request);
+
+        assertTrue(actual.getIsException());
+        assertEquals(message, actual.getExceptionMessage());
+        verify(registry, never()).getConnection(any());
+        verify(traceReportingService).report(eq(routed), any(), any(), eq(request.getParams()),
+                eq("PREPARED_STATEMENT"), eq(false), eq(false), anyLong(), eq(message));
+    }
+
+    // Covers QueryExecutionService#convertValue unsupported-class fallback and PreparedParameterSupport cache-disable behavior.
+    @Test
+    void shouldFallbackToRawStringsAndDisablePreparedCachingForUnsupportedParameterTypes() throws Exception {
+        QueryCacheService cacheService = spy(new QueryCacheService(new MapCacheStore(), new QueryProperties(), new ObjectMapper()));
+        SqlRouteService routeService = mock(SqlRouteService.class);
+        ManagedDataSourceRegistry registry = mock(ManagedDataSourceRegistry.class);
+        QueryResultMapper mapper = mock(QueryResultMapper.class);
+        TraceReportingService traceReportingService = mock(TraceReportingService.class);
+        QueryExecutionService service = new QueryExecutionService(cacheService, routeService, registry, mapper, traceReportingService, new QueryProperties());
+        PreparedQueryRequestDto request = request("SELECT NAME FROM SALES WHERE CREATED_AT = ?", param("java.util.Date", "2026-03-31T12:34:56Z"));
+        RoutedSql routed = new RoutedSql("default", "h2", request.getSql(), request.getSql());
+        Connection connection = mock(Connection.class);
+        PreparedStatement statement = mock(PreparedStatement.class);
+        ResultSet resultSet = mock(ResultSet.class);
+        SqlResponseStubDto response = response("default", "alpha");
+        response.setDuration(11L);
+
+        when(routeService.routeAndRewrite(eq(request.getSql()), any())).thenReturn(routed);
+        when(registry.getConnection("default")).thenReturn(connection);
+        when(connection.prepareStatement(request.getSql())).thenReturn(statement);
+        when(statement.executeQuery()).thenReturn(resultSet);
+        when(mapper.toResponse(eq(resultSet), eq("default"), anyLong())).thenReturn(response);
+
+        SqlResponseStubDto actual = service.execute(request);
+
+        assertEquals("alpha", actual.getResults().get(0)[0]);
+        verify(statement).setObject(1, "2026-03-31T12:34:56Z");
+        verify(cacheService, never()).tryGet(any(), any(), any());
+        verify(cacheService, never()).put(any(), any(), any(), any());
+        verify(traceReportingService).report(eq(routed), any(), eq(null), eq(request.getParams()),
+                eq("PREPARED_STATEMENT"), eq(true), eq(false), eq(11L), eq(null));
     }
 
     // Covers QueryExecutionService#execute non-query rejection branch.

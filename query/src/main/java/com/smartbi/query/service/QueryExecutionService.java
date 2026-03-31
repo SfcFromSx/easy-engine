@@ -87,8 +87,21 @@ public class QueryExecutionService {
             }
         }
 
+        String kylinPreparedSql = null;
+        if (shouldLiteralizeKylinPrepared(routed, params)) {
+            try {
+                kylinPreparedSql = literalizeKylinPreparedSql(routed.executionSql, params);
+            } catch (IllegalArgumentException ex) {
+                long durationMs = elapsedMs(startedAt);
+                SqlResponseStubDto response = queryResultMapper.exceptionResponse(routed.datasourceName, durationMs, ex.getMessage());
+                traceReportingService.report(routed, parsed, paramFingerprint, params, executionMode, false, false,
+                        durationMs, response.getExceptionMessage());
+                return response;
+            }
+        }
+
         try (Connection connection = managedDataSourceRegistry.getConnection(routed.datasourceName)) {
-            SqlResponseStubDto response = executeAgainstDatasource(connection, routed, params, startedAt);
+            SqlResponseStubDto response = executeAgainstDatasource(connection, routed, params, kylinPreparedSql, startedAt);
             if (!parsed.metadata.noCache && parameterCacheable) {
                 queryCacheService.put(parsed, paramFingerprint, routed.datasourceName, response);
             }
@@ -107,10 +120,18 @@ public class QueryExecutionService {
     private SqlResponseStubDto executeAgainstDatasource(Connection connection,
                                                         RoutedSql routed,
                                                         List<StatementParameterDto> params,
+                                                        String kylinPreparedSql,
                                                         long startedAt) throws Exception {
         if (params == null || params.isEmpty()) {
             try (Statement statement = connection.createStatement();
                  ResultSet rs = statement.executeQuery(routed.executionSql)) {
+                return queryResultMapper.toResponse(rs, routed.datasourceName, elapsedMs(startedAt));
+            }
+        }
+
+        if (kylinPreparedSql != null) {
+            try (Statement statement = connection.createStatement();
+                 ResultSet rs = statement.executeQuery(kylinPreparedSql)) {
                 return queryResultMapper.toResponse(rs, routed.datasourceName, elapsedMs(startedAt));
             }
         }
@@ -121,6 +142,149 @@ public class QueryExecutionService {
                 return queryResultMapper.toResponse(rs, routed.datasourceName, elapsedMs(startedAt));
             }
         }
+    }
+
+    private boolean shouldLiteralizeKylinPrepared(RoutedSql routed, List<StatementParameterDto> params) {
+        return routed != null
+                && params != null
+                && !params.isEmpty()
+                && "kylin".equalsIgnoreCase(routed.datasourceType);
+    }
+
+    private String literalizeKylinPreparedSql(String sql, List<StatementParameterDto> params) {
+        if (sql == null) {
+            throw new IllegalArgumentException("Prepared parameter count " + params.size()
+                    + " does not match placeholder count 0 for Kylin SQL");
+        }
+
+        StringBuilder rendered = new StringBuilder(sql.length() + (params.size() * 16));
+        int paramIndex = 0;
+        int placeholderCount = 0;
+        boolean mismatch = false;
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+        boolean inBacktick = false;
+        boolean inLineComment = false;
+        boolean inBlockComment = false;
+
+        for (int i = 0; i < sql.length(); i++) {
+            char ch = sql.charAt(i);
+            char next = i + 1 < sql.length() ? sql.charAt(i + 1) : '\0';
+
+            if (inLineComment) {
+                rendered.append(ch);
+                if (ch == '\n' || ch == '\r') {
+                    inLineComment = false;
+                }
+                continue;
+            }
+            if (inBlockComment) {
+                rendered.append(ch);
+                if (ch == '*' && next == '/') {
+                    rendered.append(next);
+                    i++;
+                    inBlockComment = false;
+                }
+                continue;
+            }
+            if (inSingleQuote) {
+                rendered.append(ch);
+                if (ch == '\'') {
+                    if (next == '\'') {
+                        rendered.append(next);
+                        i++;
+                    } else {
+                        inSingleQuote = false;
+                    }
+                }
+                continue;
+            }
+            if (inDoubleQuote) {
+                rendered.append(ch);
+                if (ch == '"') {
+                    inDoubleQuote = false;
+                }
+                continue;
+            }
+            if (inBacktick) {
+                rendered.append(ch);
+                if (ch == '`') {
+                    inBacktick = false;
+                }
+                continue;
+            }
+
+            if (ch == '-' && next == '-') {
+                rendered.append(ch).append(next);
+                i++;
+                inLineComment = true;
+                continue;
+            }
+            if (ch == '/' && next == '*') {
+                rendered.append(ch).append(next);
+                i++;
+                inBlockComment = true;
+                continue;
+            }
+            if (ch == '\'') {
+                rendered.append(ch);
+                inSingleQuote = true;
+                continue;
+            }
+            if (ch == '"') {
+                rendered.append(ch);
+                inDoubleQuote = true;
+                continue;
+            }
+            if (ch == '`') {
+                rendered.append(ch);
+                inBacktick = true;
+                continue;
+            }
+            if (ch == '?') {
+                placeholderCount++;
+                if (paramIndex < params.size()) {
+                    rendered.append(renderSqlLiteral(convertValue(params.get(paramIndex))));
+                    paramIndex++;
+                } else {
+                    mismatch = true;
+                    rendered.append(ch);
+                }
+                continue;
+            }
+
+            rendered.append(ch);
+        }
+
+        if (mismatch || paramIndex != params.size()) {
+            throw new IllegalArgumentException("Prepared parameter count " + params.size()
+                    + " does not match placeholder count " + placeholderCount + " for Kylin SQL");
+        }
+
+        return rendered.toString();
+    }
+
+    private String renderSqlLiteral(Object value) {
+        if (value == null) {
+            return "NULL";
+        }
+        if (value instanceof Boolean) {
+            return ((Boolean) value).booleanValue() ? "TRUE" : "FALSE";
+        }
+        if (value instanceof BigDecimal) {
+            return ((BigDecimal) value).toPlainString();
+        }
+        if (value instanceof Number) {
+            return value.toString();
+        }
+        if (value instanceof Date || value instanceof Time || value instanceof Timestamp || value instanceof String) {
+            return "'" + escapeSqlLiteral(String.valueOf(value)) + "'";
+        }
+        return "'" + escapeSqlLiteral(String.valueOf(value)) + "'";
+    }
+
+    private String escapeSqlLiteral(String value) {
+        return value == null ? "" : value.replace("'", "''");
     }
 
     private void bindParameters(PreparedStatement statement, List<StatementParameterDto> params) throws Exception {

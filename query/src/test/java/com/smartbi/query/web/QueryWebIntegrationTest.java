@@ -20,6 +20,7 @@ import java.util.Base64;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -78,12 +79,13 @@ class QueryWebIntegrationTest {
         }
     }
 
-    // Covers QueryController#query and QueryWebIntegrationTest's removed-endpoint contract guard.
+    // Covers QueryController#authenticate and QueryWebIntegrationTest's removed-metadata-endpoint contract guard.
     @Test
-    void shouldRejectRemovedNonQueryEndpoints() throws Exception {
+    void shouldExposeAuthenticationShimAndRejectRemovedMetadataEndpoints() throws Exception {
         mockMvc.perform(post("/kylin/api/user/authentication")
                         .header("Authorization", authHeader()))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isOk())
+                .andExpect(content().json("{\"authenticated\":true,\"userDetails\":{\"username\":\"ADMIN\"}}"));
 
         mockMvc.perform(get("/kylin/api/tables_and_columns")
                         .param("project", "demo")

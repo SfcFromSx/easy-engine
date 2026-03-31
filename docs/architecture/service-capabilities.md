@@ -14,14 +14,15 @@ This file summarizes the current functional surface of the Easy Engine services.
 | Capability | Status | Notes |
 |---|---|---|
 | Accept query requests | `Implemented` | `POST /kylin/api/query` is the supported public interface. |
-| Execute read-only SQL on the default datasource | `Implemented` | Statement and prepared execution are supported. |
+| Execute read-only SQL on the default datasource | `Implemented` | Statement execution is direct; prepared execution stays supported, with Kylin-routed prepared requests literalized inside `query` before execution. |
 | Reject non-query SQL | `Implemented` | Non-query statements return an exception-style response. |
 | Route queries by preserved metadata or engine hint | `Implemented` | `YH_TARGET_ENGINE` takes precedence, then `engine`, then default datasource. |
 | Redis-backed query cache | `Implemented` | Includes datasource isolation, TTL, cache key override, and bypass semantics. |
 | Prepared-parameter cache fingerprinting | `Implemented` | Prepared inputs participate in cache identity. |
 | Trace writing to MySQL | `Implemented` | Query execution writes trace records directly to MySQL with `executionMode` and an optional failed-prepared `parameterPayload`. |
 | Multiple datasource registry | `Implemented` | Default plus named routed datasources are supported. |
-| Independent authentication API | `Out of Scope` | Query is query-only. |
+| JDBC authentication handshake shim | `Implemented` | `GET`/`POST /kylin/api/user/authentication` returns a lightweight authenticated payload for Kylin JDBC clients that connect to `query`. |
+| Independent authentication API | `Out of Scope` | Query does not expose a standalone login/session API beyond the JDBC handshake shim. |
 | Independent metadata catalog API | `Out of Scope` | Metadata APIs were removed from query. |
 | Query cancellation controls | `Planned` | No operator kill or cancel endpoint exists today. |
 

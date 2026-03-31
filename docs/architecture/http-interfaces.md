@@ -8,7 +8,9 @@ Base service: `query`
 
 | Method | Path | Status | Purpose | Notes |
 |---|---|---|---|---|
-| `POST` | `/kylin/api/query` | `Implemented` | Execute query requests | Query-only interface; supports routed and prepared execution. Other Kylin compatibility endpoints are not provided by `query`. |
+| `POST` | `/kylin/api/query` | `Implemented` | Execute query requests | Query-only interface; supports routed and prepared execution. Kylin-routed prepared requests are literalized inside `query` before execution. |
+| `GET` | `/kylin/api/user/authentication` | `Implemented` | JDBC handshake compatibility shim | Returns a lightweight authenticated payload for Kylin JDBC clients targeting `query`; other metadata/catalog compatibility endpoints remain out of scope. |
+| `POST` | `/kylin/api/user/authentication` | `Implemented` | JDBC handshake compatibility shim | Same lightweight compatibility response as `GET`; not a standalone login/session API. |
 
 ## Manager
 
