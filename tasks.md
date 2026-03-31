@@ -15,40 +15,6 @@ This is the canonical task ledger for Easy Engine. The foreman model reads this 
 
 ## Todo
 
-### ARCH-006
-
-- **Status:** todo
-- **Module:** manager | **Type:** frontend | **Priority:** 60
-- **Title:** ADD DATASOURCE CONFIG MANAGEMENT PAGE TO MANAGER UI
-- **Attempts:** 0
-- **Depends on:** ARCH-004
-
-**Context files**
-
-- `manager/frontend/src/views/`
-- `manager/frontend/src/router/index.js`
-- `manager/frontend/src/components/` (nav/sidebar component)
-
-**Acceptance criteria**
-
-1. `QueryDatasources.vue` view added; supports list, create, edit, delete of datasource configs.
-2. Route `/query-datasources` added to router.
-3. Nav link added in sidebar/nav component.
-4. All CRUD operations wire to `/api/v1/query-datasources` endpoints.
-5. `npm --prefix manager/frontend run build` passes.
-
-**Validation commands**
-
-```bash
-npm --prefix manager/frontend run build
-```
-
-**Progress log**
-
-<!-- Foreman appends stage outcomes here during execution -->
-
----
-
 ### ARCH-007
 
 - **Status:** todo
@@ -266,6 +232,7 @@ npm --prefix manager/frontend run build
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| ARCH-006 | ADD DATASOURCE CONFIG MANAGEMENT PAGE TO MANAGER UI | manager | Datasource page, route, and nav link added; `npm --prefix manager/frontend run build` passes |
 | ARCH-005 | QUERY POLLS MANAGER FOR DATASOURCE CONFIGS | query | Manager-backed datasource loading added with static fallback; `mvn -q -f query/pom.xml test` passes |
 | ARCH-004 | EXPOSE DATASOURCE CONFIG CRUD API IN MANAGER | manager | V7 seeds query datasource configs; `/api/v1/query-datasources` CRUD added; `mvn -q -f manager/pom.xml test` passes |
 | ARCH-003 | WRITE TRACES DIRECTLY TO POSTGRESQL FROM QUERY | query | Query writes trace rows and pattern stats directly to PostgreSQL; `mvn -q -f query/pom.xml test` passes |

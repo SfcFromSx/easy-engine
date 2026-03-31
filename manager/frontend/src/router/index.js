@@ -3,6 +3,7 @@ import Dashboard from '../views/Dashboard.vue'
 import Traces from '../views/Traces.vue'
 import Patterns from '../views/Patterns.vue'
 import Acceleration from '../views/Acceleration.vue'
+import QueryDatasources from '../views/QueryDatasources.vue'
 
 export default createRouter({
   history: createWebHistory(),
@@ -10,6 +11,7 @@ export default createRouter({
     { path: '/', component: Dashboard },
     { path: '/traces', component: Traces },
     { path: '/patterns', component: Patterns },
+    { path: '/query-datasources', component: QueryDatasources },
     { path: '/acceleration', component: Acceleration }
   ]
 })

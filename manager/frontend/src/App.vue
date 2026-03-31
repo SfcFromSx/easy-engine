@@ -25,6 +25,10 @@
           <el-icon><terminal :size="18" /></el-icon>
           <span>{{ t('nav.patterns') }}</span>
         </el-menu-item>
+        <el-menu-item index="/query-datasources">
+          <el-icon><server :size="18" /></el-icon>
+          <span>{{ t('nav.datasources') }}</span>
+        </el-menu-item>
         <el-menu-item index="/acceleration">
           <el-icon><rocket :size="18" /></el-icon>
           <span>{{ t('nav.acceleration') }}</span>
@@ -64,6 +68,7 @@ import {
   LayoutDashboard, 
   Activity, 
   Terminal, 
+  Server,
   Rocket, 
   Zap 
 } from 'lucide-vue-next'
