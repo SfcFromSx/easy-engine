@@ -84,6 +84,7 @@ When a task is completed, update its **Status** line to `done` and move it to th
 - Do not make broad multi-module changes in one task unless the task explicitly says so.
 - Do not remove human review checkpoints from Git workflows.
 - Collect harness or tooling issues into `INBOX.md` first; do not change infrastructure without explicit human approval.
+- Always read `AGENTS.md` first when picking up a new task to ensure alignment with the latest project contract.
 - All task state lives in `tasks.md`. Do not create JSON, YAML, or other machine state files for task tracking.
 
 ## Git Contract

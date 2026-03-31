@@ -42,21 +42,18 @@
             table-layout="auto"
             :empty-text="t('datasources.empty')"
           >
-            <el-table-column :label="t('datasources.name')" min-width="220">
+            <el-table-column :label="t('datasources.name')" min-width="180">
               <template #default="{ row }">
-                <div class="datasource-name">
-                  <server :size="16" color="var(--primary-color)" />
-                  <div>
-                    <div class="text-card-title">{{ row.name }}</div>
-                    <div class="datasource-meta">{{ row.type || '--' }}</div>
-                  </div>
+                <div class="row-actions" style="gap: 8px">
+                  <server :size="14" color="var(--primary-color)" />
+                  <span class="text-card-title">{{ row.name }}</span>
                 </div>
               </template>
             </el-table-column>
-            <el-table-column :label="t('datasources.default')" width="120" align="center">
+            <el-table-column :label="t('datasources.default')" width="100" align="center">
               <template #default="{ row }">
-                <el-tag :type="row.isDefault ? 'success' : 'info'" effect="plain" size="small">
-                  {{ row.isDefault ? t('datasources.default') : row.type }}
+                <el-tag :type="row.isDefault ? 'success' : 'info'" effect="plain" size="small" style="font-size: 10px">
+                  {{ row.isDefault ? t('datasources.default') : row.type?.toUpperCase() }}
                 </el-tag>
               </template>
             </el-table-column>
@@ -72,8 +69,8 @@
             </el-table-column>
             <el-table-column :label="t('datasources.pool')" width="160">
               <template #default="{ row }">
-                <div class="pool-stack">
-                  <span>{{ row.maxPoolSize }}/{{ row.minIdle }}</span>
+                <div class="row-actions" style="gap: 8px">
+                  <span class="text-mono">{{ row.maxPoolSize }}/{{ row.minIdle }}</span>
                   <span class="datasource-meta">{{ row.connectionTimeoutMs }}ms</span>
                 </div>
               </template>
@@ -351,10 +348,14 @@ onMounted(load)
 </script>
 
 <style scoped>
+.datasource-table :deep(.el-table__row) {
+  height: 40px !important;
+}
+
 .datasource-name {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
 }
 
 .datasource-meta {
@@ -366,15 +367,17 @@ onMounted(load)
 .datasource-code {
   display: inline-block;
   max-width: 100%;
-  font-size: 11px;
-  white-space: normal;
-  word-break: break-all;
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1;
 }
 
 .pool-stack {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 8px;
 }
 
 .form-grid {
