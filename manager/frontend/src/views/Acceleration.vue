@@ -43,56 +43,43 @@
             table-layout="auto"
             :empty-text="t('acceleration.empty')"
           >
-            <el-table-column prop="name" :label="t('acceleration.name')" width="200">
+            <el-table-column prop="name" :label="t('acceleration.name')" width="180">
               <template #default="{ row }">
                 <div class="accel-name">
-                  <database :size="16" color="#3b82f6" />
-                  <span style="font-weight: 700">{{ row.name }}</span>
+                  <database :size="14" color="var(--primary-color)" />
+                  <span class="text-card-title">{{ row.name }}</span>
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="status" :label="t('acceleration.status')" width="110">
+            <el-table-column prop="status" :label="t('acceleration.status')" width="100">
               <template #default="{ row }">
-                <el-tag :type="row.status === 'ACTIVE' ? 'success' : 'warning'" size="small" effect="dark">
+                <el-tag :type="row.status === 'ACTIVE' ? 'success' : 'warning'" size="small" effect="plain" class="text-mono">
                   {{ row.status }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column :label="t('acceleration.schema')" min-width="220">
+            <el-table-column :label="t('acceleration.schema')" width="160">
               <template #default="{ row }">
-                <div class="sql-preview">
-                  <div class="mobile-record-tags" style="margin-top: 0">
-                    <el-tag size="small" type="info" effect="plain">{{ row.schemaName }}</el-tag>
-                    <el-tag size="small" effect="plain">{{ row.source }}</el-tag>
-                  </div>
-                  <div class="mini-muted">
-                    {{ row.cronExpr || t('common.manualOnly') }}
-                  </div>
+                <div class="column-stack">
+                  <span class="text-mono text-small">{{ row.schemaName }}</span>
+                  <span class="text-small" style="opacity: 0.7">{{ row.source }}</span>
                 </div>
               </template>
             </el-table-column>
-            <el-table-column :label="t('acceleration.refreshSql')" min-width="360" show-overflow-tooltip>
+            <el-table-column :label="t('acceleration.cronField')" width="140">
               <template #default="{ row }">
-                <div class="sql-preview">
-                  <div class="sql-snippet">
-                    <span class="sql-snippet-label">{{ t('acceleration.ddl') }}</span>
-                    <el-tooltip :content="row.ddlText" placement="top">
-                      <code class="mini-code ddl-code">{{ row.ddlText }}</code>
-                    </el-tooltip>
-                  </div>
-                  <div class="sql-snippet">
-                    <span class="sql-snippet-label">{{ t('acceleration.refreshSql') }}</span>
-                    <el-tooltip :content="row.refreshSql || t('common.manualOnly')" placement="top">
-                      <code class="mini-code ddl-code">{{ row.refreshSql || t('common.manualOnly') }}</code>
-                    </el-tooltip>
-                  </div>
-                </div>
+                <span class="text-mono text-small">{{ row.cronExpr || '--' }}</span>
               </template>
             </el-table-column>
-            <el-table-column :label="t('acceleration.actions')" width="176">
+            <el-table-column :label="t('acceleration.refreshSql')" min-width="280" show-overflow-tooltip>
               <template #default="{ row }">
-                <div class="row-actions row-actions--stacked">
-                  <el-button size="small" link type="success" @click="toggleStatus(row)">
+                <code class="mini-code text-mono" style="font-size: 11px">{{ row.refreshSql || row.ddlText }}</code>
+              </template>
+            </el-table-column>
+            <el-table-column :label="t('acceleration.actions')" width="180">
+              <template #default="{ row }">
+                <div class="row-actions">
+                  <el-button size="small" link :type="row.status === 'ACTIVE' ? 'warning' : 'success'" @click="toggleStatus(row)">
                     {{ row.status === 'ACTIVE' ? t('common.deactivate') : t('common.activate') }}
                   </el-button>
                   <el-button size="small" link @click="edit(row)">{{ t('common.configure') }}</el-button>
@@ -326,19 +313,29 @@ onMounted(load)
 .accel-name {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+}
+
+.column-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .hint {
   margin-top: 8px;
-  color: #64748b;
-  font-size: 12px;
+  color: var(--color-subtitle);
+  font-size: 11px;
 }
 
-.ddl-code {
-  display: block;
-  max-width: 100%;
-  white-space: normal;
-  word-break: break-word;
+.row-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+:deep(.el-table .el-button--link) {
+  padding: 2px 0;
+  font-weight: 600;
 }
 </style>

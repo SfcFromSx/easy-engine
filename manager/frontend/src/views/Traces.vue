@@ -53,9 +53,9 @@
       <div class="table-content" v-loading="loading">
         <div class="table-shell desktop-table">
           <el-table class="data-table traces-table" :data="rows" stripe row-key="id" :empty-text="t('traces.empty')">
-            <el-table-column :label="t('traces.time')" width="190">
+            <el-table-column :label="t('traces.time')" width="180">
               <template #default="{ row }">
-                <span style="color: #64748b; font-size: 13px">{{ formatDateTime(row.receivedAt) }}</span>
+                <span class="text-small">{{ formatDateTime(row.receivedAt) }}</span>
               </template>
             </el-table-column>
             <el-table-column :label="t('traces.flag')" width="92" align="center">
@@ -72,39 +72,37 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column :label="t('traces.duration')" width="110">
+            <el-table-column :label="t('traces.duration')" width="100">
               <template #default="{ row }">
-                <span :class="['status-text', (row.durationMs || 0) > 500 ? 'text-amber' : 'text-blue']">
+                <span :class="['status-text', 'text-mono', (row.durationMs || 0) > 500 ? 'text-amber' : 'text-blue']">
                   {{ formatDuration(row.durationMs) }}
                 </span>
               </template>
             </el-table-column>
-            <el-table-column :label="t('traces.cache')" width="90">
+            <el-table-column :label="t('traces.cache')" width="80">
               <template #default="{ row }">
                 <el-tag v-if="row.cacheHit" type="success" size="small" effect="plain">HIT</el-tag>
                 <el-tag v-else type="info" size="small" effect="plain">MISS</el-tag>
               </template>
             </el-table-column>
-            <el-table-column :label="t('traces.parseResult')" width="120">
+            <el-table-column :label="t('traces.parseResult')" width="110">
               <template #default="{ row }">
                 <el-tag :type="statusType(row.parseStatus)" size="small">
                   {{ row.parseStatus || t('common.noData') }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column :label="t('traces.fingerprint')" width="190">
+            <el-table-column :label="t('traces.fingerprint')" width="160">
               <template #default="{ row }">
-                <el-link v-if="row.sqlFingerprint" type="primary" style="font-size: 12px" @click="goPattern(row.sqlFingerprint)">
-                  <terminal :size="12" style="margin-right: 4px" />
+                <el-link v-if="row.sqlFingerprint" type="primary" class="text-mono" style="font-size: 11px" @click="goPattern(row.sqlFingerprint)">
                   {{ shortFingerprint(row.sqlFingerprint) }}
                 </el-link>
-                <span v-else class="muted-text">{{ t('traces.noFingerprint') }}</span>
+                <span v-else class="text-small">{{ t('traces.noFingerprint') }}</span>
               </template>
             </el-table-column>
             <el-table-column :label="t('traces.sql')" min-width="320" show-overflow-tooltip>
               <template #default="{ row }">
-                <code class="mini-code">{{ row.originalSql || '--' }}</code>
-                <div v-if="row.parseError" class="mini-muted">{{ t('traces.parseError', { message: row.parseError }) }}</div>
+                <code class="mini-code text-mono">{{ row.originalSql || '--' }}</code>
               </template>
             </el-table-column>
           </el-table>

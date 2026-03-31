@@ -322,44 +322,41 @@ onMounted(load)
 </script>
 
 <style scoped>
-.mb-24 { margin-bottom: 24px; }
+.mb-24 { margin-bottom: 20px; }
 .stat-card {
   display: flex;
   align-items: center;
-  padding: 24px;
+  padding: 20px;
 }
 .stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 16px;
+  margin-right: 14px;
   color: white;
+  flex-shrink: 0;
 }
 .bg-blue { background: linear-gradient(135deg, #60a5fa, #3b82f6); }
 .bg-purple { background: linear-gradient(135deg, #a78bfa, #8b5cf6); }
 .bg-emerald { background: linear-gradient(135deg, #34d399, #10b981); }
 .bg-amber { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
 
-.stat-label { font-size: 13px; color: #64748b; margin-bottom: 4px; }
-.stat-value { font-size: 24px; font-weight: 700; color: #1e293b; }
-
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
-.card-header h3 { font-size: 16px; font-weight: 600; color: #1e293b; }
 
 .dashboard-panel-body {
-  min-height: 220px;
+  min-height: 200px;
 }
 
 .panel-status {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .spin { animation: spin 2s linear infinite; }

@@ -60,33 +60,33 @@
             :empty-text="t('patterns.empty')"
             :row-class-name="rowClassName"
           >
-            <el-table-column prop="sqlFingerprint" :label="t('patterns.fingerprintId')" width="160">
+            <el-table-column prop="sqlFingerprint" :label="t('patterns.fingerprintId')" width="140">
               <template #default="{ row }">
-                <code class="mini-code">{{ shortFingerprint(row.sqlFingerprint, 12) }}</code>
+                <code class="mini-code text-mono" style="font-size: 11px">{{ shortFingerprint(row.sqlFingerprint, 12) }}</code>
               </template>
             </el-table-column>
-            <el-table-column prop="executionCount" :label="t('patterns.executionCount')" width="100" align="right">
+            <el-table-column prop="executionCount" :label="t('patterns.executionCount')" width="90" align="right">
               <template #default="{ row }">
-                <span style="font-weight: 700; color: #3b82f6">{{ row.executionCount }}</span>
+                <span class="text-mono" style="font-weight: 700; color: var(--primary-color)">{{ row.executionCount }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="avgDurationMs" :label="t('patterns.avgDuration')" width="120">
+            <el-table-column prop="avgDurationMs" :label="t('patterns.avgDuration')" width="100">
               <template #default="{ row }">
-                <span :class="['status-text', row.avgDurationMs > 300 ? 'text-amber' : 'text-blue']">
+                <span :class="['status-text', 'text-mono', row.avgDurationMs > 300 ? 'text-amber' : 'text-blue']">
                   {{ Math.round(row.avgDurationMs || 0) }}ms
                 </span>
               </template>
             </el-table-column>
             <el-table-column prop="cleanSqlSample" :label="t('patterns.sampleSql')" min-width="320" show-overflow-tooltip>
               <template #default="{ row }">
-                <code style="font-size: 11px; color: #64748b">{{ row.cleanSqlSample || t('common.noData') }}</code>
+                <code class="text-mono text-small">{{ row.cleanSqlSample || t('common.noData') }}</code>
               </template>
             </el-table-column>
-            <el-table-column :label="t('patterns.actions')" width="168">
+            <el-table-column :label="t('patterns.actions')" width="180">
               <template #default="{ row }">
-                <div class="row-actions row-actions--stacked">
+                <div class="row-actions">
                   <el-button size="small" type="primary" plain @click="goTraces(row)">{{ t('patterns.viewTraces') }}</el-button>
-                  <el-button size="small" type="success" @click="openDialog(row)">{{ t('patterns.createAcceleration') }}</el-button>
+                  <el-button size="small" type="success" plain @click="openDialog(row)">{{ t('patterns.accel') }}</el-button>
                 </div>
               </template>
             </el-table-column>

@@ -369,6 +369,38 @@ Validation status: approved
 Evidence: Visual audit with subagent confirmed perfect typography consistency across all views.
 Next action: commit.
 
+---
+
+### MGR-UX-002
+
+- **Status:** todo
+- **Module:** manager | **Type:** frontend | **Priority:** 65
+- **Title:** STANDARDIZE TYPOGRAPHY AND OPTIMIZE MANAGER UI FOR SINGLE-SCREEN
+- **Attempts:** 0
+
+**Context files**
+
+- `manager/frontend/src/style.css`
+- `manager/frontend/src/views/*.vue`
+
+**Acceptance criteria**
+
+1. All manager pages fit in a single screen (1920x872) without vertical scrolling.
+2. Consistent typography across all "kinds" of info (Titles, Subtitles, Card Headers, Table Data, Labels).
+3. Use unified font stack: Outfit for headings, Inter for body, JetBrains Mono for code.
+4. Centralized typography system in `style.css` using CSS variables.
+5. All tables (Traces, Patterns, Acceleration) optimized for density.
+
+**Validation commands**
+
+```bash
+npm --prefix manager/frontend run build
+```
+
+**Progress log**
+
+<!-- Foreman appends stage outcomes here during execution -->
+
 ## Done
 
 | ID | Title | Module | Done signal |
