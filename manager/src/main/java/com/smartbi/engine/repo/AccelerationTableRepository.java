@@ -4,10 +4,11 @@ import com.smartbi.engine.domain.AccelerationTable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
 
-public interface AccelerationTableRepository extends JpaRepository<AccelerationTable, Long> {
+public interface AccelerationTableRepository extends JpaRepository<AccelerationTable, Long>, JpaSpecificationExecutor<AccelerationTable> {
 
     List<AccelerationTable> findAllByOrderByUpdatedAtDesc();
 

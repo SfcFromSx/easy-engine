@@ -24,8 +24,17 @@ public class AccelerationController {
 
     @GetMapping
     public Page<AccelerationTable> list(@RequestParam(defaultValue = "0") int page,
-                                        @RequestParam(defaultValue = "10") int size) {
-        return accelerationService.list(PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt")));
+                                        @RequestParam(defaultValue = "10") int size,
+                                        @RequestParam(required = false) String keyword,
+                                        @RequestParam(required = false) String status,
+                                        @RequestParam(required = false) String schemaName,
+                                        @RequestParam(required = false) String source) {
+        return accelerationService.list(
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt")),
+                keyword,
+                status,
+                schemaName,
+                source);
     }
 
     @PostMapping

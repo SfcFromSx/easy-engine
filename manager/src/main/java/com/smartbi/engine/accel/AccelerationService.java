@@ -6,6 +6,8 @@ import com.smartbi.engine.domain.AccelerationTable;
 import com.smartbi.engine.domain.SqlPatternStats;
 import com.smartbi.engine.repo.AccelerationTableRepository;
 import com.smartbi.engine.repo.SqlPatternStatsRepository;
+import com.smartbi.engine.repo.spec.AccelerationSpecifications;
+import com.smartbi.engine.repo.spec.PatternSpecifications;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -31,8 +33,14 @@ public class AccelerationService {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public Page<AccelerationTable> list(Pageable pageable) {
-        return accelerationTableRepository.findAllByOrderByUpdatedAtDesc(pageable);
+    public Page<AccelerationTable> list(Pageable pageable,
+                                        String keyword,
+                                        String status,
+                                        String schemaName,
+                                        String source) {
+        return accelerationTableRepository.findAll(
+                AccelerationSpecifications.withFilters(keyword, status, schemaName, source),
+                pageable);
     }
 
     @Transactional
@@ -124,11 +132,13 @@ public class AccelerationService {
         return n;
     }
 
-    public Page<SqlPatternStats> topPatterns(Pageable pageable, String fingerprint) {
-        if (StringUtils.hasText(fingerprint)) {
-            return sqlPatternStatsRepository.findAllBySqlFingerprintOrderByExecutionCountDesc(fingerprint.trim(), pageable);
-        }
-        return sqlPatternStatsRepository.findAllByOrderByExecutionCountDesc(pageable);
+    public Page<SqlPatternStats> topPatterns(Pageable pageable,
+                                             String fingerprint,
+                                             String sqlKeyword,
+                                             Long minExecutionCount) {
+        return sqlPatternStatsRepository.findAll(
+                PatternSpecifications.withFilters(fingerprint, sqlKeyword, minExecutionCount),
+                pageable);
     }
 
     @Transactional

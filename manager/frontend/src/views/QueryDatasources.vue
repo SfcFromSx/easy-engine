@@ -24,19 +24,40 @@
 
     <div class="glass-card table-card">
       <div class="filter-bar">
-        <div class="filter-summary">
-          <span>{{ t('datasources.totalItems', { count: configs.length }) }}</span>
-          <el-tag size="small" type="success">{{ t('datasources.defaultCount', { count: defaultCount }) }}</el-tag>
-          <el-tag size="small" type="info">{{ t('datasources.customCount', { count: customCount }) }}</el-tag>
+        <div class="filter-controls">
+          <el-input
+            v-model="filters.keyword"
+            class="filter-input"
+            clearable
+            :placeholder="t('datasources.filterPlaceholder')"
+          />
+          <el-select v-model="filters.type" class="filter-select" clearable :placeholder="t('datasources.filterTypePlaceholder')">
+            <el-option v-for="type in typeOptions" :key="type" :label="type.toUpperCase()" :value="type" />
+          </el-select>
+          <el-select v-model="filters.scope" class="filter-select">
+            <el-option :label="t('datasources.scopeAll')" value="all" />
+            <el-option :label="t('datasources.scopeDefault')" value="default" />
+            <el-option :label="t('datasources.scopeCustom')" value="custom" />
+          </el-select>
         </div>
-        <el-button text :loading="loading" @click="load">{{ t('common.refresh') }}</el-button>
+        <div class="filter-side">
+          <div class="filter-summary">
+            <span>{{ t('datasources.totalItems', { count: filteredConfigs.length }) }}</span>
+            <el-tag size="small" type="success">{{ t('datasources.defaultCount', { count: defaultCount }) }}</el-tag>
+            <el-tag size="small" type="info">{{ t('datasources.customCount', { count: customCount }) }}</el-tag>
+          </div>
+          <div class="filter-actions-row">
+            <el-button v-if="hasActiveFilters" text @click="clearFilters">{{ t('common.clearFilter') }}</el-button>
+            <el-button text :loading="loading" @click="load">{{ t('common.refresh') }}</el-button>
+          </div>
+        </div>
       </div>
 
       <div class="table-content" v-loading="loading">
         <div class="table-shell desktop-table">
           <el-table
             class="data-table datasource-table"
-            :data="configs"
+            :data="filteredConfigs"
             stripe
             row-key="id"
             table-layout="auto"
@@ -95,8 +116,8 @@
           </el-table>
         </div>
 
-        <div v-if="!loading && configs.length" class="mobile-records">
-          <article v-for="row in configs" :key="row.id" class="glass-card mobile-record">
+        <div v-if="!loading && filteredConfigs.length" class="mobile-records">
+          <article v-for="row in filteredConfigs" :key="row.id" class="glass-card mobile-record">
             <div class="mobile-record-header">
               <div>
                 <div class="mobile-record-title">{{ row.name }}</div>
@@ -203,6 +224,12 @@ const saving = ref(false)
 const error = ref('')
 const dialogVisible = ref(false)
 
+const filters = reactive({
+  keyword: '',
+  type: '',
+  scope: 'all'
+})
+
 const form = reactive({
   id: null,
   name: '',
@@ -217,8 +244,20 @@ const form = reactive({
   isDefault: false
 })
 
-const defaultCount = computed(() => configs.value.filter((row) => row.isDefault).length)
-const customCount = computed(() => Math.max(0, configs.value.length - defaultCount.value))
+const typeOptions = computed(() => (
+  [...new Set(
+    configs.value
+      .map((row) => String(row.type || '').trim().toLowerCase())
+      .filter(Boolean)
+  )].sort()
+))
+
+const filteredConfigs = computed(() => configs.value.filter((row) => matchesFilters(row)))
+const defaultCount = computed(() => filteredConfigs.value.filter((row) => row.isDefault).length)
+const customCount = computed(() => Math.max(0, filteredConfigs.value.length - defaultCount.value))
+const hasActiveFilters = computed(() => (
+  Boolean(filters.keyword.trim()) || Boolean(filters.type) || filters.scope !== 'all'
+))
 
 async function load() {
   loading.value = true
@@ -233,6 +272,40 @@ async function load() {
   } finally {
     loading.value = false
   }
+}
+
+function matchesFilters(row) {
+  const keyword = filters.keyword.trim().toLowerCase()
+  if (keyword) {
+    const haystack = [
+      row.name,
+      row.jdbcUrl,
+      row.driverClass
+    ].filter(Boolean).join(' ').toLowerCase()
+    if (!haystack.includes(keyword)) {
+      return false
+    }
+  }
+
+  if (filters.type && String(row.type || '').trim().toLowerCase() !== filters.type) {
+    return false
+  }
+
+  if (filters.scope === 'default' && !row.isDefault) {
+    return false
+  }
+
+  if (filters.scope === 'custom' && row.isDefault) {
+    return false
+  }
+
+  return true
+}
+
+function clearFilters() {
+  filters.keyword = ''
+  filters.type = ''
+  filters.scope = 'all'
 }
 
 function resetForm() {

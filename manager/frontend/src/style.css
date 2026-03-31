@@ -280,7 +280,26 @@ h1, h2, h3, h4 {
   max-width: 420px;
 }
 
+.filter-select {
+  width: 180px;
+}
+
+.filter-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
 .filter-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-actions-row {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -337,6 +356,18 @@ h1, h2, h3, h4 {
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 2px;
+}
+
+.panel-item-title--inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.panel-item-separator {
+  color: var(--text-secondary);
+  flex-shrink: 0;
 }
 
 .panel-item-meta {
@@ -674,9 +705,20 @@ code.mini-code {
     width: 100%;
   }
 
+  .filter-side,
+  .filter-actions-row {
+    width: 100%;
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+
   .filter-input {
     max-width: none;
     flex: 1;
+  }
+
+  .filter-select {
+    width: 100%;
   }
 
   .desktop-table {

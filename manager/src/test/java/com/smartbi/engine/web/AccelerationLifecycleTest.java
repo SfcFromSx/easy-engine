@@ -1,6 +1,7 @@
 package com.smartbi.engine.web;
 
 import com.smartbi.engine.domain.AccelerationStatus;
+import com.smartbi.engine.domain.AccelerationSource;
 import com.smartbi.engine.domain.AccelerationTable;
 import com.smartbi.engine.domain.SqlPatternStats;
 import com.smartbi.engine.repo.AccelerationTableRepository;
@@ -49,6 +50,7 @@ class AccelerationLifecycleTest {
     }
 
     @Test
+    // Covers AccelerationController#fromPattern and AccelerationController#list.
     void shouldManageAccelerationLifecycle() throws Exception {
         // 1. Create from pattern
         String createJson = String.format("{\"patternStatsId\": %d, \"tableName\": \"mv_table1\", \"schemaName\": \"public\"}", patternId);
@@ -72,6 +74,7 @@ class AccelerationLifecycleTest {
     }
 
     @Test
+    // Covers AccelerationController#create.
     void shouldCreateManualTable() throws Exception {
         String manualJson = "{\"name\": \"manual_v\", \"ddlText\": \"CREATE VIEW v AS SELECT 1\"}";
         mockMvc.perform(post("/api/v1/acceleration-tables")
@@ -79,5 +82,36 @@ class AccelerationLifecycleTest {
                         .content(manualJson))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("manual_v"));
+    }
+
+    @Test
+    // Covers AccelerationController#list combined filter path.
+    void shouldFilterAccelerationList() throws Exception {
+        AccelerationTable matching = new AccelerationTable();
+        matching.setName("mv_sales_daily");
+        matching.setSchemaName("analytics");
+        matching.setDdlText("CREATE TABLE mv_sales_daily(id int)");
+        matching.setRefreshSql("INSERT INTO mv_sales_daily SELECT 1");
+        matching.setStatus(AccelerationStatus.ACTIVE);
+        matching.setSource(AccelerationSource.RECOMMENDED);
+        tableRepository.save(matching);
+
+        AccelerationTable other = new AccelerationTable();
+        other.setName("mv_other");
+        other.setSchemaName("public");
+        other.setDdlText("CREATE TABLE mv_other(id int)");
+        other.setRefreshSql("INSERT INTO mv_other SELECT 1");
+        other.setStatus(AccelerationStatus.DRAFT);
+        other.setSource(AccelerationSource.MANUAL);
+        tableRepository.save(other);
+
+        mockMvc.perform(get("/api/v1/acceleration-tables")
+                        .param("keyword", "sales")
+                        .param("status", "ACTIVE")
+                        .param("schemaName", "analytics")
+                        .param("source", "RECOMMENDED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].name").value("mv_sales_daily"));
     }
 }

@@ -25,26 +25,41 @@
       <div class="filter-bar">
         <div class="filter-controls">
           <el-input
-            v-model="fingerprintDraft"
+            v-model="filterDraft.fingerprint"
             class="filter-input"
             clearable
             :placeholder="t('patterns.filterPlaceholder')"
-            @clear="applyFilter"
             @keyup.enter="applyFilter"
           >
             <template #prefix>
               <terminal :size="14" />
             </template>
           </el-input>
+          <el-input
+            v-model="filterDraft.sqlKeyword"
+            class="filter-input"
+            clearable
+            :placeholder="t('patterns.filterSqlPlaceholder')"
+            @keyup.enter="applyFilter"
+          />
+          <el-input
+            v-model="filterDraft.minExecutionCount"
+            class="filter-select"
+            clearable
+            :placeholder="t('patterns.minExecutionPlaceholder')"
+            @keyup.enter="applyFilter"
+          />
           <el-button type="primary" plain @click="applyFilter">
             {{ t('common.search') }}
           </el-button>
         </div>
-        <div v-if="selectedFingerprint" class="filter-actions">
+        <div v-if="hasActiveFilters" class="filter-actions">
           <div class="filter-summary">
             <terminal :size="14" />
-            <span>{{ t('patterns.onlyFingerprint') }}</span>
-            <code class="mini-code">{{ selectedFingerprint }}</code>
+            <span>{{ t('patterns.filteredBy') }}</span>
+            <el-tag v-for="entry in activeFilterEntries" :key="entry.label" size="small" effect="plain">
+              {{ entry.label }}: {{ entry.value }}
+            </el-tag>
           </div>
           <el-button text @click="clearFilter">{{ t('common.viewAll') }}</el-button>
         </div>
@@ -97,7 +112,7 @@
           <article
             v-for="row in patterns"
             :key="row.id"
-            :class="['glass-card', 'mobile-record', { 'mobile-record--selected': row.sqlFingerprint === selectedFingerprint }]"
+            :class="['glass-card', 'mobile-record', { 'mobile-record--selected': row.sqlFingerprint === activeFilters.fingerprint }]"
           >
             <div class="mobile-record-header">
               <div>
@@ -186,39 +201,84 @@ const submitting = ref(false)
 const error = ref('')
 const visible = ref(false)
 const selected = ref(null)
-const fingerprintDraft = ref('')
+const filterDraft = reactive(emptyFilters())
 const form = reactive({ tableName: '', schemaName: 'public' })
 
-const selectedFingerprint = computed(() => {
-  const value = route.query.fingerprint
-  return typeof value === 'string' && value.trim() ? value.trim() : ''
+const activeFilters = computed(() => ({
+  fingerprint: normalizeQuery(route.query.fingerprint),
+  sqlKeyword: normalizeQuery(route.query.sqlKeyword),
+  minExecutionCount: normalizeQuery(route.query.minExecutionCount)
+}))
+
+const hasActiveFilters = computed(() => Object.values(activeFilters.value).some(Boolean))
+const activeFilterEntries = computed(() => {
+  const entries = []
+  if (activeFilters.value.fingerprint) {
+    entries.push({ label: t('patterns.fingerprintId'), value: activeFilters.value.fingerprint })
+  }
+  if (activeFilters.value.sqlKeyword) {
+    entries.push({ label: t('patterns.sampleSql'), value: activeFilters.value.sqlKeyword })
+  }
+  if (activeFilters.value.minExecutionCount) {
+    entries.push({ label: t('patterns.minExecutionCount'), value: activeFilters.value.minExecutionCount })
+  }
+  return entries
 })
 
 function goTraces(row) {
   router.push({ path: '/traces', query: { fingerprint: row.sqlFingerprint } })
 }
 
-function updateFingerprintFilter(nextFingerprint) {
-  const normalized = nextFingerprint.trim()
+function emptyFilters() {
+  return {
+    fingerprint: '',
+    sqlKeyword: '',
+    minExecutionCount: ''
+  }
+}
+
+function normalizeQuery(value) {
+  return typeof value === 'string' && value.trim() ? value.trim() : ''
+}
+
+function buildQuery(filters) {
+  const query = {}
+  if (filters.fingerprint.trim()) query.fingerprint = filters.fingerprint.trim()
+  if (filters.sqlKeyword.trim()) query.sqlKeyword = filters.sqlKeyword.trim()
+  if (filters.minExecutionCount.trim()) query.minExecutionCount = filters.minExecutionCount.trim()
+  return query
+}
+
+function isSameQuery(nextQuery) {
+  return JSON.stringify(buildQuery(activeFilters.value)) === JSON.stringify(nextQuery)
+}
+
+function updateFilters() {
+  const nextQuery = buildQuery(filterDraft)
   page.value = 1
-  if (normalized === selectedFingerprint.value) {
+  if (isSameQuery(nextQuery)) {
     load()
     return
   }
-  router.push({ path: '/patterns', query: normalized ? { fingerprint: normalized } : {} })
+  router.push({ path: '/patterns', query: nextQuery })
 }
 
 function applyFilter() {
-  updateFingerprintFilter(fingerprintDraft.value)
+  updateFilters()
 }
 
 function clearFilter() {
-  fingerprintDraft.value = ''
-  updateFingerprintFilter('')
+  Object.assign(filterDraft, emptyFilters())
+  page.value = 1
+  if (!hasActiveFilters.value) {
+    load()
+    return
+  }
+  router.push({ path: '/patterns', query: {} })
 }
 
 function rowClassName({ row }) {
-  return row.sqlFingerprint === selectedFingerprint.value ? 'is-selected-row' : ''
+  return row.sqlFingerprint === activeFilters.value.fingerprint ? 'is-selected-row' : ''
 }
 
 async function load() {
@@ -226,9 +286,9 @@ async function load() {
   error.value = ''
   try {
     const params = { page: page.value - 1, size: size.value }
-    if (selectedFingerprint.value) {
-      params.fingerprint = selectedFingerprint.value
-    }
+    if (activeFilters.value.fingerprint) params.fingerprint = activeFilters.value.fingerprint
+    if (activeFilters.value.sqlKeyword) params.sqlKeyword = activeFilters.value.sqlKeyword
+    if (activeFilters.value.minExecutionCount) params.minExecutionCount = Number(activeFilters.value.minExecutionCount)
     const { data } = await client.get(API_ENDPOINTS.PATTERNS_TOP, { params })
     patterns.value = data.content || []
     total.value = data.totalElements || 0
@@ -276,9 +336,9 @@ async function submit() {
 }
 
 watch(
-  () => selectedFingerprint.value,
-  () => {
-    fingerprintDraft.value = selectedFingerprint.value
+  activeFilters,
+  (nextFilters) => {
+    Object.assign(filterDraft, nextFilters)
     page.value = 1
     load()
   },

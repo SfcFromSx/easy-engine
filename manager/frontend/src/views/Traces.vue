@@ -25,26 +25,58 @@
       <div class="filter-bar">
         <div class="filter-controls">
           <el-input
-            v-model="fingerprintDraft"
+            v-model="filterDraft.fingerprint"
             class="filter-input"
             clearable
             :placeholder="t('traces.filterPlaceholder')"
-            @clear="applyFilter"
             @keyup.enter="applyFilter"
           >
             <template #prefix>
               <terminal :size="14" />
             </template>
           </el-input>
+          <el-input
+            v-model="filterDraft.datasource"
+            class="filter-input"
+            clearable
+            :placeholder="t('traces.filterDatasourcePlaceholder')"
+            @keyup.enter="applyFilter"
+          />
+          <el-select v-model="filterDraft.sourceFlag" class="filter-select" clearable :placeholder="t('traces.allSourceFlags')">
+            <el-option :label="t('traces.allSourceFlags')" value="" />
+            <el-option label="SEED" value="SEED" />
+            <el-option label="SELF" value="SELF" />
+            <el-option label="JDBC" value="JDBC" />
+          </el-select>
+          <el-select v-model="filterDraft.cacheHit" class="filter-select" clearable :placeholder="t('traces.allCacheStates')">
+            <el-option :label="t('traces.allCacheStates')" value="" />
+            <el-option :label="t('traces.cacheHitOnly')" value="true" />
+            <el-option :label="t('traces.cacheMissOnly')" value="false" />
+          </el-select>
+          <el-select v-model="filterDraft.parseStatus" class="filter-select" clearable :placeholder="t('traces.allParseStates')">
+            <el-option :label="t('traces.allParseStates')" value="" />
+            <el-option label="OK" value="OK" />
+            <el-option label="ERROR" value="ERROR" />
+            <el-option label="SKIPPED" value="SKIPPED" />
+          </el-select>
+          <el-input
+            v-model="filterDraft.sqlKeyword"
+            class="filter-input"
+            clearable
+            :placeholder="t('traces.filterSqlPlaceholder')"
+            @keyup.enter="applyFilter"
+          />
           <el-button type="primary" plain @click="applyFilter">
             {{ t('common.search') }}
           </el-button>
         </div>
-        <div v-if="fingerprint" class="filter-actions">
+        <div v-if="hasActiveFilters" class="filter-actions">
           <div class="filter-summary">
             <terminal :size="14" />
-            <span>{{ t('traces.onlyFingerprint') }}</span>
-            <code class="mini-code">{{ fingerprint }}</code>
+            <span>{{ t('traces.filteredBy') }}</span>
+            <el-tag v-for="entry in activeFilterEntries" :key="entry.label" size="small" effect="plain">
+              {{ entry.label }}: {{ entry.value }}
+            </el-tag>
           </div>
           <el-button text @click="clearFilter">{{ t('common.clearFilter') }}</el-button>
         </div>
@@ -172,7 +204,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { RefreshCw, Terminal } from 'lucide-vue-next'
@@ -189,34 +221,98 @@ const page = ref(1)
 const size = ref(10)
 const loading = ref(false)
 const error = ref('')
-const fingerprintDraft = ref('')
+const filterDraft = reactive(emptyFilters())
 
-const fingerprint = computed(() => {
-  const value = route.query.fingerprint
-  return typeof value === 'string' && value.trim() ? value.trim() : ''
+const activeFilters = computed(() => ({
+  fingerprint: normalizeQuery(route.query.fingerprint),
+  datasource: normalizeQuery(route.query.datasource),
+  sourceFlag: normalizeQuery(route.query.sourceFlag),
+  cacheHit: normalizeQuery(route.query.cacheHit),
+  parseStatus: normalizeQuery(route.query.parseStatus),
+  sqlKeyword: normalizeQuery(route.query.sqlKeyword)
+}))
+
+const hasActiveFilters = computed(() => Object.values(activeFilters.value).some(Boolean))
+const activeFilterEntries = computed(() => {
+  const entries = []
+  if (activeFilters.value.fingerprint) {
+    entries.push({ label: t('traces.fingerprint'), value: activeFilters.value.fingerprint })
+  }
+  if (activeFilters.value.datasource) {
+    entries.push({ label: t('traces.datasource'), value: activeFilters.value.datasource })
+  }
+  if (activeFilters.value.sourceFlag) {
+    entries.push({ label: t('traces.flag'), value: activeFilters.value.sourceFlag })
+  }
+  if (activeFilters.value.cacheHit) {
+    entries.push({ label: t('traces.cache'), value: activeFilters.value.cacheHit === 'true' ? 'HIT' : 'MISS' })
+  }
+  if (activeFilters.value.parseStatus) {
+    entries.push({ label: t('traces.parseResult'), value: activeFilters.value.parseStatus })
+  }
+  if (activeFilters.value.sqlKeyword) {
+    entries.push({ label: t('traces.sql'), value: activeFilters.value.sqlKeyword })
+  }
+  return entries
 })
 
 function goPattern(sqlFingerprint) {
   router.push({ path: '/patterns', query: { fingerprint: sqlFingerprint } })
 }
 
-function updateFingerprintFilter(nextFingerprint) {
-  const normalized = nextFingerprint.trim()
+function emptyFilters() {
+  return {
+    fingerprint: '',
+    datasource: '',
+    sourceFlag: '',
+    cacheHit: '',
+    parseStatus: '',
+    sqlKeyword: ''
+  }
+}
+
+function normalizeQuery(value) {
+  return typeof value === 'string' && value.trim() ? value.trim() : ''
+}
+
+function buildQuery(filters) {
+  const query = {}
+  if (filters.fingerprint.trim()) query.fingerprint = filters.fingerprint.trim()
+  if (filters.datasource.trim()) query.datasource = filters.datasource.trim()
+  if (filters.sourceFlag.trim()) query.sourceFlag = filters.sourceFlag.trim()
+  if (filters.cacheHit.trim()) query.cacheHit = filters.cacheHit.trim()
+  if (filters.parseStatus.trim()) query.parseStatus = filters.parseStatus.trim()
+  if (filters.sqlKeyword.trim()) query.sqlKeyword = filters.sqlKeyword.trim()
+  return query
+}
+
+function isSameQuery(nextQuery) {
+  const current = buildQuery(activeFilters.value)
+  return JSON.stringify(current) === JSON.stringify(nextQuery)
+}
+
+function updateFilters() {
+  const nextQuery = buildQuery(filterDraft)
   page.value = 1
-  if (normalized === fingerprint.value) {
+  if (isSameQuery(nextQuery)) {
     load()
     return
   }
-  router.push({ path: '/traces', query: normalized ? { fingerprint: normalized } : {} })
+  router.push({ path: '/traces', query: nextQuery })
 }
 
 function applyFilter() {
-  updateFingerprintFilter(fingerprintDraft.value)
+  updateFilters()
 }
 
 function clearFilter() {
-  fingerprintDraft.value = ''
-  updateFingerprintFilter('')
+  Object.assign(filterDraft, emptyFilters())
+  page.value = 1
+  if (!hasActiveFilters.value) {
+    load()
+    return
+  }
+  router.push({ path: '/traces', query: {} })
 }
 
 function statusType(status) {
@@ -237,9 +333,12 @@ async function load() {
   error.value = ''
   try {
     const params = { page: page.value - 1, size: size.value }
-    if (fingerprint.value) {
-      params.fingerprint = fingerprint.value
-    }
+    if (activeFilters.value.fingerprint) params.fingerprint = activeFilters.value.fingerprint
+    if (activeFilters.value.datasource) params.datasource = activeFilters.value.datasource
+    if (activeFilters.value.sourceFlag) params.sourceFlag = activeFilters.value.sourceFlag
+    if (activeFilters.value.cacheHit) params.cacheHit = activeFilters.value.cacheHit === 'true'
+    if (activeFilters.value.parseStatus) params.parseStatus = activeFilters.value.parseStatus
+    if (activeFilters.value.sqlKeyword) params.sqlKeyword = activeFilters.value.sqlKeyword
     const { data } = await client.get(API_ENDPOINTS.TRACES, { params })
     rows.value = data.content || []
     total.value = data.totalElements || 0
@@ -254,9 +353,9 @@ async function load() {
 }
 
 watch(
-  () => fingerprint.value,
-  () => {
-    fingerprintDraft.value = fingerprint.value
+  activeFilters,
+  (nextFilters) => {
+    Object.assign(filterDraft, nextFilters)
     page.value = 1
     load()
   },

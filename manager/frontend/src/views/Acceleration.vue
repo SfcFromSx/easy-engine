@@ -24,13 +24,54 @@
 
     <div class="glass-card table-card">
       <div class="filter-bar">
-        <div class="filter-summary">
-          <span>{{ t('acceleration.totalItems', { count: total }) }}</span>
-          <el-tag size="small" type="success">{{ t('acceleration.active', { count: activeCount }) }}</el-tag>
-          <el-tag size="small" type="info">{{ t('acceleration.draft', { count: draftCount }) }}</el-tag>
-          <el-tag size="small" type="warning">{{ t('acceleration.disabled', { count: disabledCount }) }}</el-tag>
+        <div class="filter-controls">
+          <el-input
+            v-model="filterDraft.keyword"
+            class="filter-input"
+            clearable
+            :placeholder="t('acceleration.filterKeywordPlaceholder')"
+            @keyup.enter="applyFilter"
+          />
+          <el-select v-model="filterDraft.status" class="filter-select" clearable :placeholder="t('acceleration.allStatuses')">
+            <el-option :label="t('acceleration.allStatuses')" value="" />
+            <el-option label="ACTIVE" value="ACTIVE" />
+            <el-option label="DRAFT" value="DRAFT" />
+            <el-option label="DISABLED" value="DISABLED" />
+          </el-select>
+          <el-input
+            v-model="filterDraft.schemaName"
+            class="filter-select"
+            clearable
+            :placeholder="t('acceleration.filterSchemaPlaceholder')"
+            @keyup.enter="applyFilter"
+          />
+          <el-select v-model="filterDraft.source" class="filter-select" clearable :placeholder="t('acceleration.allSources')">
+            <el-option :label="t('acceleration.allSources')" value="" />
+            <el-option label="MANUAL" value="MANUAL" />
+            <el-option label="RECOMMENDED" value="RECOMMENDED" />
+          </el-select>
+          <el-button type="primary" plain @click="applyFilter">
+            {{ t('common.search') }}
+          </el-button>
         </div>
-        <el-button text @click="load" :loading="loading">{{ t('common.refresh') }}</el-button>
+        <div class="filter-side">
+          <div class="filter-summary">
+            <span>{{ t('acceleration.totalItems', { count: total }) }}</span>
+            <el-tag size="small" type="success">{{ t('acceleration.active', { count: activeCount }) }}</el-tag>
+            <el-tag size="small" type="info">{{ t('acceleration.draft', { count: draftCount }) }}</el-tag>
+            <el-tag size="small" type="warning">{{ t('acceleration.disabled', { count: disabledCount }) }}</el-tag>
+          </div>
+          <div v-if="hasActiveFilters" class="filter-summary">
+            <span>{{ t('acceleration.filteredBy') }}</span>
+            <el-tag v-for="entry in activeFilterEntries" :key="entry.label" size="small" effect="plain">
+              {{ entry.label }}: {{ entry.value }}
+            </el-tag>
+          </div>
+          <div class="filter-actions-row">
+            <el-button v-if="hasActiveFilters" text @click="clearFilter">{{ t('common.clearFilter') }}</el-button>
+            <el-button text @click="load" :loading="loading">{{ t('common.refresh') }}</el-button>
+          </div>
+        </div>
       </div>
 
       <div class="table-content" v-loading="loading">
@@ -175,7 +216,8 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { Plus, Database } from 'lucide-vue-next'
 import { ElMessage } from 'element-plus'
@@ -183,6 +225,8 @@ import client from '../api/client'
 import { ACCELERATION_BY_ID, ACCELERATION_STATUS, API_ENDPOINTS } from '../api/endpoints'
 
 const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
 const tables = ref([])
 const total = ref(0)
 const page = ref(1)
@@ -194,6 +238,7 @@ const dlg = ref(false)
 const activeCount = ref(0)
 const draftCount = ref(0)
 const disabledCount = ref(0)
+const filterDraft = reactive(emptyFilters())
 
 const c = reactive({
   name: '',
@@ -203,12 +248,92 @@ const c = reactive({
   cronExpr: ''
 })
 
+const activeFilters = computed(() => ({
+  keyword: normalizeQuery(route.query.keyword),
+  status: normalizeQuery(route.query.status),
+  schemaName: normalizeQuery(route.query.schemaName),
+  source: normalizeQuery(route.query.source)
+}))
+
+const hasActiveFilters = computed(() => Object.values(activeFilters.value).some(Boolean))
+const activeFilterEntries = computed(() => {
+  const entries = []
+  if (activeFilters.value.keyword) {
+    entries.push({ label: t('acceleration.name'), value: activeFilters.value.keyword })
+  }
+  if (activeFilters.value.status) {
+    entries.push({ label: t('acceleration.status'), value: activeFilters.value.status })
+  }
+  if (activeFilters.value.schemaName) {
+    entries.push({ label: t('acceleration.schema'), value: activeFilters.value.schemaName })
+  }
+  if (activeFilters.value.source) {
+    entries.push({ label: t('acceleration.source'), value: activeFilters.value.source })
+  }
+  return entries
+})
+
+function emptyFilters() {
+  return {
+    keyword: '',
+    status: '',
+    schemaName: '',
+    source: ''
+  }
+}
+
+function normalizeQuery(value) {
+  return typeof value === 'string' && value.trim() ? value.trim() : ''
+}
+
+function buildQuery(filters) {
+  const query = {}
+  if (filters.keyword.trim()) query.keyword = filters.keyword.trim()
+  if (filters.status.trim()) query.status = filters.status.trim()
+  if (filters.schemaName.trim()) query.schemaName = filters.schemaName.trim()
+  if (filters.source.trim()) query.source = filters.source.trim()
+  return query
+}
+
+function isSameQuery(nextQuery) {
+  return JSON.stringify(buildQuery(activeFilters.value)) === JSON.stringify(nextQuery)
+}
+
+function applyFilter() {
+  const nextQuery = buildQuery(filterDraft)
+  page.value = 1
+  if (isSameQuery(nextQuery)) {
+    load()
+    return
+  }
+  router.push({ path: '/acceleration', query: nextQuery })
+}
+
+function clearFilter() {
+  Object.assign(filterDraft, emptyFilters())
+  page.value = 1
+  if (!hasActiveFilters.value) {
+    load()
+    return
+  }
+  router.push({ path: '/acceleration', query: {} })
+}
+
 async function load() {
   loading.value = true
   error.value = ''
   try {
     const [listRes, summaryRes] = await Promise.all([
-      client.get(API_ENDPOINTS.ACCELERATION_TABLES, { params: { page: page.value - 1, size: size.value } }),
+      client.get(API_ENDPOINTS.ACCELERATION_TABLES, {
+        params: {
+          page: page.value - 1,
+          size: size.value,
+          ...(activeFilters.value.keyword ? { keyword: activeFilters.value.keyword } : {}),
+          ...(activeFilters.value.status ? { status: activeFilters.value.status } : {}),
+          ...(activeFilters.value.schemaName ? { schemaName: activeFilters.value.schemaName } : {}),
+          ...(activeFilters.value.source ? { source: activeFilters.value.source } : {})
+        }
+      }),
       client.get(API_ENDPOINTS.STATS_SUMMARY)
     ])
     tables.value = listRes.data.content || []
@@ -306,7 +431,15 @@ async function save() {
   }
 }
 
-onMounted(load)
+watch(
+  activeFilters,
+  (nextFilters) => {
+    Object.assign(filterDraft, nextFilters)
+    page.value = 1
+    load()
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped>

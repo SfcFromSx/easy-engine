@@ -23,9 +23,13 @@ public class PatternController {
     @GetMapping("/top")
     public Page<SqlPatternStats> top(@RequestParam(defaultValue = "0") int page,
                                      @RequestParam(defaultValue = "20") int size,
-                                     @RequestParam(required = false) String fingerprint) {
+                                     @RequestParam(required = false) String fingerprint,
+                                     @RequestParam(required = false) String sqlKeyword,
+                                     @RequestParam(required = false) Long minExecutionCount) {
         return accelerationService.topPatterns(
                 PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "executionCount")),
-                fingerprint);
+                fingerprint,
+                sqlKeyword,
+                minExecutionCount);
     }
 }
