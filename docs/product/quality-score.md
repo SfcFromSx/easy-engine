@@ -11,5 +11,5 @@ This file is a lightweight scoreboard for the harness workflow.
 
 ## Next Improvements
 
-- run pilot Codex and Claude cycles against a docs-only task,
+- run a pilot direct-only foreman cycle against a docs-only task,
 - expand integration tests after the first live loop.

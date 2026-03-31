@@ -18,6 +18,7 @@ Use these entrypoints:
 ## For Humans
 
 - Assign and reprioritize work in [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md).
+- The foreman always works directly in the current session; there is no per-task execution-mode switch.
 - Stop or resume the foreman by telling it to stop or continue; there is no separate pause file workflow.
 - Review diffs, run extra validation, and approve merges before publish.
 - Read [INBOX.md](/Users/sfc/Documents/projects/engine/INBOX.md) for issues or suggestions that agents surfaced but did not convert into implementation work.

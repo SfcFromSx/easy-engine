@@ -1,51 +1,23 @@
 # Agent Workflow Runbook
 
-The foreman model drives task execution manually from `tasks.md`. It receives a task assignment from the human, then calls `claude` and `codex` from the command line.
+The foreman model drives task execution from `tasks.md` and works directly in the current session.
 
-See [AGENTS.md](../../AGENTS.md) for the full foreman workflow and CLI command templates, and [human-collaboration.md](/Users/sfc/Documents/projects/engine/docs/operations/human-collaboration.md) for the human-side guardrails.
+See [AGENTS.md](../../AGENTS.md) for the full foreman workflow contract, and [human-collaboration.md](/Users/sfc/Documents/projects/engine/docs/operations/human-collaboration.md) for the human-side guardrails.
 
 ## Stage Shape
 
 Each task runs through up to four stages:
 
-1. **Orchestrator** — reads the task, produces an implementation brief. Runner: claude.
-2. **Implementer** — makes code changes per the brief. Runner: codex (backend/test/docs) or claude (frontend).
-3. **Verifier** — challenges the implementation against acceptance criteria. Runner: codex.
-4. **Doc-gardener** — updates canonical docs when behavior or APIs changed. Runner: codex. Optional.
+1. **Plan / inspect** — understand the task, code paths, and constraints.
+2. **Implement** — make the required code or documentation changes.
+3. **Verify** — run validation commands and inspect the changed behavior.
+4. **Doc gardening** — update canonical docs when behavior or APIs changed. Optional.
 
-After verifier approval: commit, then optionally run doc-gardener.
-
-## Runner Commands
-
-### claude
-
-```bash
-claude -p --model opus4.6 "<prompt>"
-```
-
-### codex
-
-```bash
-codex exec --sandbox danger-full-access \
-  --model gpt-5.4 \
-  -c 'model_reasoning_effort="high"' \
-  "<prompt>"
-```
-
-Codex runs with MCP servers and plugins disabled. Model and flag values are in `.agent/config.json` under `runners.codex`.
-
-## Stage Routing
-
-Default routing is defined in `tasks.md` header and `.agent/config.json`. Per-task overrides are noted in the task entry.
-
-| Task type | Orchestrator | Implementer | Verifier | Doc-gardener |
-|-----------|-------------|-------------|----------|--------------|
-| backend / test / docs / architecture | claude | codex | codex | codex |
-| frontend | claude | claude | codex | codex |
+After verification approval: commit, then optionally run doc gardening.
 
 ## Progress Logging
 
-After each stage the foreman appends a dated entry to the task's **Progress log** in `tasks.md`. See AGENTS.md for the log format.
+After each stage, or after each major milestone, the foreman appends a dated entry to the task's **Progress log** in `tasks.md`. See AGENTS.md for the log format.
 
 ## Commit
 
@@ -80,12 +52,6 @@ See `.agent/config.json` `validation_commands` for the authoritative per-module 
 
 - On transient failures (network, timeout, process crash): retry up to 2 times with 30-second backoff. Do not count against task attempts.
 - On permanent failures (wrong output, schema error, test failure): increment task attempts. Block after 3 permanent failures.
-
-## Codex Best Practices
-
-- Prefer single-stage execution for debugging.
-- Codex runs are best-effort under unstable networks — expect retries.
-- Do not run codex with MCP or plugin flags; the isolation is intentional.
 
 ## Doc Gardening
 

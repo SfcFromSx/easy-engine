@@ -2,7 +2,7 @@
 
 This file is the fast-start contract for the foreman model working in Easy Engine.
 
-The foreman does not write code directly. It reads `tasks.md`, receives a task assignment from the human, then drives execution by calling `claude` and `codex` from the command line. All progress is written back into `tasks.md`.
+The foreman reads `tasks.md`, receives a task assignment from the human, does the work directly in the current session, and writes progress back into `tasks.md`.
 
 ## Repo Map
 
@@ -12,7 +12,7 @@ The foreman does not write code directly. It reads `tasks.md`, receives a task a
 - `kylin-jdbc-cache/`: JDBC adapter.
 - `tasks.md`: canonical task ledger — human-readable, foreman-writable.
 - `INBOX.md`: repo-root inbox for agent-found issues and suggestions awaiting human review.
-- `.agent/config.json`: runner binaries, models, validation commands, and service health checks.
+- `.agent/config.json`: harness policy, validation commands, mirror policy, and service health checks.
 - `.agent/history/`: append-only JSONL stage history; detailed runner logs live under `.agent/runtime/runner-logs/`.
 
 ## Read This First
@@ -36,69 +36,21 @@ Eligibility rules (apply when the human has not named a specific task):
 - All `depends_on` tasks must be `done`.
 - Prefer lower `priority` number. Break ties by oldest update timestamp.
 
-### 2. Run the orchestrator
+### 2. Investigate and implement
 
-The orchestrator reads the task and produces a precise implementation brief. It does not write code.
+The foreman plans, implements, and validates the task directly in the current session. There is no per-stage or per-task model switching in the harness contract.
 
-**Default runner: claude**
+Append concrete implementation notes to the task's **Progress log** section in `tasks.md`.
 
-```bash
-claude -p --model opus4.6 \
-  "You are the Easy Engine Orchestrator. Read the task below and produce an implementation brief for the implementer. Follow docs/agent/prompts/orchestrator.md.\n\n$(cat tasks.md)\n\nTask ID: <TASK_ID>"
-```
+### 3. Validate
 
-Append the orchestrator output to the task's **Progress log** section in `tasks.md`.
+Run the task's validation commands when feasible, inspect the changed behavior, and record evidence in the task's **Progress log**.
 
-### 3. Run the implementer
+### 4. Run doc-gardener (when docs changed)
 
-The implementer receives the orchestrator brief and makes the code changes.
+Run after a task that changes behavior, APIs, or architecture. The foreman performs doc gardening itself and records any doc updates or remaining drift in the task log.
 
-**Default runner: codex** (frontend tasks: claude)
-
-```bash
-# codex (backend/test/architecture/documentation tasks)
-codex exec --sandbox danger-full-access \
-  --model gpt-5.4 \
-  -c 'model_reasoning_effort="high"' \
-  "You are the Easy Engine Implementer. Follow docs/agent/prompts/implementer.md.\n\nOrchestrator brief:\n<ORCHESTRATOR_OUTPUT>\n\nTask:\n<TASK_ENTRY>"
-
-# claude (frontend tasks)
-claude -p --model opus4.6 \
-  "You are the Easy Engine Implementer. Follow docs/agent/prompts/implementer.md.\n\nOrchestrator brief:\n<ORCHESTRATOR_OUTPUT>\n\nTask:\n<TASK_ENTRY>"
-```
-
-Append the implementer output and a list of modified files to the task's **Progress log**.
-
-### 4. Run the verifier
-
-The verifier reviews the implementation against the acceptance criteria.
-
-**Default runner: codex**
-
-```bash
-codex exec --sandbox danger-full-access \
-  --model gpt-5.4 \
-  -c 'model_reasoning_effort="high"' \
-  "You are the Easy Engine Verifier. Follow docs/agent/prompts/verifier.md.\n\nOrchestrator brief:\n<ORCHESTRATOR_OUTPUT>\n\nImplementer output:\n<IMPLEMENTER_OUTPUT>\n\nTask:\n<TASK_ENTRY>"
-```
-
-- **Approved:** mark task `done` in `tasks.md`, append evidence to **Progress log**, commit.
-- **Rejected:** append the rejection reason to **Progress log**, increment attempts. If attempts ≥ 3, mark `blocked`.
-
-### 5. Run doc-gardener (when docs changed)
-
-Run after a task that changes behavior, APIs, or architecture.
-
-**Default runner: codex**
-
-```bash
-codex exec --sandbox danger-full-access \
-  --model gpt-5.4 \
-  -c 'model_reasoning_effort="high"' \
-  "You are the Easy Engine Doc Gardener. Follow docs/agent/prompts/doc-gardener.md.\n\nCompleted task:\n<TASK_ENTRY>\n\nImplementer output:\n<IMPLEMENTER_OUTPUT>"
-```
-
-### 6. Commit
+### 5. Commit
 
 One verified task = one commit.
 
@@ -109,18 +61,15 @@ git commit -m "<task-id>: <short title>"
 
 ## Writing Progress Back to tasks.md
 
-After each stage, append a dated entry under the task's **Progress log** heading:
+After each major milestone, append a dated entry under the task's **Progress log** heading:
 
 ```markdown
-**2026-03-30 — orchestrator**
-Brief: <one-line summary of the brief produced>
-
-**2026-03-30 — implementer**
+**2026-03-30 — implementation**
 Files changed: ...
 Commands run: ...
 Result: implemented / failed
 
-**2026-03-30 — verifier**
+**2026-03-30 — verification**
 Validation status: approved / rejected
 Evidence: ...
 Next action: ...
@@ -128,13 +77,10 @@ Next action: ...
 
 When a task is completed, update its **Status** line to `done` and move it to the Done table at the bottom of `tasks.md`.
 
-## Codex isolation note
-
-Codex runs are isolated: MCP servers and plugins are disabled. Pass model overrides via `-c` flags as shown above. The `.agent/config.json` `runners.codex` section is the reference for current model and flag values.
-
 ## Hard Rules
 
-- Do not write code yourself — delegate to claude or codex.
+- Do the work directly in the current session.
+- Do not switch between external coding runners by stage or by task.
 - Do not edit `.agent/config.json` during active task execution.
 - Do not make broad multi-module changes in one task unless the task explicitly says so.
 - Do not remove human review checkpoints from Git workflows.

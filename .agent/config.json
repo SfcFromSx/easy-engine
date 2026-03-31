@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "branch_prefix": "codex/autoloop",
-  "commit_message_template": "autoloop: {task_id} {title}",
+  "branch_prefix": "foreman/",
+  "commit_message_template": "foreman: {task_id} {title}",
   "push_remote": "origin",
   "auto_push_after_commit": false,
   "todo_warning_threshold": 3,
@@ -9,31 +9,6 @@
   "lock_poll_seconds": 5,
   "max_task_attempts": 3,
   "doc_gardening_interval": 2,
-  "runner_timeout_seconds": 300,
-  "default_stage_routing": {
-    "orchestrator": {
-      "runner": "claude",
-      "model": "opus4.6"
-    },
-    "implementer": {
-      "runner": "codex",
-      "model": "gpt-5.4"
-    },
-    "verifier": {
-      "runner": "codex",
-      "model": "gpt-5.4"
-    },
-    "doc_gardener": {
-      "runner": "codex",
-      "model": "gpt-5.4"
-    }
-  },
-  "frontend_stage_overrides": {
-    "implementer": {
-      "runner": "claude",
-      "model": "opus4.6"
-    }
-  },
   "architecture_trigger_paths": [
     "docs/architecture/overview.md",
     "docs/architecture/service-capabilities.md",
@@ -96,55 +71,5 @@
   "service_start_commands": {
     "manager_frontend": "cd /Users/sfc/Documents/projects/engine/manager/frontend && nohup npm run dev -- --host 127.0.0.1 > /tmp/easy-engine-manager-frontend.log 2>&1 &",
     "benchmark_frontend": "cd /Users/sfc/Documents/projects/engine/benchmark/frontend && nohup npm run dev -- --host 127.0.0.1 > /tmp/easy-engine-benchmark-frontend.log 2>&1 &"
-  },
-  "runners": {
-    "codex": {
-      "bin": "python3",
-      "model": "gpt-5.4",
-      "timeout_seconds": 900,
-      "role_timeout_seconds": {
-        "verifier": 1800
-      },
-      "retry_attempts": 2,
-      "retry_backoff_seconds": 30,
-      "retry_on_timeout": true,
-      "best_effort": true,
-      "retryable_stderr_patterns": [
-        "stream disconnected",
-        "Reconnecting",
-        "Transport channel closed",
-        "temporarily unavailable",
-        "timeout",
-        "timed out",
-        "connection reset",
-        "connection closed",
-        "broken pipe",
-        "startup remote plugin sync failed",
-        "failed to warm featured plugin ids cache"
-      ],
-      "config_overrides": [
-        "model_reasoning_effort=\"high\""
-      ],
-      "args": [
-        "scripts/codex_harness.py",
-        "exec",
-        "--sandbox",
-        "danger-full-access"
-      ]
-    },
-    "claude": {
-      "bin": "claude",
-      "model": "opus4.6",
-      "timeout_seconds": 1800,
-      "retry_attempts": 1,
-      "retry_backoff_seconds": 5,
-      "retry_on_timeout": false,
-      "best_effort": false,
-      "args": [
-        "-p",
-        "--output-format",
-        "json"
-      ]
-    }
   }
 }

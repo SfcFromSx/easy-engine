@@ -1,6 +1,6 @@
 # Tasks
 
-This is the canonical task ledger for Easy Engine. The foreman model reads this file, picks a task at human direction, and drives execution by calling `claude` and `codex` CLI tools. Progress and outcomes are written back into each task entry.
+This is the canonical task ledger for Easy Engine. The foreman model reads this file, picks a task at human direction, works directly in the current session, and writes progress and outcomes back into each task entry.
 
 ## Status values
 
@@ -11,19 +11,6 @@ This is the canonical task ledger for Easy Engine. The foreman model reads this 
 | `done` | Completed and committed |
 | `blocked` | Failed max attempts, needs human review |
 
-## Default stage routing
-
-| Stage | Runner | Model |
-|-------|--------|-------|
-| orchestrator | claude | opus4.6 |
-| implementer | codex | gpt-5.4 |
-| verifier | codex | gpt-5.4 |
-| doc-gardener | codex | gpt-5.4 |
-
-Frontend tasks override: implementer → claude / opus4.6.
-
-Per-task routing overrides are noted in the task entry.
-
 ---
 
 ## Todo
@@ -33,7 +20,6 @@ Per-task routing overrides are noted in the task entry.
 - **Status:** todo
 - **Module:** manager | **Type:** frontend | **Priority:** 0
 - **Title:** Redesign and rewrite manager frontend UI (discard legacy CSS/layouts)
-- **Routing override:** orchestrator claude/opus4.6 · implementer claude/opus4.6 · verifier codex/gpt-5.4 · doc-gardener codex/gpt-5.4
 - **Attempts:** 0
 
 **Context files**
@@ -71,7 +57,6 @@ npm --prefix manager/frontend run build
 - **Status:** todo
 - **Module:** benchmark | **Type:** frontend | **Priority:** 0
 - **Title:** Redesign and rewrite benchmark frontend UI (discard legacy CSS/layouts)
-- **Routing override:** orchestrator claude/opus4.6 · implementer claude/opus4.6 · verifier codex/gpt-5.4 · doc-gardener codex/gpt-5.4
 - **Attempts:** 0
 
 **Context files**
@@ -108,8 +93,7 @@ npm --prefix benchmark/frontend run build
 - **Status:** todo
 - **Module:** benchmark | **Type:** backend | **Priority:** 42
 - **Title:** RECOVER AND PREVENT STALE RUNNING BENCHMARK RUNS FROM BLOCKING THE ACTIVE-RUN SURFACE
-- **Routing:** default
-- **Attempts:** 0 | **Last failure:** implementer stage — codex implementer failed with code 1 on attempt 2/2
+- **Attempts:** 0 | **Last failure:** previous delegated-harness implementer attempt failed with code 1 on attempt 2/2
 
 **Context files**
 
@@ -146,7 +130,6 @@ npm --prefix benchmark/frontend run build
 - **Status:** todo
 - **Module:** benchmark | **Type:** backend | **Priority:** 43
 - **Title:** FIX BENCHMARK RUNS LIST CONTRACT SO GLOBAL RUN QUERIES DO NOT FAIL WITH 500
-- **Routing:** default
 - **Attempts:** 0
 
 **Context files**
@@ -181,7 +164,6 @@ npm --prefix benchmark/frontend run build
 - **Status:** todo
 - **Module:** query | **Type:** backend | **Priority:** 56
 - **Title:** AUDIT AND HARDEN PREPARED-STATEMENT CACHE SEMANTICS IN QUERY
-- **Routing:** default
 - **Attempts:** 0
 
 **Context files**
@@ -215,7 +197,6 @@ mvn -q -f query/pom.xml test
 - **Status:** todo
 - **Module:** query | **Type:** architecture | **Priority:** 57
 - **Title:** INVENTORY EXECUTION SEMANTICS STILL OWNED BY JDBC AND RANK MIGRATION PRIORITY
-- **Routing:** default
 - **Attempts:** 0
 
 **Context files**
@@ -247,7 +228,6 @@ _(none — documentation task)_
 - **Status:** todo
 - **Module:** docs | **Type:** triage | **Priority:** 999
 - **Title:** COLLECT NEWLY DISCOVERED ISSUES INTO A HUMAN-CONFIRMATION INBOX
-- **Routing:** default
 - **Attempts:** 0
 - **Depends on:** BENCH-E2E-001, BENCH-ACTIVE-001, BENCH-RUNS-API-001, LIST-FILTER-001, MGR-CSS-001, QUERY-DOC-001, QUERY-ARCH-001, QUERY-FUNC-001, QUERY-ARCH-002
 

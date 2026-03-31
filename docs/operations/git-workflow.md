@@ -21,7 +21,7 @@ The previous nested `kylin-jdbc-cache/.git` metadata has been archived under `.a
 ## Commit Policy
 
 - One verified task per commit.
-- Use long-lived run branches such as `codex/autoloop/<timestamp>`.
+- Use a normal task branch or the current working branch as directed by the human workflow.
 - Do not auto-push after commit.
 - Do not force-push active branches.
 - Humans review before push, merge, or publish.

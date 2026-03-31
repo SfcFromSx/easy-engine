@@ -1,6 +1,6 @@
 # Agent Docs
 
-This section contains the canonical prompt and schema assets for the autonomous harness.
+This section contains legacy prompt and schema assets kept for historical reference from earlier harness designs. The active harness workflow is direct and does not switch external models by stage or task.
 
 ## Prompt Templates
 
