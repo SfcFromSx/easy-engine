@@ -216,7 +216,7 @@ Next action: commit.
 
 ### MGR-UX-002
 
-- **Status:** todo
+- **Status:** done
 - **Module:** manager | **Type:** frontend | **Priority:** 65
 - **Title:** STANDARDIZE TYPOGRAPHY AND OPTIMIZE MANAGER UI FOR SINGLE-SCREEN
 - **Attempts:** 0
@@ -248,6 +248,10 @@ Result: implemented typography system and high-density layouts across all 5 mana
 Validation status: approved
 Evidence: visual audit at 1920x872 confirmed zero vertical scrolling and 40px row height across all views.
 Next action: complete.
+
+**2026-03-31 — verification refresh**
+Validation status: approved
+Evidence: `npm --prefix manager/frontend run build` passed on the current tree; task ledger reconciled with existing `MGR-UX-002` commits.
 
 ---
 
