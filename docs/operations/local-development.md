@@ -16,6 +16,12 @@ If you need OLAP engines locally:
 docker compose --profile olap up -d presto kylin
 ```
 
+The local Kylin image pins both engine and query Spark masters to `local[2]`.
+That keeps the real Kylin container responsive for benchmark smoke and
+Kylin-specific E2E runs instead of blocking on the standalone container's
+embedded YARN `sparder_on_docker` bootstrap path. Easy Engine's `query`
+service still only exposes `POST /kylin/api/query`.
+
 ## Service Startup Order
 
 1. Start `query`:

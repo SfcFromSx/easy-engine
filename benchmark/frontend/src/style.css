@@ -15,14 +15,14 @@
   --font-family-title: 'Outfit', sans-serif;
   --font-family-body: 'Inter', system-ui, -apple-system, sans-serif;
   --font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  
+
   --font-size-title: 20px;
   --font-size-subtitle: 13px;
   --font-size-card-title: 15px;
   --font-size-body: 13px;
   --font-size-small: 11px;
   --font-size-mono: 12px;
-  
+
   --color-title: #0f172a;
   --color-subtitle: #64748b;
   --color-body: #1e293b;
@@ -37,19 +37,49 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   font-family: var(--font-family-title);
   font-weight: 600;
   color: var(--color-title);
 }
 
 /* Typography Utilities */
-.text-title { font-size: var(--font-size-title); font-family: var(--font-family-title); font-weight: 600; color: var(--color-title); }
-.text-subtitle { font-size: var(--font-size-subtitle); color: var(--color-subtitle); font-weight: 400; }
-.text-card-title { font-size: var(--font-size-card-title); font-family: var(--font-family-title); font-weight: 600; color: #1e293b; }
-.text-body { font-size: var(--font-size-body); color: var(--color-body); }
-.text-mono { font-family: var(--font-family-mono); font-size: var(--font-size-mono); }
-.text-small { font-size: var(--font-size-small); }
+.text-title {
+  font-size: var(--font-size-title);
+  font-family: var(--font-family-title);
+  font-weight: 600;
+  color: var(--color-title);
+}
+
+.text-subtitle {
+  font-size: var(--font-size-subtitle);
+  color: var(--color-subtitle);
+  font-weight: 400;
+}
+
+.text-card-title {
+  font-size: var(--font-size-card-title);
+  font-family: var(--font-family-title);
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.text-body {
+  font-size: var(--font-size-body);
+  color: var(--color-body);
+}
+
+.text-mono {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-mono);
+}
+
+.text-small {
+  font-size: var(--font-size-small);
+}
 
 /* Glassmorphism Card */
 .glass-card {
@@ -92,24 +122,37 @@ h1, h2, h3, h4 {
   position: relative;
 }
 
-.dot-online { 
-  background-color: #10b981; 
+.dot-online {
+  background-color: #10b981;
   box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
 }
-.dot-offline { 
-  background-color: #ef4444; 
+
+.dot-offline {
+  background-color: #ef4444;
   box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
 }
-.dot-checking { 
-  background-color: #f59e0b; 
-  animation: pulse 1.2s infinite; 
+
+.dot-checking {
+  background-color: #f59e0b;
+  animation: pulse 1.2s infinite;
   box-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
 }
 
 @keyframes pulse {
-  0% { transform: scale(0.95); opacity: 0.6; }
-  50% { transform: scale(1.1); opacity: 1; }
-  100% { transform: scale(0.95); opacity: 0.6; }
+  0% {
+    transform: scale(0.95);
+    opacity: 0.6;
+  }
+
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(0.95);
+    opacity: 0.6;
+  }
 }
 
 /* Table Card Spacing */

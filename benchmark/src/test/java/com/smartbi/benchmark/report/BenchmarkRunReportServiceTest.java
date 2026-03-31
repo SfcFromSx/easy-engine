@@ -10,6 +10,7 @@ import com.smartbi.benchmark.domain.SqlExecutionMode;
 import com.smartbi.benchmark.repo.BenchmarkDataSourceRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,6 +28,7 @@ class BenchmarkRunReportServiceTest {
     private final BenchmarkRunReportService service =
             new BenchmarkRunReportService(Mockito.mock(BenchmarkDataSourceRepository.class));
 
+    // Covers BenchmarkRunReportService#buildJobSnapshotJson and #buildCompletedEvaluation single-mode summaries.
     @Test
     void shouldIncludeSingleExecutionModeInJobSnapshotAndEvaluation() throws Exception {
         BenchmarkJob job = job("Templates");
@@ -45,6 +47,7 @@ class BenchmarkRunReportServiceTest {
         assertTrue(snapshot.path("executionModeSummary").path("sourceCountByMode").has("STATEMENT"));
     }
 
+    // Covers BenchmarkRunReportService#summarizeExecutionModes mixed-mode reporting.
     @Test
     void shouldRepresentMixedExecutionModesExplicitly() throws Exception {
         BenchmarkJob job = job("Mixed");
@@ -60,6 +63,7 @@ class BenchmarkRunReportServiceTest {
         assertEquals(1, summary.path("sourceCountByMode").path("PREPARED_STATEMENT").asInt());
     }
 
+    // Covers BenchmarkRunReportService#buildCompletedEvaluation grouped failure diagnostics.
     @Test
     void shouldIncludeGroupedFailureBreakdownInEvaluation() throws Exception {
         BenchmarkJob job = job("Failures");
@@ -87,6 +91,73 @@ class BenchmarkRunReportServiceTest {
                 findGroup(breakdown.path("groups"), "prepared_fail").path("executionMode").asText());
         assertTrue(evaluation.path("summary").asText().contains("失败诊断"));
         assertEquals(2, evaluation.path("issues").size());
+    }
+
+    // Covers BenchmarkRunReportService#buildCompletedEvaluation partial verdict and fallback failure grouping.
+    @Test
+    void shouldBuildPartialEvaluationWithFallbackFailureGroupWhenNoGroupsProvided() throws Exception {
+        BenchmarkJob job = job("Partial");
+        BenchmarkRun run = completedRun();
+        run.setTotalQueries(4L);
+        run.setSuccessCount(2L);
+        run.setErrorCount(2L);
+        run.setErrorSample("driver timeout");
+
+        JsonNode evaluation = JSON.readTree(service.buildCompletedEvaluation(
+                job,
+                run,
+                1,
+                Collections.singletonList(SqlExecutionMode.STATEMENT),
+                Collections.<Map<String, Object>>emptyList()));
+
+        assertEquals("PARTIAL", evaluation.path("verdict").asText());
+        assertEquals(1, evaluation.path("diagnostics").path("failureBreakdown").path("groupCount").asInt());
+        assertEquals("(unclassified)",
+                evaluation.path("diagnostics").path("failureBreakdown").path("groups").get(0).path("sqlLabel").asText());
+        assertTrue(evaluation.path("issues").get(0).asText().contains("driver timeout"));
+    }
+
+    // Covers BenchmarkRunReportService#buildFailureEvaluation, #extractFailureBreakdown, and #buildComparisonDelta.
+    @Test
+    void shouldBuildFailureArtifactsAndComparisonDelta() throws Exception {
+        BenchmarkJob job = job("Failures");
+        BenchmarkRun current = completedRun();
+        ReflectionTestUtils.setField(current, "id", 9L);
+        current.setTotalQueries(10L);
+        current.setSuccessCount(10L);
+        current.setP50Ms(5.0);
+        current.setP95Ms(7.5);
+        current.setQps(25.0);
+        BenchmarkRun previous = completedRun();
+        ReflectionTestUtils.setField(previous, "id", 8L);
+        previous.setTotalQueries(10L);
+        previous.setSuccessCount(8L);
+        previous.setP50Ms(10.0);
+        previous.setP95Ms(12.0);
+        previous.setQps(20.0);
+
+        JsonNode failure = JSON.readTree(service.buildFailureEvaluation(
+                "startup",
+                "connection refused",
+                job,
+                Collections.singletonList(SqlExecutionMode.STATEMENT),
+                Collections.<Map<String, Object>>emptyList()));
+
+        assertEquals("FAIL", failure.path("verdict").asText());
+        assertEquals("startup", failure.path("phase").asText());
+        assertEquals("无有效样本时 latency/QPS 不可用", failure.path("metrics").path("note").asText());
+        assertEquals(1, failure.path("jdbcComparisonHints").path("dimensions").size());
+        assertTrue(failure.path("jdbcComparisonHints").path("dimensions").get(0).asText()
+                .contains("重新在页面发起压测"));
+        assertEquals("STATEMENT",
+                failure.path("meta").path("executionModeSummary").path("primary").asText());
+
+        Map<String, Object> breakdown = service.extractFailureBreakdown(failure.toString());
+        assertEquals(1, breakdown.get("groupCount"));
+
+        Map<String, Object> delta = service.buildComparisonDelta(current, previous);
+        assertEquals(Boolean.TRUE, delta.get("available"));
+        assertEquals(8L, delta.get("baselineRunId"));
     }
 
     private static BenchmarkJob job(String name) {

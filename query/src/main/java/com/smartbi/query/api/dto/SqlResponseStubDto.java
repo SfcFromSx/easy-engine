@@ -4,6 +4,10 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Compatibility response envelope for the Kylin-shaped `/kylin/api/query` contract.
+ * The `Stub` suffix is intentional and mirrors the historical JDBC-facing payload name.
+ */
 public class SqlResponseStubDto implements Serializable {
 
     private List<ColumnMetaStubDto> columnMetas = new ArrayList<ColumnMetaStubDto>();
@@ -106,6 +110,9 @@ public class SqlResponseStubDto implements Serializable {
         this.storageCacheUsed = storageCacheUsed;
     }
 
+    /**
+     * Compatibility metadata block that mirrors Kylin's column metadata payload shape.
+     */
     public static class ColumnMetaStubDto implements Serializable {
         private boolean autoIncrement;
         private boolean caseSensitive;

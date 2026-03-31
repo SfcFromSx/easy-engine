@@ -13,7 +13,8 @@ Canonical English documentation lives under [docs/README.md](/Users/sfc/Document
 Use these entrypoints:
 
 - [AGENTS.md](/Users/sfc/Documents/projects/engine/AGENTS.md) for the agent operating contract.
-- [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md) for the canonical task ledger.
+- [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md) for the active task ledger.
+- [tasks-done.md](/Users/sfc/Documents/projects/engine/tasks-done.md) for the completed task archive.
 - [INBOX.md](/Users/sfc/Documents/projects/engine/INBOX.md) for agent-found issues and suggestions awaiting human decisions.
 - [docs/architecture/README.md](/Users/sfc/Documents/projects/engine/docs/architecture/README.md) for architecture docs.
 - [docs/operations/README.md](/Users/sfc/Documents/projects/engine/docs/operations/README.md) for runbooks and local development.
@@ -23,7 +24,8 @@ Use these entrypoints:
 
 ## For Humans
 
-- Assign and reprioritize work in [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md).
+- Assign and reprioritize active work in [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md).
+- Review completed-task history in [tasks-done.md](/Users/sfc/Documents/projects/engine/tasks-done.md).
 - The foreman always works directly in the current session; there is no per-task execution-mode switch.
 - Stop or resume the foreman by telling it to stop or continue; there is no separate pause file workflow.
 - Review diffs, run extra validation, and approve merges before publish.

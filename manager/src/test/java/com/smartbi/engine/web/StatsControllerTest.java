@@ -29,6 +29,7 @@ class StatsControllerTest {
     );
 
     @Test
+    // Covers StatsController#summary populated branch.
     void summaryIncludesAccelerationAndCacheMetrics() {
         SqlExecutionRecord lastTrace = new SqlExecutionRecord();
         Instant lastSeenAt = Instant.parse("2026-03-29T11:40:21Z");
@@ -53,5 +54,23 @@ class StatsControllerTest {
         assertEquals(1L, dto.getDraftAccelerationCount());
         assertEquals(120L, dto.getCacheHitCount());
         assertSame(lastSeenAt, dto.getLastTraceAt());
+    }
+
+    @Test
+    // Covers StatsController#summary null-last-trace branch.
+    void summaryLeavesLastTraceNullWhenRepositoryHasNoRows() {
+        when(recordRepository.count()).thenReturn(0L);
+        when(recordRepository.countByParseStatus(ParseStatus.OK)).thenReturn(0L);
+        when(recordRepository.countByParseStatus(ParseStatus.ERROR)).thenReturn(0L);
+        when(recordRepository.countByCacheHitTrue()).thenReturn(0L);
+        when(patternStatsRepository.count()).thenReturn(0L);
+        when(accelerationTableRepository.countByStatus(AccelerationStatus.ACTIVE)).thenReturn(0L);
+        when(accelerationTableRepository.countByStatus(AccelerationStatus.DRAFT)).thenReturn(0L);
+        when(recordRepository.findTopByOrderByReceivedAtDesc()).thenReturn(null);
+
+        StatsSummaryDto dto = controller.summary();
+
+        assertEquals(0L, dto.getTotalTraces());
+        assertEquals(null, dto.getLastTraceAt());
     }
 }

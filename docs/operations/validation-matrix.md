@@ -10,6 +10,7 @@ Use [testing-standard.md](/Users/sfc/Documents/projects/engine/docs/operations/t
 
 ```bash
 mvn -q -f manager/pom.xml test
+npm --prefix manager/frontend run test
 npm --prefix manager/frontend run build
 ```
 

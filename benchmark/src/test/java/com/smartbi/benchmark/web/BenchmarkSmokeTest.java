@@ -29,6 +29,7 @@ class BenchmarkSmokeTest {
     @Autowired
     private MockMvc mockMvc;
 
+    // Covers DataSourceController#create and #list through the HTTP API.
     @Test
     void shouldManageDatasource() throws Exception {
         String dsJson = "{\"name\":\"test_ds\",\"type\":\"h2\",\"driverClass\":\"org.h2.Driver\",\"jdbcUrl\":\"jdbc:h2:mem:test\",\"jdbcUser\":\"sa\",\"jdbcPassword\":\"\"}";
@@ -43,6 +44,7 @@ class BenchmarkSmokeTest {
                 .andExpect(jsonPath("$[0].name").exists());
     }
 
+    // Covers TemplateController#create through the HTTP API.
     @Test
     void shouldManageTemplates() throws Exception {
         String templateJson = "{\"name\":\"T1\",\"sqlText\":\"SELECT 1\",\"executionMode\":\"STATEMENT\",\"weight\":1.0}";

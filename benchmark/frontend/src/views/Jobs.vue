@@ -126,8 +126,8 @@
       <el-dialog 
         v-model="dlg" 
         :title="form.id ? $t('jobs.dlgEdit') : $t('jobs.dlgAdd')" 
-        width="720px" 
-        class="premium-dialog"
+        width="650px" 
+        custom-class="premium-dialog"
       >
         <el-form label-position="top" class="job-form premium-form">
           <el-form-item :label="$t('jobs.dlgName')" required>
@@ -156,9 +156,8 @@
             <p class="hint">Tasks are now decoupled from connection details. Choose a Data Source profile to execute this job.</p>
           </el-form-item>
 
-          <div class="form-section">
-            <div class="section-title">Performance & Strategy</div>
-            <el-row :gutter="24">
+          <div class="config-grid">
+            <el-row :gutter="20">
               <el-col :span="8">
                 <el-form-item :label="$t('jobs.dlgConcurrency')">
                   <el-input-number v-model="form.concurrentThreads" :min="1" :max="1000" style="width: 100%" />
@@ -400,20 +399,9 @@ onMounted(load)
   margin: 4px 0;
 }
 
-.form-section {
-  padding: 16px;
-  background: rgba(241, 245, 249, 0.5);
-  border-radius: 12px;
-  margin-bottom: 24px;
-}
-
-.section-title {
-  font-size: 11px;
-  font-weight: 800;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 16px;
+.config-grid {
+  padding: 12px;
+  margin-bottom: 12px;
 }
 
 :deep(.el-card__body) {

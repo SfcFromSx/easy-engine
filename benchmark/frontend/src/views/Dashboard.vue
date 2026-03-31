@@ -57,11 +57,11 @@
           <div class="progress-body">
             <div class="progress-stats">
               <div class="stat-item">
-                <span class="stat-label">Progress</span>
+                <span class="stat-label">{{ $t('dashboard.activeRun.completed') }}</span>
                 <span class="stat-value small">{{ activeRun.currentProgress || 0 }} / {{ activeRun.totalTarget || '—' }}</span>
               </div>
               <div class="stat-item">
-                <span class="stat-label">Success</span>
+                <span class="stat-label">{{ $t('dashboard.activeRun.successRate') }}</span>
                 <span class="stat-value small success">{{ calcSuccessRate(activeRun) }}%</span>
               </div>
             </div>
@@ -192,6 +192,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { RefreshRight, Loading } from '@element-plus/icons-vue'
 import client from '../api/client'
 import PerformanceCharts from '../components/PerformanceCharts.vue'
+import { buildDashboardStats, calcPercent, calcSuccessRate } from '../utils/benchmarkViewHelpers'
 
 const router = useRouter()
 const jobs = ref([])
@@ -208,25 +209,10 @@ const historyLoading = ref(false)
 const activeRun = ref(null)
 let activeTimer = null
 
-const stats = computed(() => {
-  const completedRuns = runHistory.value.filter((run) => run.status === 'COMPLETED')
-  const totalQueries = completedRuns.reduce((sum, run) => sum + (run.totalQueries || 0), 0)
-  const successQueries = completedRuns.reduce((sum, run) => sum + (run.successCount || 0), 0)
-  const latencySamples = completedRuns
-    .map((run) => run.p50Ms ?? run.durationMs)
-    .filter((value) => typeof value === 'number' && !Number.isNaN(value))
-
-  return {
-    totalJobs: jobs.value.length,
-    totalRuns: runHistoryTotal.value,
-    successRate: totalQueries > 0
-      ? Math.round((successQueries / totalQueries) * 1000) / 10
-      : 100,
-    avgLatency: latencySamples.length > 0
-      ? Math.round(latencySamples.reduce((sum, value) => sum + value, 0) / latencySamples.length)
-      : 0
-  }
-})
+const stats = computed(() => ({
+  ...buildDashboardStats(runHistory.value, jobs.value),
+  totalRuns: runHistoryTotal.value
+}))
 
 async function runPreflight() {
   pfLoading.value = true
@@ -264,18 +250,6 @@ async function loadActiveRun() {
 function getJobName(id) {
   const j = jobs.value.find(x => x.id === id)
   return j ? j.name : `#${id}`
-}
-
-function calcPercent(run) {
-  if (!run || !run.totalTarget) return 0
-  return Math.min(100, Math.floor(((run.currentProgress || 0) / run.totalTarget) * 100))
-}
-
-function calcSuccessRate(run) {
-  if (!run) return 100
-  const processed = (run.successCount || 0) + (run.errorCount || 0)
-  if (!processed) return 100
-  return Math.round(((run.successCount || 0) / processed) * 1000) / 10
 }
 
 async function loadRunHistory() {

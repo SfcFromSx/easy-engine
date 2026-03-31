@@ -115,6 +115,7 @@ class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
         }
     }
 
+    // Covers BenchmarkAsyncRunner#executeRun mixed execution-mode summaries and persisted run artifacts.
     @Test
     void shouldPersistMixedExecutionModeSummaryFromTestSetSources() throws Exception {
         BenchmarkDataSource dataSource = new BenchmarkDataSource();
@@ -207,6 +208,7 @@ class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
         assertTrue(context.path("comparisonDelta").path("reason").asText().contains("无上一次已完成同任务 Run"));
     }
 
+    // Covers BenchmarkAsyncRunner#executeRun grouped failure diagnostics for routed and prepared failures.
     @Test
     void shouldRetainSeparateFailureGroupsForRoutedAndPreparedFailures() throws Exception {
         BenchmarkDataSource dataSource = new BenchmarkDataSource();

@@ -147,6 +147,7 @@ public class BenchmarkAsyncRunner {
             AtomicInteger successes = new AtomicInteger();
             AtomicInteger errors = new AtomicInteger();
             AtomicInteger completed = new AtomicInteger();
+            AtomicInteger dispatched = new AtomicInteger();
             AtomicReference<String> firstError = new AtomicReference<String>();
             ConcurrentMap<String, FailureGroupAccumulator> failureGroups = new ConcurrentHashMap<String, FailureGroupAccumulator>();
 
@@ -185,6 +186,10 @@ public class BenchmarkAsyncRunner {
                         }
                     }
                 });
+                int sent = dispatched.incrementAndGet();
+                if (sent % 20 == 0 || sent == total) {
+                    updateProgress(rid, sent);
+                }
             }
 
             try {

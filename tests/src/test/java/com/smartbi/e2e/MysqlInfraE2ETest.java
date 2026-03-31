@@ -7,19 +7,20 @@ import java.sql.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Verifies PostgreSQL infrastructure and schema correctness.
+ * Verifies MySQL infrastructure and schema correctness.
  * Checks that all expected tables exist with the correct columns,
  * and that Flyway migrations have run cleanly.
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class PostgresInfraE2ETest extends E2ETestBase {
+public class MysqlInfraE2ETest extends E2ETestBase {
 
     @Test
     @Order(1)
-    @DisplayName("PostgreSQL is reachable and engine_db is accessible")
-    void testPgConnectivity() throws SQLException {
-        try (Connection c = pgConnection()) {
+    @DisplayName("MySQL is reachable and engine_db is accessible")
+    void testMysqlConnectivity() throws SQLException {
+        try (Connection c = mysqlConnection()) {
             assertThat(c.isClosed()).isFalse();
+            // In MySQL, getCatalog() returns the database name
             assertThat(c.getCatalog()).isEqualTo("engine_db");
         }
     }
@@ -28,14 +29,15 @@ public class PostgresInfraE2ETest extends E2ETestBase {
     @Order(2)
     @DisplayName("sql_execution_record table exists with required columns")
     void testSqlExecutionRecordSchema() throws SQLException {
-        try (Connection c = pgConnection()) {
+        try (Connection c = mysqlConnection()) {
             DatabaseMetaData meta = c.getMetaData();
-            ResultSet cols = meta.getColumns(null, "public", "sql_execution_record", null);
+            // MySQL uses catalog for database name, schema is typically null
+            ResultSet cols = meta.getColumns("engine_db", null, "sql_execution_record", null);
             java.util.Set<String> colNames = new java.util.HashSet<>();
             while (cols.next()) colNames.add(cols.getString("COLUMN_NAME").toLowerCase());
             assertThat(colNames).contains(
                 "id", "original_sql", "datasource_name", "execution_mode",
-                "success", "duration_ms", "sql_fingerprint", "created_at"
+                "success", "duration_ms", "sql_fingerprint", "received_at"
             );
         }
     }
@@ -44,13 +46,13 @@ public class PostgresInfraE2ETest extends E2ETestBase {
     @Order(3)
     @DisplayName("sql_pattern_stats table exists with required columns")
     void testSqlPatternStatsSchema() throws SQLException {
-        try (Connection c = pgConnection()) {
+        try (Connection c = mysqlConnection()) {
             DatabaseMetaData meta = c.getMetaData();
-            ResultSet cols = meta.getColumns(null, "public", "sql_pattern_stats", null);
+            ResultSet cols = meta.getColumns("engine_db", null, "sql_pattern_stats", null);
             java.util.Set<String> colNames = new java.util.HashSet<>();
             while (cols.next()) colNames.add(cols.getString("COLUMN_NAME").toLowerCase());
             assertThat(colNames).contains(
-                "id", "sql_fingerprint", "execution_count", "sample_sql"
+                "id", "sql_fingerprint", "execution_count", "clean_sql_sample"
             );
         }
     }
@@ -59,12 +61,12 @@ public class PostgresInfraE2ETest extends E2ETestBase {
     @Order(4)
     @DisplayName("acceleration_table table exists with required columns")
     void testAccelerationTableSchema() throws SQLException {
-        try (Connection c = pgConnection()) {
+        try (Connection c = mysqlConnection()) {
             DatabaseMetaData meta = c.getMetaData();
-            ResultSet cols = meta.getColumns(null, "public", "acceleration_table", null);
+            ResultSet cols = meta.getColumns("engine_db", null, "acceleration_table", null);
             java.util.Set<String> colNames = new java.util.HashSet<>();
             while (cols.next()) colNames.add(cols.getString("COLUMN_NAME").toLowerCase());
-            assertThat(colNames).contains("id", "table_name", "status", "source");
+            assertThat(colNames).contains("id", "name", "schema_name", "status", "source");
         }
     }
 
@@ -72,9 +74,9 @@ public class PostgresInfraE2ETest extends E2ETestBase {
     @Order(5)
     @DisplayName("query_datasource_config table exists with required columns")
     void testQueryDatasourceConfigSchema() throws SQLException {
-        try (Connection c = pgConnection()) {
+        try (Connection c = mysqlConnection()) {
             DatabaseMetaData meta = c.getMetaData();
-            ResultSet cols = meta.getColumns(null, "public", "query_datasource_config", null);
+            ResultSet cols = meta.getColumns("engine_db", null, "query_datasource_config", null);
             java.util.Set<String> colNames = new java.util.HashSet<>();
             while (cols.next()) colNames.add(cols.getString("COLUMN_NAME").toLowerCase());
             assertThat(colNames).contains(
@@ -88,10 +90,17 @@ public class PostgresInfraE2ETest extends E2ETestBase {
     @Order(6)
     @DisplayName("Flyway schema history records all migrations as successful")
     void testFlywayMigrationsAllSucceeded() throws SQLException {
-        try (Connection c = pgConnection();
+        try (Connection c = mysqlConnection();
              Statement st = c.createStatement();
              ResultSet rs = st.executeQuery(
                  "SELECT count(*) AS failed FROM flyway_schema_history WHERE success = false")) {
+            assertThat(rs.next()).isTrue();
+            assertThat(rs.getInt("failed")).isEqualTo(0);
+        }
+        try (Connection c = mysqlConnection();
+             Statement st = c.createStatement();
+             ResultSet rs = st.executeQuery(
+                 "SELECT count(*) AS failed FROM benchmark_flyway_schema_history WHERE success = false")) {
             assertThat(rs.next()).isTrue();
             assertThat(rs.getInt("failed")).isEqualTo(0);
         }
@@ -101,7 +110,7 @@ public class PostgresInfraE2ETest extends E2ETestBase {
     @Order(7)
     @DisplayName("query_datasource_config is seeded with default Kylin datasource")
     void testDatasourceConfigSeeded() throws SQLException {
-        int rows = countPgRows(
+        int rows = countMysqlRows(
             "SELECT count(*) FROM query_datasource_config WHERE name = 'default'");
         assertThat(rows).isGreaterThanOrEqualTo(1);
     }

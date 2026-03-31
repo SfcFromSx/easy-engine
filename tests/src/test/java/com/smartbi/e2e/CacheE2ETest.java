@@ -62,21 +62,21 @@ public class CacheE2ETest extends E2ETestBase {
 
     @Test
     @Order(3)
-    @DisplayName("Cache trace record shows cacheHit=true in PG for second call")
-    void testCacheHitRecordedInPg() throws Exception {
-        String sql = "SELECT 3 AS cache_pg_probe";
+    @DisplayName("Cache trace record shows cacheHit=true in MySQL for second call")
+    void testCacheHitRecordedInMysql() throws Exception {
+        String sql = "SELECT 3 AS cache_mysql_probe";
         querySpec().body(statementRequest(sql)).post("/kylin/api/query"); // warm
         querySpec().body(statementRequest(sql)).post("/kylin/api/query"); // hit
 
-        waitFor(5_000, "cache_hit trace in PG", () -> {
+        waitFor(5_000, "cache_hit trace in MySQL", () -> {
             try {
-                return countPgRows(
+                return countMysqlRows(
                     "SELECT count(*) FROM sql_execution_record WHERE cache_hit = true AND original_sql = ?",
                     sql) > 0;
             } catch (Exception e) { return false; }
         });
 
-        int hits = countPgRows(
+        int hits = countMysqlRows(
             "SELECT count(*) FROM sql_execution_record WHERE cache_hit = true AND original_sql = ?", sql);
         assertThat(hits).isGreaterThanOrEqualTo(1);
     }

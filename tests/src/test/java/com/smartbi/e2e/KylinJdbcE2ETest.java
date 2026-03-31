@@ -80,7 +80,7 @@ public class KylinJdbcE2ETest extends E2ETestBase {
 
     @Test
     @Order(5)
-    @DisplayName("Kylin JDBC query triggers a trace record in PostgreSQL")
+    @DisplayName("Kylin JDBC query triggers a trace record in MySQL")
     void testJdbcQueryWritesTrace() throws Exception {
         String sql = "SELECT count(*) AS jdbc_trace_probe FROM KYLIN_SALES";
         try (Connection c = DriverManager.getConnection(
@@ -89,14 +89,14 @@ public class KylinJdbcE2ETest extends E2ETestBase {
             st.executeQuery(sql);
         }
 
-        waitFor(5_000, "JDBC trace in PG", () -> {
+        waitFor(5_000, "JDBC trace in MySQL", () -> {
             try {
-                return countPgRows(
+                return countMysqlRows(
                     "SELECT count(*) FROM sql_execution_record WHERE original_sql LIKE '%jdbc_trace_probe%'") > 0;
             } catch (Exception e) { return false; }
         });
 
-        int rows = countPgRows(
+        int rows = countMysqlRows(
             "SELECT count(*) FROM sql_execution_record WHERE original_sql LIKE '%jdbc_trace_probe%'");
         assertThat(rows).isGreaterThan(0);
     }

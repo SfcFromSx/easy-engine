@@ -154,6 +154,7 @@ import { Plus, UploadCloud } from 'lucide-vue-next'
 import client from '../api/client'
 import { API_ENDPOINTS, TEST_SET_ITEMS } from '../api/endpoints'
 import CodeBlock from '../components/CodeBlock.vue'
+import { filterTestSets, formatParamJson } from '../utils/benchmarkViewHelpers'
 
 const testSets = ref([])
 const loading = ref(false)
@@ -167,20 +168,7 @@ const sourceFilter = ref('all')
 
 const form = reactive({ id: null, name: '', description: '' })
 
-const filteredTestSets = computed(() => {
-  const normalizedKeyword = keyword.value.trim().toLowerCase()
-  return testSets.value.filter((item) => {
-    const matchesKeyword = !normalizedKeyword || [
-      item.name,
-      item.description,
-      item.sourceFilename
-    ].some((value) => String(value || '').toLowerCase().includes(normalizedKeyword))
-    const matchesSource = sourceFilter.value === 'all'
-      || (sourceFilter.value === 'uploaded' && Boolean(item.sourceFilename))
-      || (sourceFilter.value === 'manual' && !item.sourceFilename)
-    return matchesKeyword && matchesSource
-  })
-})
+const filteredTestSets = computed(() => filterTestSets(testSets.value, keyword.value, sourceFilter.value))
 
 async function load() {
   loading.value = true
@@ -266,17 +254,6 @@ async function remove(row) {
 }
 
 onMounted(load)
-
-function formatParamJson(value) {
-  if (!value) {
-    return ''
-  }
-  try {
-    return JSON.stringify(JSON.parse(value), null, 2)
-  } catch {
-    return value
-  }
-}
 </script>
 
 <style scoped>

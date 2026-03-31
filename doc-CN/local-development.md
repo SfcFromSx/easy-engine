@@ -1,4 +1,4 @@
-<!-- MIRROR: docs/operations/local-development.md | SOURCE_SHA256: 3b4967f7c5ed | SYNCED_AT: 2026-03-31T10:19:40Z -->
+<!-- MIRROR: docs/operations/local-development.md | SOURCE_SHA256: 7e2392753491 | SYNCED_AT: 2026-03-31T13:15:00Z -->
 
 # 本地开发
 
@@ -17,6 +17,11 @@ docker compose up -d mysql redis
 ```bash
 docker compose --profile olap up -d presto kylin
 ```
+
+本地 Kylin 镜像会把 engine 和 query Spark master 都固定为 `local[2]`。
+这样可以让真实的 Kylin 容器在 benchmark smoke 和 Kylin 专用 E2E 场景里保持可用，
+避免被独立容器内嵌 YARN 的 `sparder_on_docker` 启动路径卡住。
+Easy Engine 自身的 `query` 服务仍然只暴露 `POST /kylin/api/query`。
 
 ## 服务启动顺序
 

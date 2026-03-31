@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class QueryDatasourceConfigService {
@@ -23,6 +24,11 @@ public class QueryDatasourceConfigService {
                 Sort.Order.desc("isDefault"),
                 Sort.Order.asc("name")
         ));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<QueryDatasourceConfig> get(long id) {
+        return repository.findById(id);
     }
 
     @Transactional

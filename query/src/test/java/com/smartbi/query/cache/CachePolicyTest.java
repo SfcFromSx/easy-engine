@@ -56,7 +56,8 @@ class CachePolicyTest {
 
         assertTrue(policy.isFingerprintableParameterType(null));
         assertTrue(policy.isFingerprintableParameterType("java.lang.Integer"));
-        assertTrue(policy.isFingerprintableParameterType("java.util.Date"));
+        assertTrue(policy.isFingerprintableParameterType("java.sql.Timestamp"));
+        assertFalse(policy.isFingerprintableParameterType("java.util.Date"));
         assertFalse(policy.isFingerprintableParameterType("java.util.UUID"));
     }
 

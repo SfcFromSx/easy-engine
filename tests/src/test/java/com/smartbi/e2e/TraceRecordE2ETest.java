@@ -12,32 +12,32 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Verifies that every query execution writes a correct SqlExecutionRecord to
- * PostgreSQL and that manager's /api/v1/traces API reflects it.
+ * MySQL and that manager's /api/v1/traces API reflects it.
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TraceRecordE2ETest extends E2ETestBase {
 
     private static final String UNIQUE_SQL =
-            "SELECT 42 AS trace_probe_" + System.currentTimeMillis() + " FROM (VALUES(1)) t";
+            "SELECT 42 AS trace_probe_" + System.currentTimeMillis();
     private static final String PRESTO_SQL =
             "/* YH_TARGET_ENGINE=presto_local */ SELECT 1 AS presto_trace_probe";
 
     @Test
     @Order(1)
-    @DisplayName("Statement query writes a trace record to PostgreSQL")
-    void testStatementTraceWrittenToPg() throws Exception {
+    @DisplayName("Statement query writes a trace record to MySQL")
+    void testStatementTraceWrittenToMysql() throws Exception {
         querySpec().body(statementRequest(UNIQUE_SQL)).post("/kylin/api/query");
 
-        waitFor(5_000, "trace row in PG", () -> {
+        waitFor(5_000, "trace row in MySQL", () -> {
             try {
-                return countPgRows(
+                return countMysqlRows(
                     "SELECT count(*) FROM sql_execution_record WHERE original_sql = ?",
                     UNIQUE_SQL) > 0;
             } catch (Exception e) { return false; }
         });
 
-        try (Connection c = pgConnection();
-             ResultSet rs = queryPg(c,
+        try (Connection c = mysqlConnection();
+             ResultSet rs = queryMysql(c,
                  "SELECT datasource_name, execution_mode, success, duration_ms "
                + "FROM sql_execution_record WHERE original_sql = ? LIMIT 1",
                  UNIQUE_SQL)) {
@@ -51,23 +51,23 @@ public class TraceRecordE2ETest extends E2ETestBase {
 
     @Test
     @Order(2)
-    @DisplayName("Prepared-statement query writes PREPARED_STATEMENT executionMode to PG")
-    void testPreparedTraceWrittenToPg() throws Exception {
+    @DisplayName("Prepared-statement query writes PREPARED_STATEMENT executionMode to MySQL")
+    void testPreparedTraceWrittenToMysql() throws Exception {
         String sql = "SELECT count(*) FROM KYLIN_SALES WHERE PART_DT > ?";
         querySpec().body(preparedRequest(sql, java.sql.Date.valueOf("2010-01-01")))
                    .post("/kylin/api/query");
 
-        waitFor(5_000, "prepared trace row in PG", () -> {
+        waitFor(5_000, "prepared trace row in MySQL", () -> {
             try {
-                return countPgRows(
+                return countMysqlRows(
                     "SELECT count(*) FROM sql_execution_record WHERE execution_mode = 'PREPARED_STATEMENT'") > 0;
             } catch (Exception e) { return false; }
         });
 
-        try (Connection c = pgConnection();
-             ResultSet rs = queryPg(c,
+        try (Connection c = mysqlConnection();
+             ResultSet rs = queryMysql(c,
                  "SELECT execution_mode FROM sql_execution_record "
-               + "WHERE execution_mode = 'PREPARED_STATEMENT' ORDER BY created_at DESC LIMIT 1")) {
+               + "WHERE execution_mode = 'PREPARED_STATEMENT' ORDER BY received_at DESC LIMIT 1")) {
             assertThat(rs.next()).isTrue();
             assertThat(rs.getString("execution_mode")).isEqualTo("PREPARED_STATEMENT");
         }
@@ -80,16 +80,16 @@ public class TraceRecordE2ETest extends E2ETestBase {
         String badSql = "SELECT * FROM nonexistent_table_xyz_" + System.currentTimeMillis();
         querySpec().body(statementRequest(badSql)).post("/kylin/api/query");
 
-        waitFor(5_000, "failed trace row in PG", () -> {
+        waitFor(5_000, "failed trace row in MySQL", () -> {
             try {
-                return countPgRows(
+                return countMysqlRows(
                     "SELECT count(*) FROM sql_execution_record WHERE success = false AND original_sql = ?",
                     badSql) > 0;
             } catch (Exception e) { return false; }
         });
 
-        try (Connection c = pgConnection();
-             ResultSet rs = queryPg(c,
+        try (Connection c = mysqlConnection();
+             ResultSet rs = queryMysql(c,
                  "SELECT success, error_message FROM sql_execution_record WHERE original_sql = ? LIMIT 1",
                  badSql)) {
             assertThat(rs.next()).isTrue();
@@ -100,22 +100,22 @@ public class TraceRecordE2ETest extends E2ETestBase {
 
     @Test
     @Order(4)
-    @DisplayName("Presto-routed query records correct datasource_name in PG")
+    @DisplayName("Presto-routed query records correct datasource_name in MySQL")
     void testPrestoRouteTraceHasCorrectDatasource() throws Exception {
         querySpec().body(statementRequest(PRESTO_SQL)).post("/kylin/api/query");
 
-        waitFor(5_000, "presto trace in PG", () -> {
+        waitFor(5_000, "presto trace in MySQL", () -> {
             try {
-                return countPgRows(
+                return countMysqlRows(
                     "SELECT count(*) FROM sql_execution_record WHERE datasource_name = ?",
                     E2EConfig.PRESTO_DS_NAME) > 0;
             } catch (Exception e) { return false; }
         });
 
-        try (Connection c = pgConnection();
-             ResultSet rs = queryPg(c,
+        try (Connection c = mysqlConnection();
+             ResultSet rs = queryMysql(c,
                  "SELECT datasource_name FROM sql_execution_record "
-               + "WHERE datasource_name = ? ORDER BY created_at DESC LIMIT 1",
+               + "WHERE datasource_name = ? ORDER BY received_at DESC LIMIT 1",
                  E2EConfig.PRESTO_DS_NAME)) {
             assertThat(rs.next()).isTrue();
             assertThat(rs.getString("datasource_name")).isEqualTo(E2EConfig.PRESTO_DS_NAME);
@@ -136,7 +136,8 @@ public class TraceRecordE2ETest extends E2ETestBase {
         assertThat(first).containsKey("originalSql");
         assertThat(first).containsKey("datasourceName");
         assertThat(first).containsKey("executionMode");
-        assertThat(first).containsKey("success");
+        assertThat(first).containsKey("cacheHit");
+        assertThat(first).containsKey("parseStatus");
     }
 
     @Test
@@ -145,22 +146,22 @@ public class TraceRecordE2ETest extends E2ETestBase {
     void testPatternStatsIncrement() throws Exception {
         String sql = "SELECT 1 AS pattern_probe";
         // get baseline
-        int before = countPgRows(
-            "SELECT coalesce(sum(execution_count),0) FROM sql_pattern_stats WHERE sample_sql = ?", sql);
+        int before = countMysqlRows(
+            "SELECT coalesce(sum(execution_count),0) FROM sql_pattern_stats WHERE clean_sql_sample = ?", sql);
         // execute twice more
         querySpec().body(statementRequest(sql)).post("/kylin/api/query");
         querySpec().body(statementRequest(sql)).post("/kylin/api/query");
 
-        waitFor(5_000, "pattern stats updated", () -> {
+        waitFor(10_000, "pattern stats updated", () -> {
             try {
-                return countPgRows(
-                    "SELECT coalesce(sum(execution_count),0) FROM sql_pattern_stats WHERE sample_sql = ?",
+                return countMysqlRows(
+                    "SELECT coalesce(sum(execution_count),0) FROM sql_pattern_stats WHERE clean_sql_sample = ?",
                     sql) > before;
             } catch (Exception e) { return false; }
         });
 
-        int after = countPgRows(
-            "SELECT coalesce(sum(execution_count),0) FROM sql_pattern_stats WHERE sample_sql = ?", sql);
+        int after = countMysqlRows(
+            "SELECT coalesce(sum(execution_count),0) FROM sql_pattern_stats WHERE clean_sql_sample = ?", sql);
         assertThat(after).isGreaterThan(before);
     }
 }

@@ -10,10 +10,12 @@ public final class E2EConfig {
     public static final String QUERY_URL    = prop("e2e.query.url",   "http://localhost:8092");
     public static final String MANAGER_URL  = prop("e2e.manager.url", "http://localhost:8090");
 
-    // PostgreSQL
-    public static final String PG_URL      = prop("e2e.pg.url",      "jdbc:postgresql://localhost:5433/engine_db");
-    public static final String PG_USER     = prop("e2e.pg.user",     "engine");
-    public static final String PG_PASSWORD = prop("e2e.pg.password", "engine123");
+    // MySQL
+    public static final String MYSQL_HOST     = prop("e2e.mysql.host",     "localhost");
+    public static final int    MYSQL_PORT     = Integer.parseInt(prop("e2e.mysql.port", "3307"));
+    public static final String MYSQL_URL      = prop("e2e.mysql.url",      "jdbc:mysql://" + MYSQL_HOST + ":" + MYSQL_PORT + "/engine_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC");
+    public static final String MYSQL_USER     = prop("e2e.mysql.user",     "engine");
+    public static final String MYSQL_PASSWORD = prop("e2e.mysql.password", "engine123");
 
     // Redis
     public static final String REDIS_HOST = prop("e2e.redis.host", "localhost");

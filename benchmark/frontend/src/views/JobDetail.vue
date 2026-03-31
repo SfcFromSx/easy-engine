@@ -127,6 +127,7 @@ import { Setting, DataLine, Clock, VideoPlay } from '@element-plus/icons-vue'
 import client from '../api/client'
 import { API_ENDPOINTS, JOB_BY_ID, RUN_START } from '../api/endpoints'
 import PerformanceCharts from '../components/PerformanceCharts.vue'
+import { buildTrendData, strategyTagType } from '../utils/benchmarkViewHelpers'
 
 const route = useRoute()
 const router = useRouter()
@@ -136,23 +137,7 @@ const runs = ref([])
 const loading = ref(false)
 const starting = ref(false)
 
-const trendData = computed(() => {
-  return runs.value
-    .filter(r => r.status === 'COMPLETED' && r.qps != null)
-    .map(r => ({
-      runId: `#${r.id}`,
-      qps: r.qps,
-      p50: r.p50Ms
-    }))
-    .reverse()
-})
-
-function strategyTagType(s) {
-  if (s === 'RANDOM_WEIGHT') return 'primary'
-  if (s === 'ROUND_ROBIN') return 'success'
-  if (s === 'CACHE_PENETRATION') return 'warning'
-  return 'info'
-}
+const trendData = computed(() => buildTrendData(runs.value))
 
 async function load() {
   const id = route.params.id

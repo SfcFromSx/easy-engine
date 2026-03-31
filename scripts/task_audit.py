@@ -14,6 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TASKS_PATH = ROOT / "tasks.md"
+TASKS_DONE_PATH = ROOT / "tasks-done.md"
 CONFIG_PATH = ROOT / ".agent" / "config.json"
 LEGACY_INBOX_ID = "INBOX-20260331-001"
 LEGACY_MISSING_COMMIT_IDS = {
@@ -53,14 +54,16 @@ def load_tasks() -> str:
     return TASKS_PATH.read_text()
 
 
-def split_sections(text: str) -> tuple[str, str]:
+def load_done_archive() -> str:
+    return TASKS_DONE_PATH.read_text()
+
+
+def split_active_section(text: str) -> str:
     todo_match = re.search(r"^## Todo$", text, re.MULTILINE)
-    done_match = re.search(r"^## Done$", text, re.MULTILINE)
-    if not todo_match or not done_match:
-        raise ValueError("tasks.md is missing ## Todo or ## Done headings")
+    if not todo_match:
+        raise ValueError("tasks.md is missing ## Todo heading")
     todo_start = todo_match.start()
-    done_start = done_match.start()
-    return text[todo_start:done_start], text[done_start:]
+    return text[todo_start:]
 
 
 def parse_todo_blocks(todo_section: str) -> list[TaskBlock]:
@@ -111,12 +114,16 @@ def git_subjects() -> str:
 
 def audit() -> tuple[list[str], list[str]]:
     text = load_tasks()
-    todo_section, done_section = split_sections(text)
+    done_text = load_done_archive()
+    todo_section = split_active_section(text)
     todo_blocks = parse_todo_blocks(todo_section)
-    done_ids = parse_done_ids(done_section)
+    done_ids = parse_done_ids(done_text)
     max_attempts = load_max_attempts()
     issues: list[str] = []
     notes: list[str] = []
+
+    if re.search(r"^## Done$", text, re.MULTILINE):
+        issues.append("tasks.md: active ledger still contains a ## Done section; completed tasks must live in tasks-done.md")
 
     todo_ids = [block.task_id for block in todo_blocks]
     for block in todo_blocks:
@@ -131,7 +138,7 @@ def audit() -> tuple[list[str], list[str]]:
 
     duplicates = sorted(set(todo_ids) & set(done_ids))
     for task_id in duplicates:
-        issues.append(f"{task_id}: task id appears in both ## Todo and ## Done")
+        issues.append(f"{task_id}: task id appears in both active tasks.md and tasks-done.md")
 
     subjects = git_subjects()
     missing_commit_ids = sorted(task_id for task_id in done_ids if task_id not in subjects)
@@ -139,7 +146,7 @@ def audit() -> tuple[list[str], list[str]]:
     unexpected_missing = sorted(task_id for task_id in missing_commit_ids if task_id not in LEGACY_MISSING_COMMIT_IDS)
 
     for task_id in unexpected_missing:
-        issues.append(f"{task_id}: Done table entry has no git commit subject containing the task id")
+        issues.append(f"{task_id}: tasks-done.md entry has no git commit subject containing the task id")
 
     if legacy_missing:
         notes.append(
@@ -151,7 +158,7 @@ def audit() -> tuple[list[str], list[str]]:
     stale_allowlist = sorted(task_id for task_id in LEGACY_MISSING_COMMIT_IDS if task_id not in done_ids)
     if stale_allowlist:
         notes.append(
-            "Legacy allowlist ids no longer present in Done table: " + ", ".join(stale_allowlist)
+            "Legacy allowlist ids no longer present in tasks-done.md: " + ", ".join(stale_allowlist)
         )
 
     return issues, notes

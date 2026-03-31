@@ -100,7 +100,7 @@ public class ManagerApiE2ETest extends E2ETestBase {
     @DisplayName("DELETE /api/v1/query-datasources/{id} removes the datasource")
     void testDeleteDatasource() {
         assertThat(createdDsId).isNotNull();
-        managerSpec().delete("/api/v1/query-datasources/" + createdDsId).then().statusCode(200);
+        managerSpec().delete("/api/v1/query-datasources/" + createdDsId).then().statusCode(204);
         managerSpec().get("/api/v1/query-datasources/" + createdDsId).then().statusCode(404);
     }
 
@@ -122,54 +122,47 @@ public class ManagerApiE2ETest extends E2ETestBase {
         assertThat(content).isNotEmpty();
         Map<String, Object> row = content.get(0);
         assertThat(row).containsKeys("originalSql", "datasourceName", "executionMode",
-                                     "success", "durationMs", "sqlFingerprint");
+                                     "cacheHit", "durationMs", "sqlFingerprint");
     }
 
     // --- Stats summary ---
 
     @Test
     @Order(7)
-    @DisplayName("GET /api/v1/stats returns summary with positive totalTraces")
+    @DisplayName("GET /api/v1/stats/summary returns summary with positive totalTraces")
     void testStatsSummary() {
-        Response r = managerSpec().get("/api/v1/stats")
+        Response r = managerSpec().get("/api/v1/stats/summary")
                 .then().statusCode(200).extract().response();
         assertThat(r.jsonPath().getLong("totalTraces")).isGreaterThan(0);
         assertThat(r.jsonPath().getMap("")).containsKeys(
                 "totalTraces", "parseOk", "parseError", "patternCount",
-                "activeAccelCount", "draftAccelCount", "cacheHitCount");
+                "activeAccelerationCount", "draftAccelerationCount", "cacheHitCount");
     }
 
     // --- Acceleration lifecycle ---
 
     @Test
     @Order(8)
-    @DisplayName("Acceleration table can be created, status updated, and deleted")
+    @DisplayName("Acceleration table can be created, listed, and deleted")
     void testAccelerationLifecycle() {
-        // create
+        String tableName = "e2e_accel_" + System.currentTimeMillis();
         Map<String, Object> body = new HashMap<>();
-        body.put("tableName", "e2e_accel_" + System.currentTimeMillis());
-        body.put("datasourceName", "default");
-        body.put("status", "DRAFT");
-        body.put("source", "MANUAL");
+        body.put("name", tableName);
+        body.put("schemaName", "public");
+        body.put("ddlText", "CREATE VIEW " + tableName + " AS SELECT 1");
 
-        Response created = managerSpec().body(body).post("/api/v1/accelerations")
+        Response created = managerSpec().body(body).post("/api/v1/acceleration-tables")
                 .then().statusCode(200).extract().response();
         long id = created.jsonPath().getLong("id");
         assertThat(id).isGreaterThan(0);
+        assertThat(created.jsonPath().getString("name")).isEqualTo(tableName);
         assertThat(created.jsonPath().getString("status")).isEqualTo("DRAFT");
 
-        // update status
-        Map<String, String> statusBody = new HashMap<>();
-        statusBody.put("status", "ACTIVE");
-        managerSpec().body(statusBody).put("/api/v1/accelerations/" + id + "/status")
-                .then().statusCode(200);
-
-        // verify
-        Response fetched = managerSpec().get("/api/v1/accelerations/" + id)
+        Response listed = managerSpec().get("/api/v1/acceleration-tables?page=0&size=20")
                 .then().statusCode(200).extract().response();
-        assertThat(fetched.jsonPath().getString("status")).isEqualTo("ACTIVE");
+        List<Map<String, Object>> content = listed.jsonPath().getList("content");
+        assertThat(content.stream().anyMatch(row -> ((Number) row.get("id")).longValue() == id)).isTrue();
 
-        // delete
-        managerSpec().delete("/api/v1/accelerations/" + id).then().statusCode(200);
+        managerSpec().delete("/api/v1/acceleration-tables/" + id).then().statusCode(204);
     }
 }

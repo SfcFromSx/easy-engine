@@ -59,6 +59,13 @@
 - `java.util.Date` is intentionally treated as unsupported today because the service does not define a canonical string-to-`java.util.Date` conversion format.
 - Kylin literalization validates placeholder count before datasource execution and returns the normal exception-style response when the request parameter count does not match the SQL placeholders.
 
+## Tips
+
+- Seeing `Kylin OK` in benchmark preflight or an operator dashboard only proves that the Kylin service, auth path, and basic connectivity are healthy. It does not prove that Kylin-backed prepared queries are healthy.
+- If statement SQL works and trace rows are written, but prepared SQL with `?` still fails, the usual cause is downstream Kylin planning on the placeholder form rather than service availability.
+- It is normal to still see `?` in incoming requests, saved trace SQL, or other compatibility-facing views. `query` preserves the external prepared request contract and only literalizes parameters internally right before execution against routed Kylin datasources.
+- Because of that split, operator-visible SQL can still look prepared while the actual SQL sent to Kylin already contains concrete literals such as `'2010-01-01'`, `123`, `TRUE`, or `NULL`.
+
 ## Routing Notes
 
 Query-side routing precedence is:

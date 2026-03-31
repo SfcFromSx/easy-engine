@@ -29,6 +29,7 @@ class TraceIngestionTest {
     private SqlPatternStatsRepository patternStatsRepository;
 
     @Test
+    // Covers TraceIngestionService#ingestJson success path.
     void shouldIngestAndSummarizeTrace() {
         String json = "{\"datasourceName\":\"default\",\"datasourceType\":\"h2\",\"originalSql\":\"SELECT 1\",\"parameterPayload\":\"[{\\\"position\\\":1,\\\"className\\\":\\\"java.lang.Integer\\\",\\\"value\\\":\\\"1\\\"}]\",\"executionMode\":\"PREPARED_STATEMENT\",\"success\":false,\"durationMs\":10}";
         
@@ -52,6 +53,7 @@ class TraceIngestionTest {
     }
 
     @Test
+    // Covers TraceIngestionService#ingestJson aggregate update path.
     void shouldAccumulateStatsForSameFingerprint() {
         String json1 = "{\"originalSql\":\"SELECT * FROM t1\",\"durationMs\":100}";
         String json2 = "{\"originalSql\":\"SELECT   *   FROM   t1\",\"durationMs\":200}"; 
@@ -67,5 +69,25 @@ class TraceIngestionTest {
         SqlPatternStats stats = statsOpt.get();
         assertEquals(2, stats.getExecutionCount(), "Should have aggregated 2 executions");
         assertEquals(150.0, stats.getAvgDurationMs(), "Average duration should be 150");
+    }
+
+    @Test
+    // Covers TraceIngestionService#ingestBatch and TraceIngestionService#ingestJson skipped path.
+    void ingestBatchIgnoresEmptyEntriesAndPersistsSkippedRecord() {
+        ingestionService.ingestBatch(List.of("", "{\"datasourceName\":\"default\"}", " "));
+
+        List<SqlExecutionRecord> records = recordRepository.findAll();
+        assertEquals(1, records.size());
+        assertEquals(ParseStatus.SKIPPED, records.get(0).getParseStatus());
+    }
+
+    @Test
+    // Covers TraceIngestionService#ingestJson error path.
+    void ingestJsonStoresParseErrorWhenPayloadIsInvalid() {
+        ingestionService.ingestJson("{invalid-json");
+
+        SqlExecutionRecord record = recordRepository.findAll().get(0);
+        assertEquals(ParseStatus.ERROR, record.getParseStatus());
+        assertNotNull(record.getParseError());
     }
 }

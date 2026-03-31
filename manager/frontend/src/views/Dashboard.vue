@@ -7,8 +7,8 @@
       </div>
       <div class="page-header-actions system-status">
         <el-tag :type="healthTagType" effect="plain" class="status-badge">
-          <refresh-cw :size="14" style="margin-right: 4px" :class="{ spin: refreshing }" />
-          {{ healthText }}
+          <refresh-cw :size="14" class="status-badge-icon" :class="{ spin: refreshing }" />
+          <span class="status-badge-text">{{ healthText }}</span>
         </el-tag>
       </div>
     </div>
@@ -74,10 +74,10 @@
     </el-row>
 
     <el-row :gutter="20">
-      <el-col :xs="24" :lg="14">
+      <el-col :xs="24" :lg="12" class="dashboard-panel-column">
         <div
           v-loading="tracesState.loading"
-          class="glass-card panel-card"
+          class="glass-card panel-card dashboard-panel-card"
           :element-loading-text="t('dashboard.refreshing')"
         >
           <div class="card-header">
@@ -97,8 +97,11 @@
             <div v-else-if="recentTraces.length" class="panel-list">
               <div v-for="trace in recentTraces" :key="trace.id" class="panel-item">
                 <div>
-                  <div class="panel-item-title">{{ trace.datasourceName || t('common.unnamedDatasource') }}</div>
-                  <div class="panel-item-meta">{{ shortFingerprint(trace.sqlFingerprint) }}</div>
+                  <div class="panel-item-title panel-item-title--inline">
+                    <span>{{ trace.datasourceName || t('common.unnamedDatasource') }}</span>
+                    <span class="panel-item-separator">·</span>
+                    <span>{{ shortFingerprint(trace.sqlFingerprint) }}</span>
+                  </div>
                   <div class="panel-item-meta">{{ trace.originalSql || t('common.noSqlText') }}</div>
                 </div>
                 <div style="text-align: right">
@@ -110,10 +113,10 @@
           </div>
         </div>
       </el-col>
-      <el-col :xs="24" :lg="10">
+      <el-col :xs="24" :lg="12" class="dashboard-panel-column">
         <div
           v-loading="patternsState.loading"
-          class="glass-card panel-card"
+          class="glass-card panel-card dashboard-panel-card"
           :element-loading-text="t('dashboard.refreshing')"
         >
           <div class="card-header">
@@ -324,9 +327,12 @@ onMounted(load)
 <style scoped>
 .mb-24 { margin-bottom: 20px; }
 .stat-card {
+  padding: 22px;
   display: flex;
-  align-items: center;
-  padding: 20px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 12px;
 }
 .stat-icon {
   width: 44px;
@@ -344,6 +350,28 @@ onMounted(load)
 .bg-emerald { background: linear-gradient(135deg, #34d399, #10b981); }
 .bg-amber { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
 
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  height: 28px;
+  line-height: normal;
+}
+
+.status-badge-icon {
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.status-badge-text {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.stat-icon svg {
+  display: block;
+}
+
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -353,6 +381,15 @@ onMounted(load)
 
 .dashboard-panel-body {
   min-height: 200px;
+}
+
+.dashboard-panel-column {
+  display: flex;
+}
+
+.dashboard-panel-card {
+  width: 100%;
+  height: 100%;
 }
 
 .panel-status {

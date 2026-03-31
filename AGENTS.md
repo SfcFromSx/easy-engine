@@ -2,14 +2,15 @@
 
 This file is the fast-start contract for the foreman model working in Easy Engine.
 
-The foreman reads `tasks.md`, receives a task assignment from the human, does the work directly in the current session, and writes progress back into `tasks.md`.
+The foreman reads `tasks.md`, receives a task assignment from the human, does the work directly in the current session, and writes progress back into the active ledger. Completed-task history lives in `tasks-done.md`.
 
 ## Repo Map
 
 - `query/`: query execution service.
 - `manager/`: control-plane service.
 - `benchmark/`: benchmark backend and frontend.
-- `tasks.md`: canonical task ledger — human-readable, foreman-writable.
+- `tasks.md`: active task ledger — human-readable, foreman-writable.
+- `tasks-done.md`: completed task archive and done-signal history.
 - `INBOX.md`: repo-root inbox for agent-found issues and suggestions awaiting human review.
 - `.agent/config.json`: harness policy, validation commands, mirror policy, and service health checks.
 - `.agent/history/`: best-effort JSONL diagnostics from earlier loop tooling; detailed runner logs live under `.agent/runtime/runner-logs/`.
@@ -64,7 +65,7 @@ Completion order is mandatory:
 2. verify
 3. doc-garden if needed
 4. append progress evidence to `tasks.md`
-5. update the task to `done` and move it to the Done table
+5. update the task to `done` and move it from `tasks.md` into `tasks-done.md`
 6. create the single task commit, including the ledger update
 7. treat the task as finished only after the commit succeeds
 
@@ -87,7 +88,7 @@ Next action: ...
 Escalation: none / INBOX-...
 ```
 
-When a task is completed, update its **Status** line to `done`, move it to the Done table at the bottom of `tasks.md`, and include that ledger update in the task's commit.
+When a task is completed, update its **Status** line to `done`, move it out of `tasks.md` and into `tasks-done.md`, and include that ledger update in the task's commit.
 
 ## Hard Rules
 
@@ -98,7 +99,7 @@ When a task is completed, update its **Status** line to `done`, move it to the D
 - Do not remove human review checkpoints from Git workflows.
 - Collect harness or tooling issues into `INBOX.md` first, even when they are discovered during another tracked task; do not change infrastructure without explicit human approval.
 - Always read `AGENTS.md` first when picking up a new task to ensure alignment with the latest project contract.
-- All task state lives in `tasks.md`. Do not create JSON, YAML, or other machine state files for task tracking.
+- Task state lives in `tasks.md` and `tasks-done.md`. Do not create JSON, YAML, or other machine state files for task tracking.
 
 ## Git Contract
 
@@ -110,7 +111,7 @@ When a task is completed, update its **Status** line to `done`, move it to the D
 
 ## Audit Trail
 
-- `tasks.md` plus Git history are the canonical audit trail for task state and completion.
+- `tasks.md`, `tasks-done.md`, and Git history are the canonical audit trail for task state and completion.
 - `.agent/history/` and `.agent/runtime/runner-logs/` are best-effort diagnostics only unless an in-repo loop implementation is restored.
 
 ## Validation Commands Reference

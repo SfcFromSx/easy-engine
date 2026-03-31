@@ -22,4 +22,12 @@ public class QueryController {
     public SqlResponseStubDto query(@RequestBody PreparedQueryRequestDto request) {
         return queryExecutionService.execute(request);
     }
+
+    /**
+     * Dummy authentication endpoint to satisfy the Kylin JDBC driver's connection handshake.
+     */
+    @RequestMapping(value = "/user/authentication", method = {org.springframework.web.bind.annotation.RequestMethod.GET, org.springframework.web.bind.annotation.RequestMethod.POST})
+    public String authenticate() {
+        return "{\"authenticated\": true, \"userDetails\": {\"username\": \"ADMIN\"}}";
+    }
 }

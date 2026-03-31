@@ -196,6 +196,11 @@ watch(
 }
 
 .el-icon {
+  width: 18px;
+  height: 18px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
   margin-right: 12px;
 }
 

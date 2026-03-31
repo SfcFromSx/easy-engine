@@ -1,0 +1,12 @@
+# Created at 2026-03-31T18:48:21.285
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+
+# Created at 2026-03-31T18:48:21.285
+WARNING: sun.misc.Unsafe::arrayBaseOffset has been called by org.apache.kylin.jdbc.shaded.com.google.protobuf.UnsafeUtil$MemoryAccessor (file:/Users/sfc/.m2/repository/org/apache/kylin/kylin-jdbc/4.0.1/kylin-jdbc-4.0.1.jar)
+
+# Created at 2026-03-31T18:48:21.285
+WARNING: Please consider reporting this to the maintainers of class org.apache.kylin.jdbc.shaded.com.google.protobuf.UnsafeUtil$MemoryAccessor
+
+# Created at 2026-03-31T18:48:21.285
+WARNING: sun.misc.Unsafe::arrayBaseOffset will be removed in a future release
+

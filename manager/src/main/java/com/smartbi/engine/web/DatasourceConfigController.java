@@ -30,6 +30,13 @@ public class DatasourceConfigController {
         return service.list();
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<QueryDatasourceConfig> get(@PathVariable long id) {
+        return service.get(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @PostMapping
     public QueryDatasourceConfig create(@RequestBody QueryDatasourceConfigUpsertRequest request) {
         return service.create(request);

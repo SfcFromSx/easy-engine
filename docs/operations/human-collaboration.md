@@ -4,7 +4,7 @@ This document describes what humans should do in the task-driven foreman workflo
 
 ## Allowed Human Actions
 
-- Update goals and priorities through [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md) and plan docs under [docs/exec-plans/](/Users/sfc/Documents/projects/engine/docs/exec-plans/).
+- Update active goals and priorities through [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md), and review completed-task history through [tasks-done.md](/Users/sfc/Documents/projects/engine/tasks-done.md), plus plan docs under [docs/exec-plans/](/Users/sfc/Documents/projects/engine/docs/exec-plans/).
 - Pause work by telling the foreman to stop; resume by directing it to continue.
 - Provide credentials, environment variables, and infrastructure.
 - Review diffs, run extra validation, approve merges, and decide whether to push or publish.
@@ -58,5 +58,5 @@ If a human needs to modify code, prompts, task state, or repo layout:
 
 - English documentation is canonical.
 - Chinese mirrors are for human convenience only.
-- Agents should always be able to recover context from `docs/`, `tasks.md`, `INBOX.md`, and `.agent/config.json`.
+- Agents should always be able to recover context from `docs/`, `tasks.md`, `tasks-done.md`, `INBOX.md`, and `.agent/config.json`.
 - Human convenience must not override agent continuity.

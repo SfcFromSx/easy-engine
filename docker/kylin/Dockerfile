@@ -5,6 +5,7 @@ FROM apachekylin/apache-kylin-standalone:4.0.0
 USER root
 
 RUN sed -i 's|/home/admin/first_run|/data/.kylin_first_run|g' /home/admin/entrypoint.sh \
-    && sed -i 's/^rm -rf \/data\/zookeeper\/\*$/# &/' /home/admin/entrypoint.sh
+    && sed -i 's/^rm -rf \/data\/zookeeper\/\*$/# &/' /home/admin/entrypoint.sh \
+    && printf '\n# Easy Engine local overrides\nkylin.engine.spark-conf.spark.master=local[2]\nkylin.query.spark-conf.spark.master=local[2]\n' >> /home/admin/apache-kylin-4.0.0-bin-spark2/conf/kylin.properties
 
 USER root

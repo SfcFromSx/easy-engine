@@ -8,7 +8,7 @@
     <artifactId>engine-e2e-tests</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <name>engine-e2e-tests</name>
-    <description>Easy Engine — full-coverage E2E tests (real Kylin, Presto, Redis, PostgreSQL)</description>
+    <description>Easy Engine — full-coverage E2E tests (real Kylin, Presto, Redis, MySQL)</description>
 
     <properties>
         <java.version>1.8</java.version>
@@ -21,9 +21,11 @@
         <!-- Service endpoints (override with -D flags or env vars) -->
         <e2e.query.url>http://localhost:8092</e2e.query.url>
         <e2e.manager.url>http://localhost:8090</e2e.manager.url>
-        <e2e.pg.url>jdbc:postgresql://localhost:5433/engine_db</e2e.pg.url>
-        <e2e.pg.user>engine</e2e.pg.user>
-        <e2e.pg.password>engine123</e2e.pg.password>
+        <e2e.mysql.host>localhost</e2e.mysql.host>
+        <e2e.mysql.port>3307</e2e.mysql.port>
+        <e2e.mysql.url>jdbc:mysql://${e2e.mysql.host}:${e2e.mysql.port}/engine_db?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=UTC</e2e.mysql.url>
+        <e2e.mysql.user>engine</e2e.mysql.user>
+        <e2e.mysql.password>engine123</e2e.mysql.password>
         <e2e.redis.host>localhost</e2e.redis.host>
         <e2e.redis.port>6380</e2e.redis.port>
         <e2e.kylin.host>localhost</e2e.kylin.host>
@@ -51,9 +53,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>42.6.0</version>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>8.0.33</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -72,6 +74,18 @@
             <groupId>com.facebook.presto</groupId>
             <artifactId>presto-jdbc</artifactId>
             <version>${presto.jdbc.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>2.3.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>2.3.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -95,9 +109,11 @@
                     <systemPropertyVariables>
                         <e2e.query.url>${e2e.query.url}</e2e.query.url>
                         <e2e.manager.url>${e2e.manager.url}</e2e.manager.url>
-                        <e2e.pg.url>${e2e.pg.url}</e2e.pg.url>
-                        <e2e.pg.user>${e2e.pg.user}</e2e.pg.user>
-                        <e2e.pg.password>${e2e.pg.password}</e2e.pg.password>
+                        <e2e.mysql.host>${e2e.mysql.host}</e2e.mysql.host>
+                        <e2e.mysql.port>${e2e.mysql.port}</e2e.mysql.port>
+                        <e2e.mysql.url>${e2e.mysql.url}</e2e.mysql.url>
+                        <e2e.mysql.user>${e2e.mysql.user}</e2e.mysql.user>
+                        <e2e.mysql.password>${e2e.mysql.password}</e2e.mysql.password>
                         <e2e.redis.host>${e2e.redis.host}</e2e.redis.host>
                         <e2e.redis.port>${e2e.redis.port}</e2e.redis.port>
                         <e2e.kylin.host>${e2e.kylin.host}</e2e.kylin.host>

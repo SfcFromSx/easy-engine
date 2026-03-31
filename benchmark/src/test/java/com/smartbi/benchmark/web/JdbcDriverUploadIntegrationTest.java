@@ -59,6 +59,7 @@ class JdbcDriverUploadIntegrationTest {
         Files.createDirectories(BUILD_DIR);
     }
 
+    // Covers DriverController#uploadDriver, #listDrivers, and DataSourceController#testConnection with uploaded JDBC jars.
     @Test
     void shouldUploadListAndUseDriverJar() throws Exception {
         Path driverJar = buildUploadedDriverJar();
@@ -116,6 +117,8 @@ class JdbcDriverUploadIntegrationTest {
                 null,
                 null,
                 null,
+                "--release",
+                "8",
                 "-cp",
                 System.getProperty("java.class.path"),
                 "-d",

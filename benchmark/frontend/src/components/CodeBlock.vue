@@ -19,6 +19,7 @@
 import { computed, ref } from 'vue'
 import { CopyDocument } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { highlightSql } from '../utils/sqlHighlight'
 
 const props = defineProps({
   code: { type: String, default: '' },
@@ -28,36 +29,7 @@ const props = defineProps({
 
 const showCopy = ref(false)
 
-const highlightedCode = computed(() => {
-  if (!props.code) return ''
-  
-  let html = props.code
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-
-  // Keywords (Case-insensitive)
-  const keywords = [
-    'SELECT', 'FROM', 'WHERE', 'GROUP BY', 'ORDER BY', 'LIMIT', 'JOIN', 'LEFT', 'RIGHT', 'INNER', 'ON',
-    'AS', 'AND', 'OR', 'NOT', 'IN', 'IS', 'NULL', 'CASE', 'WHEN', 'THEN', 'ELSE', 'END',
-    'UNION', 'ALL', 'EXISTS', 'HAVING', 'DISTINCT', 'COUNT', 'SUM', 'AVG', 'MIN', 'MAX',
-    'INSERT', 'INTO', 'VALUES', 'UPDATE', 'SET', 'DELETE', 'CREATE', 'TABLE', 'DROP', 'ALTER'
-  ]
-  const keywordRegex = new RegExp(`\\b(${keywords.join('|')})\\b`, 'gi')
-  html = html.replace(keywordRegex, '<span class="token-keyword">$1</span>')
-
-  // Strings
-  html = html.replace(/'([^']*)'/g, '<span class="token-string">\'$1\'</span>')
-
-  // Numbers
-  html = html.replace(/\b(\d+)\b/g, '<span class="token-number">$1</span>')
-
-  // Comments
-  html = html.replace(/(--.*$)/gm, '<span class="token-comment">$1</span>')
-  html = html.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="token-comment">$1</span>')
-
-  return html
-})
+const highlightedCode = computed(() => highlightSql(props.code))
 
 function copy() {
   navigator.clipboard.writeText(props.code).then(() => {

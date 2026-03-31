@@ -1,6 +1,8 @@
 package com.smartbi.benchmark.migration;
 
+import com.smartbi.benchmark.domain.BenchmarkDataSource;
 import com.smartbi.benchmark.domain.BenchmarkTestSet;
+import com.smartbi.benchmark.repo.BenchmarkDataSourceRepository;
 import com.smartbi.benchmark.repo.BenchmarkJobRepository;
 import com.smartbi.benchmark.repo.BenchmarkTestSetItemRepository;
 import com.smartbi.benchmark.repo.BenchmarkTestSetRepository;
@@ -14,8 +16,14 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -47,11 +55,27 @@ class BenchmarkFlywaySeedTest {
     private BenchmarkTestSetItemRepository testSetItemRepository;
     @Autowired
     private BenchmarkJobRepository jobRepository;
+    @Autowired
+    private BenchmarkDataSourceRepository dataSourceRepository;
 
+    // Covers Flyway benchmark seed migrations for templates, jobs, and prepared-statement fixtures.
     @Test
     void flywaySeedsTemplatesJobsAndTestSet() {
         long templates = sqlTemplateRepository.count();
         assertTrue(templates >= 22, "全局 SQL 模板应 >= 22（V2 两条 + V5 约 20 条）, actual=" + templates);
+
+        List<String> templateNames = sqlTemplateRepository.findAll().stream()
+                .map(template -> template.getName())
+                .collect(Collectors.toList());
+        assertTrue(templateNames.contains("sample_agg"), "应保留 sample_agg 示例模板供回归任务复用");
+
+        String sampleAggSql = sqlTemplateRepository.findAll().stream()
+                .filter(template -> "sample_agg".equals(template.getName()))
+                .map(template -> template.getSqlText())
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("sample_agg template missing"));
+        assertEquals("SELECT sum(price) AS sum_price FROM KYLIN_SALES", sampleAggSql,
+                "fresh schema should replace the original SELECT 1 placeholder with the seeded learn_kylin example");
 
         Optional<BenchmarkTestSet> reg = testSetRepository.findAll().stream()
                 .filter(t -> "learn_kylin_regression".equals(t.getName()))
@@ -63,6 +87,14 @@ class BenchmarkFlywaySeedTest {
 
         long jobs = jobRepository.count();
         assertTrue(jobs >= 4, "任务应 >= 4（V2 默认 + V5 三条）, actual=" + jobs);
+
+        Set<String> seededJobNames = jobRepository.findAll().stream()
+                .map(job -> job.getName())
+                .collect(Collectors.toSet());
+        assertTrue(seededJobNames.contains("default-kylin-cached"));
+        assertTrue(seededJobNames.contains("benchmark-smoke-global"));
+        assertTrue(seededJobNames.contains("benchmark-testset-round-robin"));
+        assertTrue(seededJobNames.contains("benchmark-cache-penetration"));
 
         boolean smokeSet = testSetRepository.findAll().stream()
                 .anyMatch(t -> "smoke_kylin_only".equals(t.getName()));
@@ -81,5 +113,27 @@ class BenchmarkFlywaySeedTest {
                 .anyMatch(i -> "PREPARED_STATEMENT".equalsIgnoreCase(i.getExecutionMode())
                         && i.getParamJson() != null && !i.getParamJson().trim().isEmpty());
         assertTrue(preparedItem, "应存在 prepared statement 测试集条目");
+    }
+
+    // Covers Flyway benchmark datasource seed cleanup for duplicate legacy job connections.
+    @Test
+    void flywaySeedsOneCanonicalQueryGatewayDatasource() {
+        assertEquals(1L, dataSourceRepository.count(),
+                "相同 JDBC 明细的 benchmark 种子数据源应收敛为 1 条共享记录");
+
+        BenchmarkDataSource dataSource = dataSourceRepository.findAll().get(0);
+        assertEquals("engine-query-default", dataSource.getName());
+        assertEquals("jdbc:kylin://127.0.0.1:8092/learn_kylin", dataSource.getJdbcUrl());
+        assertEquals("org.apache.kylin.jdbc.Driver", dataSource.getDriverClass());
+
+        Set<Long> referencedDataSourceIds = jobRepository.findAll().stream()
+                .map(job -> {
+                    assertNotNull(job.getDataSourceId(), "seeded benchmark jobs should keep a datasource reference");
+                    return job.getDataSourceId();
+                })
+                .collect(Collectors.toSet());
+
+        assertEquals(Collections.singleton(dataSource.getId()), referencedDataSourceIds,
+                "all seeded benchmark jobs should point at the canonical shared query gateway datasource");
     }
 }

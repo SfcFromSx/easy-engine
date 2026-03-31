@@ -17,7 +17,7 @@ import java.util.Map;
 
 /**
  * Base class for all E2E tests.
- * Provides helpers for HTTP, PostgreSQL, and Redis interactions.
+ * Provides helpers for HTTP, MySQL, and Redis interactions.
  */
 public abstract class E2ETestBase {
 
@@ -65,14 +65,14 @@ public abstract class E2ETestBase {
         return body;
     }
 
-    // --- PostgreSQL helpers ---
+    // --- MySQL helpers ---
 
-    protected static Connection pgConnection() throws SQLException {
-        return DriverManager.getConnection(E2EConfig.PG_URL, E2EConfig.PG_USER, E2EConfig.PG_PASSWORD);
+    protected static Connection mysqlConnection() throws SQLException {
+        return DriverManager.getConnection(E2EConfig.MYSQL_URL, E2EConfig.MYSQL_USER, E2EConfig.MYSQL_PASSWORD);
     }
 
-    protected static int countPgRows(String sql, Object... args) throws SQLException {
-        try (Connection c = pgConnection();
+    protected static int countMysqlRows(String sql, Object... args) throws SQLException {
+        try (Connection c = mysqlConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             for (int i = 0; i < args.length; i++) ps.setObject(i + 1, args[i]);
             try (ResultSet rs = ps.executeQuery()) {
@@ -81,7 +81,7 @@ public abstract class E2ETestBase {
         }
     }
 
-    protected static ResultSet queryPg(Connection c, String sql, Object... args) throws SQLException {
+    protected static ResultSet queryMysql(Connection c, String sql, Object... args) throws SQLException {
         PreparedStatement ps = c.prepareStatement(sql);
         for (int i = 0; i < args.length; i++) ps.setObject(i + 1, args[i]);
         return ps.executeQuery();

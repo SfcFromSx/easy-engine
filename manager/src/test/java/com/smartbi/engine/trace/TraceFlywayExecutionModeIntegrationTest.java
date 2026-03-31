@@ -72,6 +72,7 @@ class TraceFlywayExecutionModeIntegrationTest {
     }
 
     @Test
+    // Covers TraceIngestionService#ingestJson and TraceController#page against Flyway-backed schema changes.
     void shouldApplyFlywayTraceColumnsAndExposeStoredValues() throws Exception {
         Integer executionModeColumnCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +

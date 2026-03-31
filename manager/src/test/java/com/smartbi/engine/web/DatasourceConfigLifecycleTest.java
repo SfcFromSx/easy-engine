@@ -36,6 +36,7 @@ class DatasourceConfigLifecycleTest {
     }
 
     @Test
+    // Covers DatasourceConfigController#create, DatasourceConfigController#update, and DatasourceConfigController#delete.
     void shouldManageDatasourceCrudLifecycle() throws Exception {
         String defaultJson = "{" +
                 "\"name\":\"default\"," +

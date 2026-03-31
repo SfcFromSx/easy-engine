@@ -48,8 +48,7 @@ public class CachePolicy {
                 || "java.lang.Boolean".equals(className)
                 || "java.sql.Date".equals(className)
                 || "java.sql.Time".equals(className)
-                || "java.sql.Timestamp".equals(className)
-                || "java.util.Date".equals(className);
+                || "java.sql.Timestamp".equals(className);
     }
 
     public String cacheModeKeyTag() {

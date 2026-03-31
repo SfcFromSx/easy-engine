@@ -42,6 +42,7 @@ Benchmark connects to `query` using the standard Apache Kylin JDBC driver (`jdbc
 - For failed runs with no valid samples, `evaluationJson.verdict`, `summary`, `phase`, `issues`, `diagnostics.failureBreakdown`, and `meta.executionModeSummary` are the stable contract. The failure-path `metrics.note` and `jdbcComparisonHints.dimensions` content remain best-effort placeholder guidance rather than measured latency/QPS output.
 - The dashboard active-run card reads `/api/v1/runs/active`; that endpoint now reconciles stale `RUNNING` rows before responding and returns the most recently started live run when more than one exists.
 - Flyway seed content under `V2`, `V5`, and `V6` is starter content for local bootstrap and regression runs. `sample_agg` no longer survives as the original `SELECT 1` placeholder on a fresh schema, but the remaining seeded templates, test sets, and jobs still model `learn_kylin` and `presto_local` examples and should be edited or removed for production-like environments instead of being mistaken for live workload evidence.
+- A reproducible public TPC-H / Presto sample import now lives under `benchmark/src/main/resources/samples/test-sets/`; see `docs/modules/benchmark-sample-data.md` for the upstream Trino source, normalization notes, and the exact `curl` re-import command.
 
 ## Run
 
@@ -65,5 +66,6 @@ npm --prefix benchmark/frontend run build
 
 - [docs/architecture/overview.md](/Users/sfc/Documents/projects/engine/docs/architecture/overview.md)
 - [docs/operations/local-development.md](/Users/sfc/Documents/projects/engine/docs/operations/local-development.md)
+- [docs/modules/benchmark-sample-data.md](/Users/sfc/Documents/projects/engine/docs/modules/benchmark-sample-data.md)
 - [docs/modules/benchmark-test-matrix.md](/Users/sfc/Documents/projects/engine/docs/modules/benchmark-test-matrix.md)
 - [docs/operations/validation-matrix.md](/Users/sfc/Documents/projects/engine/docs/operations/validation-matrix.md)

@@ -14,6 +14,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.time.Instant;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -48,6 +51,7 @@ class RunControllerContextTest {
         jobRepository.deleteAll();
     }
 
+    // Covers RunController#context failureBreakdown extraction for failed runs.
     @Test
     void shouldExposeFailureBreakdownFromEvaluationJson() throws Exception {
         BenchmarkJob job = new BenchmarkJob();
@@ -84,6 +88,7 @@ class RunControllerContextTest {
                 .andExpect(jsonPath("$.comparisonDelta.available").value(false));
     }
 
+    // Covers RunController#context success payload shaping and comparison delta exposure.
     @Test
     void shouldExposeSuccessContextShapeAndComparisonDelta() throws Exception {
         BenchmarkJob job = new BenchmarkJob();
@@ -140,5 +145,86 @@ class RunControllerContextTest {
                 .andExpect(jsonPath("$.comparisonDelta.deltas.p50Ms.baseline").value(4.0))
                 .andExpect(jsonPath("$.comparisonDelta.deltas.qpsSuccessful.current").value(250.0))
                 .andExpect(jsonPath("$.comparisonDelta.deltas.qpsSuccessful.baseline").value(200.0));
+    }
+
+    // Covers RunController#list global paging without jobId and preserves newest-first ordering.
+    @Test
+    void shouldListRunsGloballyWhenJobIdIsOmitted() throws Exception {
+        BenchmarkJob firstJob = new BenchmarkJob();
+        firstJob.setName("first-job");
+        firstJob.setConcurrentThreads(1);
+        firstJob.setRounds(1);
+        firstJob.setStrategy(BenchmarkStrategy.ROUND_ROBIN);
+        firstJob = jobRepository.save(firstJob);
+
+        BenchmarkJob secondJob = new BenchmarkJob();
+        secondJob.setName("second-job");
+        secondJob.setConcurrentThreads(1);
+        secondJob.setRounds(1);
+        secondJob.setStrategy(BenchmarkStrategy.ROUND_ROBIN);
+        secondJob = jobRepository.save(secondJob);
+
+        BenchmarkRun older = new BenchmarkRun();
+        older.setJobId(firstJob.getId());
+        older.setStatus(RunStatus.COMPLETED);
+        ReflectionTestUtils.setField(older, "startedAt", Instant.parse("2026-03-31T08:00:00Z"));
+        runRepository.save(older);
+
+        BenchmarkRun newer = new BenchmarkRun();
+        newer.setJobId(secondJob.getId());
+        newer.setStatus(RunStatus.RUNNING);
+        ReflectionTestUtils.setField(newer, "startedAt", Instant.parse("2026-03-31T09:00:00Z"));
+        runRepository.save(newer);
+
+        mockMvc.perform(get("/api/v1/runs")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.content[0].jobId").value(secondJob.getId()))
+                .andExpect(jsonPath("$.content[0].status").value("RUNNING"))
+                .andExpect(jsonPath("$.content[1].jobId").value(firstJob.getId()))
+                .andExpect(jsonPath("$.content[1].status").value("COMPLETED"));
+    }
+
+    // Covers RunController#list per-job paging branch while the global list contract is also supported.
+    @Test
+    void shouldKeepFilteringRunsByJobWhenJobIdIsProvided() throws Exception {
+        BenchmarkJob targetJob = new BenchmarkJob();
+        targetJob.setName("target-job");
+        targetJob.setConcurrentThreads(1);
+        targetJob.setRounds(1);
+        targetJob.setStrategy(BenchmarkStrategy.ROUND_ROBIN);
+        targetJob = jobRepository.save(targetJob);
+
+        BenchmarkJob otherJob = new BenchmarkJob();
+        otherJob.setName("other-job");
+        otherJob.setConcurrentThreads(1);
+        otherJob.setRounds(1);
+        otherJob.setStrategy(BenchmarkStrategy.ROUND_ROBIN);
+        otherJob = jobRepository.save(otherJob);
+
+        BenchmarkRun targetRun = new BenchmarkRun();
+        targetRun.setJobId(targetJob.getId());
+        targetRun.setStatus(RunStatus.COMPLETED);
+        ReflectionTestUtils.setField(targetRun, "startedAt", Instant.parse("2026-03-31T09:00:00Z"));
+        runRepository.save(targetRun);
+
+        BenchmarkRun otherRun = new BenchmarkRun();
+        otherRun.setJobId(otherJob.getId());
+        otherRun.setStatus(RunStatus.FAILED);
+        ReflectionTestUtils.setField(otherRun, "startedAt", Instant.parse("2026-03-31T10:00:00Z"));
+        runRepository.save(otherRun);
+
+        mockMvc.perform(get("/api/v1/runs")
+                        .param("jobId", String.valueOf(targetJob.getId()))
+                        .param("page", "0")
+                        .param("size", "10")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].jobId").value(targetJob.getId()))
+                .andExpect(jsonPath("$.content[0].status").value("COMPLETED"));
     }
 }

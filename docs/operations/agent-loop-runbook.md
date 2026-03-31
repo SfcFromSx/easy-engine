@@ -12,9 +12,9 @@ Each task runs through up to five stages:
 2. **Implement** — make the required code or documentation changes.
 3. **Verify** — run validation commands and inspect the changed behavior.
 4. **Doc gardening** — update canonical docs when behavior or APIs changed. Optional.
-5. **Ledger closeout + commit** — append progress evidence, move the task to `Done`, and create the task commit.
+5. **Ledger closeout + commit** — append progress evidence, move the task from `tasks.md` into `tasks-done.md`, and create the task commit.
 
-Completion order is mandatory: implement, verify, doc-garden if needed, append progress evidence, update `tasks.md`, then commit. A task is not finished until that commit succeeds.
+Completion order is mandatory: implement, verify, doc-garden if needed, append progress evidence, update `tasks.md`, archive the completed task in `tasks-done.md`, then commit. A task is not finished until that commit succeeds.
 
 ## Progress Logging
 
@@ -64,4 +64,4 @@ Run the doc-gardener stage after any task that changes behavior, APIs, or archit
 
 ## History Logs
 
-`tasks.md` plus Git history are the canonical audit trail. `.agent/history/` and `.agent/runtime/runner-logs/` are best-effort diagnostics from earlier loop tooling and must not be treated as authoritative completion state unless an in-repo loop implementation is restored. The repository does not currently ship `scripts/agent_loop.py`.
+`tasks.md`, `tasks-done.md`, and Git history are the canonical audit trail. `.agent/history/` and `.agent/runtime/runner-logs/` are best-effort diagnostics from earlier loop tooling and must not be treated as authoritative completion state unless an in-repo loop implementation is restored. The repository does not currently ship `scripts/agent_loop.py`.

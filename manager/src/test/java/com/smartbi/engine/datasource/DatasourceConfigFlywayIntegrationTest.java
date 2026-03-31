@@ -48,6 +48,7 @@ class DatasourceConfigFlywayIntegrationTest {
     }
 
     @Test
+    // Covers DatasourceConfigController#list and Flyway datasource schema seeding.
     void shouldCreateDatasourceConfigTableAndSeedQueryDefaults() throws Exception {
         Integer defaultColumnCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
