@@ -1,0 +1,38 @@
+.jobs-view-container {
+  max-width: 100%;
+}
+
+.page-header {
+  margin-bottom: 16px;
+}
+
+.glass-card {
+  padding: 0;
+}
+
+:deep(.el-table__row) {
+  height: 40px;
+}
+
+.premium-btn {
+  height: 32px;
+  padding: 0 12px;
+}
+
+.list-toolbar {
+  padding: 10px 16px;
+  margin-bottom: 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.hint {
+  font-size: var(--font-size-small);
+  color: var(--color-subtitle);
+  padding: 6px 10px;
+  margin: 4px 0;
+}
+
+:deep(.el-card__body) {
+  padding: 0 !important; /* Table card should have no body padding */
+}
+

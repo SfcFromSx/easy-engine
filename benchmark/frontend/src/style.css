@@ -297,3 +297,66 @@ h4 {
     width: 100%;
   }
 }
+
+/* Premium Dialog & Form Enhancements */
+.premium-dialog {
+  border-radius: 20px !important;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+
+.premium-dialog :deep(.el-dialog__header) {
+  padding: 24px 28px 12px !important;
+  margin: 0 !important;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.premium-dialog :deep(.el-dialog__title) {
+  font-family: var(--font-family-title);
+  font-weight: 700;
+  font-size: 18px;
+  color: #0f172a;
+}
+
+.premium-dialog :deep(.el-dialog__body) {
+  padding: 24px 28px !important;
+}
+
+.premium-dialog :deep(.el-dialog__footer) {
+  padding: 16px 28px 24px !important;
+  border-top: 1px solid #f1f5f9;
+}
+
+.premium-form :deep(.el-form-item) {
+  margin-bottom: 24px;
+}
+
+.premium-form :deep(.el-form-item__label) {
+  font-weight: 600;
+  color: #475569;
+  font-size: 13px;
+  padding-bottom: 4px !important;
+  line-height: 1.4 !important;
+}
+
+.premium-form :deep(.el-input__wrapper),
+.premium-form :deep(.el-textarea__inner) {
+  box-shadow: 0 0 0 1px #e2e8f0 inset !important;
+  border-radius: 10px !important;
+  transition: all 0.2s;
+  background: #ffffff !important;
+}
+
+.premium-form :deep(.el-input__wrapper:hover),
+.premium-form :deep(.el-textarea__inner:hover) {
+  box-shadow: 0 0 0 1px #94a3b8 inset !important;
+}
+
+.premium-form :deep(.el-input__wrapper.is-focus),
+.premium-form :deep(.el-textarea__inner:focus) {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2), 0 0 0 1px #3b82f6 inset !important;
+}

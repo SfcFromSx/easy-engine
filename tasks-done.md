@@ -8,6 +8,8 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| BENCH-UX-008 | FIX BOX COVER PROBLEM IN JOB CONFIG EDIT DIALOG | benchmark | Overlapping form fields in Job edit dialog fixed by adding missing premium-form/dialog CSS and refactoring Job template grid; visual inspection via browser subagent verified. |
+| BENCH-UX-007 | REPOSITION CONDITION SELECTION BOXES TO TOP-LEFT OF TABLES IN TEMPLATES AND RUNS | benchmark | Filter selection boxes in SQL Templates and Run History have been moved from the header to a dedicated toolbar at the top-left of the table; `npm --prefix benchmark/frontend run build` and visual inspection via vision browser pass. |
 | BENCH-UX-006 | STANDARDIZE CONDITION SELECTION BOXES WIDTH ACROSS BENCHMARK PAGES | benchmark | All filter inputs and dropdowns across bookmark pages now share a uniform 160px width and are aligned in a single horizontal row; `npm --prefix benchmark/frontend run build` and visual inspection via vision browser pass. |
 | MGR-UX-004 | STANDARDIZE CONDITION SELECTION BOXES WIDTH ACROSS MANAGER PAGES | manager | All condition selection boxes across manager pages (Traces, Patterns, Datasources, Acceleration) now share a uniform 160px width, ensuring they fit on a single line on desktop; `npm --prefix manager/frontend run build` and visual inspection via vision browser pass. |
 | ARCH-010 | UPDATE E2E TEST SUITE FOR MYSQL DATABASE | tests | Kylin-routed prepared requests are now literalized inside `query` while preserving the prepared request/trace/cache contract, the lightweight `/kylin/api/user/authentication` shim is documented and covered again, and `mvn -q -f query/pom.xml test`, `mvn -q -f tests/pom.xml -Dtest=QueryHttpE2ETest,KylinJdbcE2ETest test`, and `mvn -q -f tests/pom.xml test` all pass against the local MySQL/Kylin/manager/query stack. |
@@ -57,3 +59,17 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+
+### BENCH-UX-008: FIX BOX COVER PROBLEM IN JOB CONFIG EDIT DIALOG
+
+- **Status**: done
+- **Updated**: 2026-03-31
+- **Progress log**:
+  - **2026-03-31 — implementation**
+    - Investigated UI issue, identified missing premium-form/dialog styles.
+    - Generated implementation plan, approved by user.
+    - Added `premium-dialog` and `premium-form` CSS to `style.css`.
+    - Refactored `Jobs.template.html` and `Jobs.css` to fix the layout.
+  - **2026-03-31 — verification**
+    - Validation status: approved
+    - Evidence: Browser subagent verified that labels and inputs are correctly aligned and no longer overlapping.
