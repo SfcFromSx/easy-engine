@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.smartbi</groupId>
+    <artifactId>engine-e2e-tests</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <name>engine-e2e-tests</name>
+    <description>Easy Engine — full-coverage E2E tests (real Kylin, Presto, Redis, PostgreSQL)</description>
+
+    <properties>
+        <java.version>1.8</java.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <junit.version>5.9.3</junit.version>
+        <rest-assured.version>5.3.2</rest-assured.version>
+        <kylin.jdbc.version>4.0.1</kylin.jdbc.version>
+        <presto.jdbc.version>0.276.2</presto.jdbc.version>
+        <!-- Service endpoints (override with -D flags or env vars) -->
+        <e2e.query.url>http://localhost:8092</e2e.query.url>
+        <e2e.manager.url>http://localhost:8090</e2e.manager.url>
+        <e2e.pg.url>jdbc:postgresql://localhost:5433/engine_db</e2e.pg.url>
+        <e2e.pg.user>engine</e2e.pg.user>
+        <e2e.pg.password>engine123</e2e.pg.password>
+        <e2e.redis.host>localhost</e2e.redis.host>
+        <e2e.redis.port>6380</e2e.redis.port>
+        <e2e.kylin.host>localhost</e2e.kylin.host>
+        <e2e.kylin.port>17070</e2e.kylin.port>
+        <e2e.presto.url>jdbc:presto://localhost:18081/tpch/tiny</e2e.presto.url>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <version>${rest-assured.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.24.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.6.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>4.4.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.kylin</groupId>
+            <artifactId>kylin-jdbc</artifactId>
+            <version>${kylin.jdbc.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.facebook.presto</groupId>
+            <artifactId>presto-jdbc</artifactId>
+            <version>${presto.jdbc.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.15.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.2</version>
+                <configuration>
+                    <includes>
+                        <include>**/*E2ETest.java</include>
+                    </includes>
+                    <systemPropertyVariables>
+                        <e2e.query.url>${e2e.query.url}</e2e.query.url>
+                        <e2e.manager.url>${e2e.manager.url}</e2e.manager.url>
+                        <e2e.pg.url>${e2e.pg.url}</e2e.pg.url>
+                        <e2e.pg.user>${e2e.pg.user}</e2e.pg.user>
+                        <e2e.pg.password>${e2e.pg.password}</e2e.pg.password>
+                        <e2e.redis.host>${e2e.redis.host}</e2e.redis.host>
+                        <e2e.redis.port>${e2e.redis.port}</e2e.redis.port>
+                        <e2e.kylin.host>${e2e.kylin.host}</e2e.kylin.host>
+                        <e2e.kylin.port>${e2e.kylin.port}</e2e.kylin.port>
+                        <e2e.presto.url>${e2e.presto.url}</e2e.presto.url>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
