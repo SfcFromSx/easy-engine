@@ -15,5 +15,5 @@ These notes adapt ideas from OpenAI's [Harness Engineering](https://openai.com/i
 ## Easy Engine Implications
 
 - The foreman workflow should refuse to proceed if the root Git boundary is invalid.
-- `query`, `manager`, `benchmark`, and `kylin-jdbc-cache` need concise module docs so agents can scope changes quickly.
+- `query`, `manager`, and `benchmark` need concise module docs so agents can scope changes quickly.
 - Chinese translations should stay limited to human-facing docs so the agent-facing surface stays compact and canonical.

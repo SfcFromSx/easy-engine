@@ -19,7 +19,7 @@ This file summarizes the current functional surface of the Easy Engine services.
 | Route queries by preserved metadata or engine hint | `Implemented` | `YH_TARGET_ENGINE` takes precedence, then `engine`, then default datasource. |
 | Redis-backed query cache | `Implemented` | Includes datasource isolation, TTL, cache key override, and bypass semantics. |
 | Prepared-parameter cache fingerprinting | `Implemented` | Prepared inputs participate in cache identity. |
-| Trace publishing to Redis for manager ingestion | `Implemented` | Query execution emits trace payloads asynchronously with `executionMode` and an optional failed-prepared `parameterPayload`. |
+| Trace writing to PostgreSQL | `Implemented` | Query execution writes trace records directly to PostgreSQL with `executionMode` and an optional failed-prepared `parameterPayload`. |
 | Multiple datasource registry | `Implemented` | Default plus named routed datasources are supported. |
 | Independent authentication API | `Out of Scope` | Query is query-only. |
 | Independent metadata catalog API | `Out of Scope` | Metadata APIs were removed from query. |
@@ -29,7 +29,7 @@ This file summarizes the current functional surface of the Easy Engine services.
 
 | Capability | Status | Notes |
 |---|---|---|
-| Consume trace payloads from Redis | `Implemented` | Scheduled polling is active. |
+| Read trace records from PostgreSQL | `Implemented` | Manager reads `SqlExecutionRecord` rows written directly by `query`. |
 | Persist trace history to PostgreSQL | `Implemented` | Raw payloads and normalized execution records are stored, including `executionMode` and optional `parameterPayload`. |
 | Parse SQL structure with Calcite | `Implemented` | Preview and ingestion-time parsing are both present. |
 | Maintain SQL fingerprint and pattern statistics | `Implemented` | Pattern stats are upserted during ingestion. |
@@ -71,6 +71,6 @@ This file summarizes the current functional surface of the Easy Engine services.
 | Concern | Status | Notes |
 |---|---|---|
 | Query-only boundary for `query` | `Implemented` | Query serves execution only. |
-| Trace contract between `query` and `manager` | `Implemented` | Redis trace pipeline is active and backward compatible with optional failed-prepared `parameterPayload` data. |
-| Benchmark path through cached JDBC to query | `Implemented` | Standard path is `benchmark -> kylin-jdbc-cache -> query`. |
+| Trace contract between `query` and `manager` | `Implemented` | Query writes directly to PostgreSQL; manager reads from the same DB. |
+| Benchmark path via Kylin JDBC to query | `Implemented` | Standard path is `benchmark (Kylin JDBC) -> query`. |
 | Full scheduler platform in manager | `Partial` | Architecture expects more than the current codebase exposes. |

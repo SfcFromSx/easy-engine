@@ -1,6 +1,6 @@
 # Easy Engine
 
-Easy Engine is an agent-first workspace for query execution, control-plane analysis, benchmark orchestration, and the `kylin-jdbc-cache` adapter.
+Easy Engine is an agent-first workspace for query execution, control-plane analysis, and benchmark orchestration.
 
 Canonical English documentation lives under [docs/README.md](/Users/sfc/Documents/projects/engine/docs/README.md).
 

@@ -10,7 +10,7 @@
 ## Phase 2
 
 - keep the root Git boundary stable,
-- decide the long-term ownership model for the archived `kylin-jdbc-cache` Git history,
+- remove `kylin-jdbc-cache` and migrate its responsibilities into `query` and `manager` (see ARCH-001 through ARCH-008 in tasks.md),
 - run pilot autonomous tasks on documentation and small module-scoped fixes.
 
 ## Phase 3

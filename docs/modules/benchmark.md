@@ -1,6 +1,6 @@
 # Benchmark Module
 
-`benchmark` manages benchmark datasources, jobs, templates, test sets, and execution runs. It is the preferred operator interface for benchmark-driven validation of the cached JDBC path.
+`benchmark` manages benchmark datasources, jobs, templates, test sets, and execution runs. It is the preferred operator interface for benchmark-driven validation of query execution.
 
 ## Responsibilities
 
@@ -13,8 +13,10 @@
 ## Standard Path
 
 ```text
-benchmark -> kylin-jdbc-cache -> query -> Kylin or Presto
+benchmark (Kylin JDBC) -> query -> Kylin / Presto / Hive
 ```
+
+Benchmark connects to `query` using the standard Apache Kylin JDBC driver (`jdbc:kylin://localhost:8092/<project>`). Additional JDBC driver JARs can be uploaded via the Benchmark UI under Data Sources > Upload Driver.
 
 ## Prepared Execution Notes
 

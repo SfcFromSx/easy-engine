@@ -1,50 +1,34 @@
 # Easy Engine Architecture Overview
 
-Easy Engine is organized as four cooperating modules:
+Easy Engine is organized as three cooperating modules:
 
-1. `query`: the query-only execution service and the long-term source of truth for execution semantics.
-2. `manager`: the control-plane service.
+1. `query`: the query execution service and source of truth for execution semantics.
+2. `manager`: the control-plane service — manages datasource configs, acceleration tables, and trace history.
 3. `benchmark`: the benchmark orchestration service and UI.
-4. `kylin-jdbc-cache`: the JDBC compatibility adapter that can front `query`.
 
 The standard benchmark end-to-end path is:
 
 ```text
-benchmark -> kylin-jdbc-cache -> query -> Kylin or Presto
+benchmark (Kylin JDBC) -> query -> Kylin / Presto / Hive
+                               |-> writes SqlExecutionRecord to PostgreSQL
+manager <-- reads PostgreSQL, manages datasource configs
 ```
 
 ## Architectural Boundaries
 
-- `query` accepts query requests, parses hints and preserved metadata, routes requests, reads and writes cache, executes read-only SQL, and emits trace payloads with explicit execution-mode metadata. It is the authoritative owner of future execution behavior in this repository.
-- `manager` consumes trace payloads, persists history including optional readable parameter payloads for failed prepared executions, parses SQL with Calcite, maintains pattern statistics, and exposes control-plane APIs for acceleration metadata.
-- `benchmark` manages benchmark datasources, templates, test sets, and runs. It does not own production query execution semantics.
-- `kylin-jdbc-cache` is an adapter layer, not a standalone control-plane or query server. It preserves JDBC-facing compatibility concerns but is not the future home for execution semantics.
+- `query` accepts query requests via the standard Apache Kylin JDBC protocol, parses hints and preserved metadata, routes requests to the configured backend (Kylin, Presto, Hive), reads and writes the Redis result cache, executes read-only SQL, and writes trace records directly to PostgreSQL.
+- `manager` owns datasource configuration (exposed via `/api/v1/query-datasources`), consumes trace records from PostgreSQL, parses SQL with Calcite, maintains pattern statistics, and exposes control-plane APIs for acceleration metadata.
+- `benchmark` manages benchmark datasources, templates, test sets, and runs. It connects to `query` using the standard Apache Kylin JDBC driver. It supports uploading arbitrary JDBC driver JARs for datasource testing.
 
-## Query and JDBC Migration Boundary
+## Request Flow
 
-This task documents the ownership boundary only. It does not move behavior and does not require JDBC code changes.
-
-`query` owns execution semantics:
-
-- routing precedence, including preserved metadata such as `YH_TARGET_ENGINE`, surviving driver hints, and default datasource fallback
-- cache semantics that determine whether a request is served from Redis or executed against the datasource
-- preserved metadata handling that must survive adapter handoff when query-side behavior depends on it
-- the trace contract emitted for downstream consumers, including `executionMode` and readable failed-prepared `parameterPayload` metadata
-
-`kylin-jdbc-cache` owns JDBC compatibility concerns:
-
-- consuming driver-facing hints before forwarding SQL when that is required for JDBC compatibility
-- adapter behavior needed to present JDBC-compatible caching and fallback behavior to driver callers
-- JDBC-side request and response handling that can front `query` without redefining query execution ownership
-
-## Data Flow
-
-1. A client or benchmark run issues a query through `kylin-jdbc-cache` or directly to `query`.
-2. `query` parses comments and preserved metadata such as `YH_TARGET_ENGINE`.
-3. `query` prefers preserved routing metadata, then driver-style engine hints, then the default datasource.
-4. `query` serves a cache hit from Redis or executes the SQL against the selected datasource.
-5. `query` publishes a trace payload to Redis with `executionMode` and, for failed prepared executions, an optional readable `parameterPayload` derived from request DTO parameters.
-6. `manager` consumes the trace payload, stores it in PostgreSQL, exposes the compatible trace record through `/api/v1/traces`, parses SQL with Calcite, and updates pattern statistics.
+1. `benchmark` (or any JDBC client) connects via `jdbc:kylin://query-host:8092/<project>`.
+2. `query` parses SQL comments and preserved metadata such as `YH_TARGET_ENGINE`.
+3. `query` fetches active datasource definitions from `manager` (`GET /api/v1/query-datasources`).
+4. `query` prefers preserved routing metadata, then driver-style engine hints, then the default datasource.
+5. `query` serves a cache hit from Redis or executes the SQL against the selected backend datasource.
+6. `query` writes a `SqlExecutionRecord` directly to PostgreSQL with `executionMode` and, for failed prepared executions, a readable `parameterPayload`.
+7. `manager` reads `SqlExecutionRecord` rows from PostgreSQL, exposes the trace record through `/api/v1/traces`, parses SQL with Calcite, and updates pattern statistics.
 
 ## Runtime Defaults
 
@@ -54,10 +38,9 @@ This task documents the ownership boundary only. It does not move behavior and d
 - Redis: `6380`
 - PostgreSQL: `5433`
 
-## Compatibility Rules
+## Ownership Rules
 
-- `query` remains the source of truth for routing, cache semantics, preserved metadata handling, and trace payloads even when requests arrive through `kylin-jdbc-cache`.
-- `kylin-jdbc-cache` must stay compatible with the active `query` execution contract when adapting JDBC-facing traffic.
-- `manager` must remain backward compatible with the active trace payload contract, including optional fields added for newer query traces.
-- Job-server responsibilities belong to `manager`; there is no separate job server in this repository.
+- `query` is the sole owner of execution semantics: routing, caching, SQL rewriting, and trace emission.
+- `manager` is the sole owner of datasource configuration and control-plane state.
+- `benchmark` does not own production query execution semantics.
 - English docs are canonical; Chinese mirrors are selective convenience artifacts only.

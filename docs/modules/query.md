@@ -1,6 +1,6 @@
 # Query Module
 
-`query` is the Easy Engine query-only execution service. It accepts read-only query traffic, parses comments and preserved metadata, routes to the selected datasource, manages Redis-backed cache behavior, and publishes traces for `manager`. It is also the long-term source of truth for execution semantics, even when JDBC traffic is fronted by `kylin-jdbc-cache`.
+`query` is the Easy Engine query execution service. It accepts read-only query traffic via the standard Apache Kylin JDBC protocol, parses comments and preserved metadata, routes to the selected datasource, manages Redis-backed result cache, and writes trace records directly to PostgreSQL.
 
 ## Responsibilities
 
@@ -13,20 +13,12 @@
 
 ## Ownership Boundary
 
-This task documents the migration boundary only. It does not move behavior and does not require JDBC code changes.
-
-`query` continues to own:
+`query` owns:
 
 - routing precedence across preserved metadata, surviving driver hints, and datasource fallback
 - cache semantics for deciding hits, misses, and datasource execution
 - preserved metadata handling that must remain visible after any adapter handoff
 - trace and execution metadata contracts such as `executionMode` and failed-prepared `parameterPayload`
-
-`kylin-jdbc-cache` remains responsible for JDBC compatibility work:
-
-- consuming driver-facing hints before forwarding SQL when needed for JDBC callers
-- adapter-specific JDBC request, response, and fallback behavior
-- compatibility shims that front `query` without redefining query-owned semantics
 
 ## Trace Contract Notes
 
@@ -42,9 +34,8 @@ Query-side routing precedence is:
 2. driver-style engine hints that still reach `query`
 3. the default datasource fallback
 
-- The standard benchmark path is `benchmark -> kylin-jdbc-cache -> query`.
-- In that path, cached-JDBC processing can consume or strip driver hints such as `-- engine:presto_local` before the request reaches `query`; that hint consumption remains an adapter concern, not the owner of routing semantics.
-- When a benchmark or JDBC path must select a specific engine at the `query` layer, preserved metadata comments are the reliable mechanism because they survive that handoff:
+- The standard benchmark path is `benchmark (Kylin JDBC) -> query`.
+- When a JDBC client must select a specific engine, preserved metadata comments are the reliable mechanism:
 
 ```sql
 /* YH_TARGET_ENGINE=presto_local */

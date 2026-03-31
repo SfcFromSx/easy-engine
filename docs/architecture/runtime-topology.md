@@ -5,17 +5,13 @@
 ```mermaid
 flowchart LR
   subgraph Clients
-    BI["BI / app clients"]
-    Bench["Benchmark"]
-  end
-
-  subgraph Adapter
-    CacheJdbc["kylin-jdbc-cache"]
+    BI["BI / app clients (Kylin JDBC)"]
+    Bench["Benchmark (Kylin JDBC)"]
   end
 
   subgraph QueryPlane
     Query["query"]
-    Redis["Redis"]
+    Redis["Redis (result cache)"]
   end
 
   subgraph ControlPlane
@@ -26,16 +22,18 @@ flowchart LR
   subgraph Engines
     Kylin["Kylin"]
     Presto["Presto"]
+    Hive["Hive"]
   end
 
-  BI --> CacheJdbc
-  Bench --> CacheJdbc
-  CacheJdbc --> Query
+  BI --> Query
+  Bench --> Query
   Query --> Redis
   Query --> Kylin
   Query --> Presto
-  Redis --> Manager
+  Query --> Hive
+  Query --> PG
   Manager --> PG
+  Query -.->|polls datasource configs| Manager
 ```
 
 ## Service Ports
@@ -50,7 +48,9 @@ flowchart LR
 
 ## Operational Notes
 
-- `benchmark` depends on `query` semantics when using the cached JDBC route.
+- `benchmark` connects to `query` using the standard Apache Kylin JDBC driver (`jdbc:kylin://localhost:8092/<project>`).
+- `query` fetches datasource configurations from `manager` on startup. It falls back to static config if manager is unreachable.
+- `query` writes execution trace records directly to PostgreSQL; no Redis trace queue is used.
 - `query` should keep serving traffic if Redis is unavailable by degrading to direct datasource execution.
-- `manager` should not bring down the runtime when Redis or Calcite parsing has transient failures.
+- `manager` should not bring down the runtime when Calcite parsing has transient failures.
 - The root harness should run from the repository root, not from individual submodules.

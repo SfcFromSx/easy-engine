@@ -15,7 +15,6 @@ This is the canonical English documentation entrypoint for Easy Engine.
 - [modules/manager.md](/Users/sfc/Documents/projects/engine/docs/modules/manager.md)
 - [modules/query.md](/Users/sfc/Documents/projects/engine/docs/modules/query.md)
 - [modules/benchmark.md](/Users/sfc/Documents/projects/engine/docs/modules/benchmark.md)
-- [modules/kylin-jdbc-cache.md](/Users/sfc/Documents/projects/engine/docs/modules/kylin-jdbc-cache.md)
 
 ## Generated and Reference Material
 

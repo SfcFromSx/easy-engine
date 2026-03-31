@@ -14,6 +14,6 @@
 - `query` is query-only.
 - `manager` is control-plane only.
 - `benchmark` owns benchmark orchestration, not production query semantics.
-- `kylin-jdbc-cache` remains a client-side adapter.
+- `query` accepts connections from any standard Apache Kylin JDBC client directly.
 - `tasks.md` is the task ledger — human-readable Markdown, written by the foreman model.
 - `AGENTS.md` must stay short.

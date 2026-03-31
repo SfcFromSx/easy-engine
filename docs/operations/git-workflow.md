@@ -8,15 +8,11 @@ The foreman workflow uses the repository root as the canonical Git boundary.
 - `git rev-parse --show-toplevel` resolves to `/Users/sfc/Documents/projects/engine`.
 - Nested `.git` directories are removed, converted to submodules, or archived outside active module paths.
 
-## Current Handling
-
-The previous nested `kylin-jdbc-cache/.git` metadata has been archived under `.agent/runtime/archived-git/` so the harness can treat the root as the active repository.
-
 ## Archived Metadata Notes
 
+- The previous nested `kylin-jdbc-cache/.git` metadata has been archived under `.agent/runtime/archived-git/`. The `kylin-jdbc-cache` module is being removed (ARCH-001); the archived metadata can be cleaned up after that task completes.
 - Keep archived Git metadata outside active module paths.
 - Do not recreate nested `.git` directories without an explicit structural decision.
-- If `kylin-jdbc-cache` later needs to become a submodule or external dependency, update this doc and the harness expectations together.
 
 ## Commit Policy
 

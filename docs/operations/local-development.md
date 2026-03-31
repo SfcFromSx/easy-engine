@@ -18,13 +18,7 @@ docker compose --profile olap up -d presto kylin
 
 ## Service Startup Order
 
-1. Install the cached JDBC adapter when benchmark depends on it:
-
-```bash
-mvn -f kylin-jdbc-cache/pom.xml install
-```
-
-2. Start `query`:
+1. Start `query`:
 
 ```bash
 cd /Users/sfc/Documents/projects/engine/query
@@ -55,7 +49,8 @@ npm --prefix benchmark/frontend run dev
 ## Operator Notes
 
 - Benchmark is the preferred control surface for benchmark runs, preflight checks, and structured run reports.
-- The benchmark path disables driver-side routing for normal job execution, so preserved metadata comments should be used for routed `query` flows.
+- Benchmark connects to `query` using the standard Apache Kylin JDBC driver (`jdbc:kylin://localhost:8092/<project>`). Upload additional JDBC driver JARs via the Benchmark UI under Data Sources > Upload Driver.
+- Preserved metadata comments (e.g. `YH_TARGET_ENGINE`) in SQL are used to route requests to specific backends within `query`.
 - If Flyway reports a checksum mismatch after editing an applied migration during local work, repair and migrate explicitly:
 
 ```bash
