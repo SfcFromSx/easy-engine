@@ -15,40 +15,6 @@ This is the canonical task ledger for Easy Engine. The foreman model reads this 
 
 ## Todo
 
-### ARCH-004
-
-- **Status:** todo
-- **Module:** manager | **Type:** backend | **Priority:** 40
-- **Title:** EXPOSE DATASOURCE CONFIG CRUD API IN MANAGER
-- **Attempts:** 0
-
-**Context files**
-
-- `manager/src/main/resources/db/migration/`
-- `manager/src/main/java/com/smartbi/engine/web/` (existing controller patterns)
-- `manager/src/main/java/com/smartbi/engine/domain/`
-- `manager/src/main/resources/application.yml`
-
-**Acceptance criteria**
-
-1. Flyway migration `V7__datasource_config.sql` creates table `query_datasource_config` (id, name, type, driver_class, jdbc_url, username, password, max_pool_size, min_idle, connection_timeout_ms, is_default, created_at, updated_at).
-2. JPA entity `QueryDatasourceConfig` and Spring Data repo added under `com.smartbi.engine.datasource`.
-3. `DatasourceConfigController` exposes `GET/POST/PUT/DELETE /api/v1/query-datasources`.
-4. Migration seeds the two datasources from current query `application.yml` (kylin default + presto_local).
-5. Manager tests pass.
-
-**Validation commands**
-
-```bash
-mvn -q -f manager/pom.xml test
-```
-
-**Progress log**
-
-<!-- Foreman appends stage outcomes here during execution -->
-
----
-
 ### ARCH-005
 
 - **Status:** todo
@@ -334,6 +300,7 @@ npm --prefix manager/frontend run build
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| ARCH-004 | EXPOSE DATASOURCE CONFIG CRUD API IN MANAGER | manager | V7 seeds query datasource configs; `/api/v1/query-datasources` CRUD added; `mvn -q -f manager/pom.xml test` passes |
 | ARCH-003 | WRITE TRACES DIRECTLY TO POSTGRESQL FROM QUERY | query | Query writes trace rows and pattern stats directly to PostgreSQL; `mvn -q -f query/pom.xml test` passes |
 | ARCH-002 | REMOVE REDIS TRACE CONSUMER FROM MANAGER | manager | Redis consumer path removed; manager tests pass without Redis |
 | BENCH-UX-004 | STANDARDIZE TYPOGRAPHY ACROSS ALL BENCHMARK PAGES | benchmark | Typography consistent across all pages |
