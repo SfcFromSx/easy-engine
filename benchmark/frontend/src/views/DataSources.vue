@@ -1,9 +1,9 @@
 <template>
   <div class="datasources-container">
     <div class="page-header">
-      <div class="title-section">
-        <div class="main-title">{{ $t('datasources.title') }}</div>
-        <div class="subtitle">{{ $t('datasources.subtitle') }}</div>
+      <div class="title-group">
+        <h1>{{ $t('datasources.title') }}</h1>
+        <p class="subtitle">{{ $t('datasources.subtitle') }}</p>
       </div>
       <div class="actions">
         <el-button type="primary" class="premium-btn" @click="handleAdd">
@@ -235,14 +235,6 @@ onMounted(fetchDataSources)
   margin-bottom: 16px;
 }
 
-.title-section .main-title {
-  font-size: 20px;
-}
-
-.title-section .subtitle {
-  font-size: 13px;
-}
-
 .glass-card {
   padding: 0;
 }
@@ -258,7 +250,6 @@ onMounted(fetchDataSources)
 .premium-btn {
   height: 32px;
   padding: 0 12px;
-  font-size: 13px;
 }
 
 .list-toolbar {

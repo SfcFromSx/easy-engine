@@ -406,14 +406,6 @@ onUnmounted(() => clearInterval(timer))
   margin-bottom: 16px;
 }
 
-.page-header h1 {
-  font-size: 20px;
-}
-
-.subtitle {
-  font-size: 13px;
-}
-
 .glass-card {
   padding: 0;
 }
@@ -426,16 +418,29 @@ onUnmounted(() => clearInterval(timer))
   height: 40px;
 }
 
+.section-title {
+  font-family: var(--font-family-title);
+  font-size: var(--font-size-card-title);
+  font-weight: 600;
+  margin: 16px 0 8px;
+  color: var(--color-title);
+}
+
 .json-block {
   background: #0f172a;
   color: #94a3b8;
   padding: 12px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: var(--font-size-mono);
   line-height: 1.4;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  font-family: 'Fira Code', monospace;
+  font-family: var(--font-family-mono);
   max-height: 200px;
   overflow-y: auto;
+}
+
+.failure-message {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-small);
 }
 </style>

@@ -354,13 +354,6 @@ onUnmounted(() => {
 .page-header {
   margin-bottom: 16px;
 }
-.page-header h1 {
-  font-size: 20px;
-  margin-bottom: 4px;
-}
-.page-header p {
-  font-size: 13px;
-}
 
 .top-row {
   margin-bottom: 16px;
@@ -374,11 +367,14 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-family: var(--font-family-title);
+  font-weight: 600;
+  font-size: var(--font-size-card-title);
 }
 
 .active-run-card {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 246, 255, 0.9) 100%) !important;
-  border-left: 5px solid #3b82f6 !important;
+  border-left: 5px solid var(--primary-color) !important;
 }
 
 .active-title {
@@ -387,11 +383,6 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-}
-
-.progress-body {
-  padding: 0;
 }
 
 .progress-stats {
@@ -407,18 +398,20 @@ onUnmounted(() => {
 }
 
 .stat-label {
-  font-size: 10px;
-  color: #64748b;
+  font-size: var(--font-size-small);
+  color: var(--color-subtitle);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  font-weight: 600;
 }
 
 .stat-value {
   font-size: 20px;
   font-weight: 700;
-  color: #0f172a;
-  font-family: 'Outfit', sans-serif;
+  color: var(--color-title);
+  font-family: var(--font-family-title);
 }
+
 .stat-value.small {
   font-size: 18px;
 }
@@ -448,20 +441,6 @@ onUnmounted(() => {
   gap: 16px;
 }
 
-.preflight-card, .start-card {
-  margin-bottom: 0px;
-}
-
-.start-form {
-  padding-top: 0px;
-}
-
-.links {
-  margin-top: 16px;
-  padding-bottom: 10px;
-  text-align: center;
-}
-
 .engine-insight-row {
   margin-bottom: 16px;
 }
@@ -470,23 +449,14 @@ onUnmounted(() => {
   padding: 12px 16px;
 }
 
-.stat-card .stat-value {
-  font-size: 20px;
-}
-
 code {
-  font-size: 11px;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-mono);
   background: #f4f4f5;
   padding: 1px 4px;
   border-radius: 4px;
 }
 
-:deep(.el-card__header) {
-  padding: 10px 16px;
-}
-:deep(.el-card__body) {
-  padding: 12px 16px;
-}
 :deep(.el-divider--horizontal) {
   margin: 12px 0;
 }

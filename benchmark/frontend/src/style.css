@@ -10,21 +10,46 @@
   --card-bg: rgba(255, 255, 255, 0.8);
   --glass-border: 1px solid rgba(255, 255, 255, 0.3);
   --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+
+  /* Typography System */
+  --font-family-title: 'Outfit', sans-serif;
+  --font-family-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  
+  --font-size-title: 20px;
+  --font-size-subtitle: 13px;
+  --font-size-card-title: 15px;
+  --font-size-body: 13px;
+  --font-size-small: 11px;
+  --font-size-mono: 12px;
+  
+  --color-title: #0f172a;
+  --color-subtitle: #64748b;
+  --color-body: #1e293b;
 }
 
 body {
   margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-family-body);
   background-color: var(--bg-color);
-  color: #1e293b;
+  color: var(--color-body);
+  font-size: var(--font-size-body);
   -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3, h4 {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-family-title);
   font-weight: 600;
-  color: #0f172a;
+  color: var(--color-title);
 }
+
+/* Typography Utilities */
+.text-title { font-size: var(--font-size-title); font-family: var(--font-family-title); font-weight: 600; color: var(--color-title); }
+.text-subtitle { font-size: var(--font-size-subtitle); color: var(--color-subtitle); font-weight: 400; }
+.text-card-title { font-size: var(--font-size-card-title); font-family: var(--font-family-title); font-weight: 600; color: #1e293b; }
+.text-body { font-size: var(--font-size-body); color: var(--color-body); }
+.text-mono { font-family: var(--font-family-mono); font-size: var(--font-size-mono); }
+.text-small { font-size: var(--font-size-small); }
 
 /* Glassmorphism Card */
 .glass-card {
@@ -99,10 +124,10 @@ h1, h2, h3, h4 {
 
 .el-table th.el-table__cell {
   background: rgba(248, 250, 252, 0.5) !important;
-  color: #64748b;
+  color: var(--color-subtitle);
   font-weight: 600;
   text-transform: uppercase;
-  font-size: 11px;
+  font-size: var(--font-size-small);
   letter-spacing: 0.05em;
 }
 
@@ -115,17 +140,21 @@ h1, h2, h3, h4 {
 
 .page-header h1 {
   margin: 0;
-  font-size: 20px;
+  font-size: var(--font-size-title);
 }
 
 .page-header .subtitle {
   margin: 4px 0 0;
-  font-size: 13px;
+  font-size: var(--font-size-subtitle);
+  color: var(--color-subtitle);
 }
 
 /* Compact Card Overrides */
 :deep(.el-card__header) {
   padding: 10px 16px !important;
+  font-size: var(--font-size-card-title);
+  font-family: var(--font-family-title);
+  font-weight: 600;
 }
 
 :deep(.el-card__body) {
@@ -139,8 +168,8 @@ h1, h2, h3, h4 {
 
 .subtitle {
   margin: 8px 0 0;
-  color: #64748b;
-  font-size: 14px;
+  color: var(--color-subtitle);
+  font-size: var(--font-size-subtitle);
 }
 
 .list-toolbar {

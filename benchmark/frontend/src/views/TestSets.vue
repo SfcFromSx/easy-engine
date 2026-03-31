@@ -288,14 +288,6 @@ function formatParamJson(value) {
   margin-bottom: 16px;
 }
 
-.page-header h1 {
-  font-size: 20px;
-}
-
-.subtitle {
-  font-size: 13px;
-}
-
 .mb-16 { margin-bottom: 12px; }
 .upload-area { padding: 10px; text-align: center; }
 .excel-uploader { width: 100%; }
@@ -315,11 +307,11 @@ function formatParamJson(value) {
   border: 1px solid #dbeafe;
   border-radius: 10px;
   background: linear-gradient(135deg, #f8fbff 0%, #eef6ff 100%);
-  color: #334155;
+  color: var(--color-body);
 }
 
 .workflow-callout__title {
-  font-size: 12px;
+  font-size: var(--font-size-subtitle);
   font-weight: 700;
   color: #1e3a8a;
   margin-bottom: 4px;
@@ -335,10 +327,6 @@ function formatParamJson(value) {
 
 :deep(.el-table__row) {
   height: 40px;
-}
-
-:deep(.el-card__header) {
-  padding: 10px 16px !important;
 }
 
 :deep(.el-card__body) {

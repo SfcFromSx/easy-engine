@@ -216,22 +216,19 @@ onMounted(load)
   margin-top: 8px;
 }
 
-.title-row h1 {
-  font-size: 20px;
-  margin: 0;
-}
-
-.subtitle {
-  font-size: 13px;
-}
-
 .detail-card {
   padding: 12px 16px;
 }
 
 .card-title {
-  font-size: 13px;
+  font-family: var(--font-family-title);
+  font-size: var(--font-size-card-title);
+  font-weight: 600;
   margin-bottom: 12px;
+  color: var(--color-title);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .chart-container {
@@ -241,5 +238,30 @@ onMounted(load)
 .run-history {
   max-height: 300px;
   overflow-y: auto;
+}
+
+.driver-code, .url-code {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-mono);
+  background: #f1f5f9;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.run-tag {
+  font-family: var(--font-family-mono);
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.metric-mini .label {
+  font-size: var(--font-size-small);
+  color: var(--color-subtitle);
+  text-transform: uppercase;
+}
+
+.metric-mini .val {
+  font-weight: 600;
+  margin-left: 4px;
 }
 </style>

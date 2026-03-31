@@ -350,14 +350,6 @@ onMounted(load)
   margin-bottom: 16px;
 }
 
-.page-header h1 {
-  font-size: 20px;
-}
-
-.subtitle {
-  font-size: 13px;
-}
-
 .glass-card {
   padding: 0;
 }
@@ -369,7 +361,6 @@ onMounted(load)
 .premium-btn {
   height: 32px;
   padding: 0 12px;
-  font-size: 13px;
 }
 
 .list-toolbar {
@@ -379,7 +370,8 @@ onMounted(load)
 }
 
 .hint {
-  font-size: 11px;
+  font-size: var(--font-size-small);
+  color: var(--color-subtitle);
   padding: 6px 10px;
   margin: 4px 0;
 }
@@ -387,10 +379,6 @@ onMounted(load)
 .config-grid {
   padding: 12px;
   margin-bottom: 12px;
-}
-
-:deep(.el-card__header) {
-  padding: 10px 16px !important;
 }
 
 :deep(.el-card__body) {

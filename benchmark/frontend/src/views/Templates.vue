@@ -314,25 +314,17 @@ onMounted(load)
   margin-bottom: 16px;
 }
 
-.page-header h1 {
-  font-size: 20px;
-}
-
-.subtitle {
-  font-size: 13px;
-}
-
 .flow-callout {
   margin-bottom: 12px;
   padding: 8px 12px;
   border: 1px solid #dbeafe;
   border-radius: 10px;
   background: linear-gradient(135deg, #f8fbff 0%, #eef6ff 100%);
-  color: #334155;
+  color: var(--color-body);
 }
 
 .flow-callout__title {
-  font-size: 12px;
+  font-size: var(--font-size-subtitle);
   font-weight: 700;
   color: #1e3a8a;
   margin-bottom: 4px;
@@ -343,7 +335,7 @@ onMounted(load)
   border-radius: 4px;
   background: #e0f2fe;
   color: #075985;
-  font-size: 10px;
+  font-size: var(--font-size-small);
   font-weight: 700;
 }
 
@@ -368,7 +360,13 @@ onMounted(load)
 }
 
 .sql-preview-text {
-  font-size: 12px;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-mono);
   padding: 4px 0;
+}
+
+.mini-code {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-mono);
 }
 </style>

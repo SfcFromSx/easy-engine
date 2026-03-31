@@ -330,10 +330,50 @@ Evidence: Verified all pages in vision browser (1920x872). Zero scrolling requir
 Next action: commit.
 
 
+---
+
+### BENCH-UX-004
+
+- **Status:** done
+- **Module:** benchmark | **Type:** frontend | **Priority:** 75
+- **Title:** STANDARDIZE TYPOGRAPHY ACROSS ALL BENCHMARK PAGES
+- **Attempts:** 1
+- **Depends on:** BENCH-UX-003
+
+**Context files**
+
+- `benchmark/frontend/src/style.css`
+- `benchmark/frontend/src/views/*.vue`
+
+**Acceptance criteria**
+
+1. All "kinds" of info (titles, subtitles, card headers, table data, and labels) use consistent font styles across all pages.
+2. Typography system defined in `style.css` using CSS variables.
+3. Redundant local font styles removed from view components.
+4. Mono-spaced fonts standardized for code, SQL, and technical IDs.
+
+**Validation commands**
+
+```bash
+npm --prefix benchmark/frontend run build
+```
+
+**Progress log**
+
+**2026-03-31 — implementation**
+Files changed: `style.css`, `Dashboard.vue`, `Jobs.vue`, `TestSets.vue`, `Templates.vue`, `DataSources.vue`, `Runs.vue`, `JobDetail.vue`.
+Result: Global typography system implemented and view components refactored.
+
+**2026-03-31 — verification**
+Validation status: approved
+Evidence: Visual audit with subagent confirmed perfect typography consistency across all views.
+Next action: commit.
+
 ## Done
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| BENCH-UX-004 | STANDARDIZE TYPOGRAPHY ACROSS ALL BENCHMARK PAGES | benchmark | Typography consistent across all pages |
 | ARCH-001 | REMOVE KYLIN-JDBC-CACHE MODULE | docs | Module directory deleted; manager/query/benchmark tests pass |
 | BENCH-UX-003 | OPTIMIZE ALL BENCHMARK PAGES FOR SINGLE-SCREEN VIEW | benchmark | All pages fit in one screen |
 | BENCH-UX-002 | OPTIMIZE BENCHMARK DASHBOARD FOR SINGLE-SCREEN VIEW | benchmark | Dashboard fits in one screen |
