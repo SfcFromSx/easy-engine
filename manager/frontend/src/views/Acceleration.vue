@@ -58,11 +58,11 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column :label="t('acceleration.schema')" width="160">
+            <el-table-column :label="t('acceleration.schema')" width="200">
               <template #default="{ row }">
-                <div class="column-stack">
+                <div class="row-actions" style="gap: 8px">
                   <span class="text-mono text-small">{{ row.schemaName }}</span>
-                  <span class="text-small" style="opacity: 0.7">{{ row.source }}</span>
+                  <el-tag size="small" effect="plain" type="info" style="font-size: 10px">{{ row.source }}</el-tag>
                 </div>
               </template>
             </el-table-column>
