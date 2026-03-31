@@ -66,8 +66,8 @@
           <div class="health-details">
             <div class="health-header">{{ $t('status.health') }}</div>
             <div class="component-item">
-              <span class="comp-name">Postgres (Metadata)</span>
-              <el-tag size="small" :type="health.postgres === 'OK' ? 'success' : 'danger'">{{ health.postgres }}</el-tag>
+              <span class="comp-name">MySQL (Metadata)</span>
+              <el-tag size="small" :type="health.mysql === 'OK' ? 'success' : 'danger'">{{ health.mysql }}</el-tag>
             </div>
             <div class="component-item">
               <span class="comp-name">Kylin OLAP</span>
@@ -115,7 +115,7 @@ import client from './api/client'
 const route = useRoute()
 const { locale } = useI18n()
 const status = ref('offline')
-const health = ref({ postgres: 'OK', kylin: '—', presto: '—' })
+const health = ref({ mysql: 'OK', kylin: '—', presto: '—' })
 
 const menuActive = computed(() => {
   const p = route.path
@@ -131,7 +131,7 @@ async function checkStatus() {
   try {
     const { data } = await client.get('/preflight')
     health.value = {
-      postgres: 'OK',
+      mysql: data.mysql?.status === 'OK' ? 'OK' : 'ERROR',
       kylin: data.kylinRest?.status === 'OK' ? 'OK' : 'ERROR',
       presto: data.prestoUi?.status === 'OK' ? 'OK' : 'ERROR'
     }

@@ -1,11 +1,11 @@
 # Manager Module
 
-`manager` is the Easy Engine control plane. It ingests query traces, stores execution history, parses SQL structure, maintains pattern statistics, and manages acceleration metadata.
+`manager` is the Easy Engine control plane. It reads query trace history from the shared metadata database, stores execution history, parses SQL structure, maintains pattern statistics, and manages acceleration metadata.
 
 ## Responsibilities
 
-- Consume trace payloads from Redis.
-- Persist execution records to PostgreSQL.
+- Read execution records from MySQL.
+- Persist control-plane records to MySQL.
 - Parse SQL with Apache Calcite.
 - Maintain SQL fingerprint and pattern statistics.
 - Expose stats, trace, pattern, parse-preview, and acceleration APIs.
@@ -25,7 +25,7 @@
 ## Run
 
 ```bash
-docker compose up -d postgres redis
+docker compose up -d mysql redis
 cd /Users/sfc/Documents/projects/engine/manager
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 cd /Users/sfc/Documents/projects/engine/manager/frontend

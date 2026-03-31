@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -19,23 +19,24 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * 在独立 PostgreSQL 容器中跑 Flyway 铺底，断言模板、任务与 prepared 语义种子完整。
+ * 在独立 MySQL 容器中跑 Flyway 铺底，断言模板、任务与 prepared 语义种子完整。
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Testcontainers(disabledWithoutDocker = true)
 class BenchmarkFlywaySeedTest {
 
     @Container
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine")
+    static final MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.4")
             .withDatabaseName("engine_db")
             .withUsername("engine")
             .withPassword("engine123");
 
     @DynamicPropertySource
     static void datasourceProps(DynamicPropertyRegistry r) {
-        r.add("spring.datasource.url", POSTGRES::getJdbcUrl);
-        r.add("spring.datasource.username", POSTGRES::getUsername);
-        r.add("spring.datasource.password", POSTGRES::getPassword);
+        r.add("spring.datasource.url", MYSQL::getJdbcUrl);
+        r.add("spring.datasource.username", MYSQL::getUsername);
+        r.add("spring.datasource.password", MYSQL::getPassword);
+        r.add("spring.datasource.driver-class-name", MYSQL::getDriverClassName);
     }
 
     @Autowired

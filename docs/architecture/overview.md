@@ -10,7 +10,7 @@ The standard benchmark end-to-end path is:
 
 ```text
 benchmark (Kylin JDBC) -> query -> Kylin / Presto / Hive
-                               |-> PostgreSQL (SqlExecutionRecord)
+                               |-> MySQL (SqlExecutionRecord)
 manager <----------------------+
 manager ----> query datasource configs
 ```
@@ -30,8 +30,8 @@ No standalone JDBC adapter service exists in the active architecture. JDBC clien
 3. `query` fetches active datasource definitions from `manager` via `GET /api/v1/query-datasources`.
 4. `query` resolves the target datasource using preserved routing metadata first, driver-style engine hints second, and the default datasource last.
 5. `query` serves a cache hit from Redis or executes the read-only SQL against Kylin, Presto, or Hive.
-6. `query` writes a `SqlExecutionRecord` directly to PostgreSQL, including `executionMode` and readable failed-prepared `parameterPayload` data when applicable.
-7. `manager` reads those PostgreSQL trace rows, exposes them through `/api/v1/traces`, parses SQL with Calcite, and updates pattern statistics.
+6. `query` writes a `SqlExecutionRecord` directly to MySQL, including `executionMode` and readable failed-prepared `parameterPayload` data when applicable.
+7. `manager` reads those MySQL trace rows, exposes them through `/api/v1/traces`, parses SQL with Calcite, and updates pattern statistics.
 
 ## Control-Plane Flow
 
@@ -46,7 +46,7 @@ No standalone JDBC adapter service exists in the active architecture. JDBC clien
 - `benchmark`: `8091`
 - `query`: `8092`
 - Redis: `6380`
-- PostgreSQL: `5433`
+- MySQL: `3307`
 
 ## Ownership Rules
 

@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS sql_execution_record (
-    id BIGSERIAL PRIMARY KEY,
-    received_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    received_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     raw_payload TEXT,
     datasource_name VARCHAR(256),
     datasource_type VARCHAR(64),
@@ -17,14 +17,14 @@ CREATE TABLE IF NOT EXISTS sql_execution_record (
     sql_fingerprint VARCHAR(64)
 );
 
-CREATE INDEX IF NOT EXISTS idx_sql_exec_received ON sql_execution_record (received_at DESC);
+CREATE INDEX IF NOT EXISTS idx_sql_exec_received ON sql_execution_record (received_at);
 CREATE INDEX IF NOT EXISTS idx_sql_exec_fingerprint ON sql_execution_record (sql_fingerprint);
 CREATE INDEX IF NOT EXISTS idx_sql_exec_ds ON sql_execution_record (datasource_name);
 
 CREATE TABLE IF NOT EXISTS acceleration_table (
-    id BIGSERIAL PRIMARY KEY,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     name VARCHAR(256) NOT NULL,
     schema_name VARCHAR(256) NOT NULL DEFAULT 'public',
     ddl_text TEXT NOT NULL,
@@ -38,12 +38,12 @@ CREATE TABLE IF NOT EXISTS acceleration_table (
 CREATE UNIQUE INDEX IF NOT EXISTS uq_accel_name_schema ON acceleration_table (name, schema_name);
 
 CREATE TABLE IF NOT EXISTS sql_pattern_stats (
-    id BIGSERIAL PRIMARY KEY,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     sql_fingerprint VARCHAR(64) NOT NULL,
     clean_sql_sample TEXT,
     execution_count BIGINT NOT NULL DEFAULT 0,
-    last_seen_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    avg_duration_ms DOUBLE PRECISION,
+    last_seen_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    avg_duration_ms DOUBLE,
     signature_json TEXT
 );
 

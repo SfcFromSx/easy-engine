@@ -1,21 +1,22 @@
 # Easy Engine 平台 — 本地联调基础设施
-# 用法: docker compose up -d postgres redis
+# 用法: docker compose up -d mysql redis
 # Kylin/Presto 资源较大，可按需启动: docker compose --profile olap up -d
 
 services:
-  postgres:
-    image: postgres:16-alpine
+  mysql:
+    image: mysql:8.4
     container_name: engine-db
     environment:
-      POSTGRES_USER: engine
-      POSTGRES_PASSWORD: engine123
-      POSTGRES_DB: engine_db
+      MYSQL_DATABASE: engine_db
+      MYSQL_USER: engine
+      MYSQL_PASSWORD: engine123
+      MYSQL_ROOT_PASSWORD: engine_root_123
     ports:
-      - "5433:5432"
+      - "3307:3306"
     volumes:
-      - engine_pg_data:/var/lib/postgresql/data
+      - engine_mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U engine -d engine_db"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uengine -pengine123 --silent"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -74,6 +75,6 @@ services:
       start_period: 600s
 
 volumes:
-  engine_pg_data:
+  engine_mysql_data:
   kylin_olap_data:
   kylin_olap_mysql:

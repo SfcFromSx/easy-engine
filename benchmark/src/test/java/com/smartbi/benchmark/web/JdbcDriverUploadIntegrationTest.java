@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(properties = {
-        "spring.datasource.url=jdbc:h2:mem:benchmarkdriverupload;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
+        "spring.datasource.url=jdbc:h2:mem:benchmarkdriverupload;MODE=MySQL;DB_CLOSE_DELAY=-1",
         "spring.datasource.driver-class-name=org.h2.Driver",
         "spring.datasource.username=sa",
         "spring.datasource.password=",
@@ -82,7 +82,7 @@ class JdbcDriverUploadIntegrationTest {
         String dsJson = "{"
                 + "\"name\":\"uploaded-driver\","
                 + "\"driverClass\":\"com.example.uploaded.UploadedH2Driver\","
-                + "\"jdbcUrl\":\"jdbc:h2:mem:uploadeddriver;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE\","
+                + "\"jdbcUrl\":\"jdbc:h2:mem:uploadeddriver;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE\","
                 + "\"jdbcUser\":\"sa\","
                 + "\"jdbcPassword\":\"\""
                 + "}";

@@ -34,10 +34,10 @@ public class PreflightController {
     @GetMapping
     public Map<String, Object> check() {
         Map<String, Object> out = new LinkedHashMap<>();
-        Map<String, Object> pg = new LinkedHashMap<>();
-        pg.put("status", "OK");
-        pg.put("hint", "应用已连上配置的 PG；端口以 application 为准");
-        out.put("postgres", pg);
+        Map<String, Object> mysql = new LinkedHashMap<>();
+        mysql.put("status", "OK");
+        mysql.put("hint", "应用已连上配置的 MySQL；端口以 application 为准");
+        out.put("mysql", mysql);
         out.put("kylinRest", probeKylin());
         out.put("prestoUi", probePresto());
         out.put("message", "压测请在「控制台」页发起；本接口仅做连通性参考。");

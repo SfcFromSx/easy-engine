@@ -95,7 +95,7 @@ class DatasourceConfigFlywayIntegrationTest {
     private static String baselineJdbcUrl() {
         Path baselineScript = resolveBaselineSchema();
         return "jdbc:h2:mem:managerdatasourceflyway;" +
-                "MODE=PostgreSQL;" +
+                "MODE=MySQL;" +
                 "DATABASE_TO_LOWER=TRUE;" +
                 "DEFAULT_NULL_ORDERING=HIGH;" +
                 "DB_CLOSE_DELAY=-1;" +

@@ -1,4 +1,4 @@
-<!-- MIRROR: docs/operations/local-development.md | SOURCE_SHA256: 3aa21c6e68af | SYNCED_AT: 2026-03-31T08:06:10Z -->
+<!-- MIRROR: docs/operations/local-development.md | SOURCE_SHA256: 3b4967f7c5ed | SYNCED_AT: 2026-03-31T10:19:40Z -->
 
 # 本地开发
 
@@ -9,7 +9,7 @@
 先启动共享基础设施：
 
 ```bash
-docker compose up -d postgres redis
+docker compose up -d mysql redis
 ```
 
 如果本地还需要 OLAP 引擎：
@@ -52,6 +52,7 @@ npm --prefix benchmark/frontend run dev
 
 - benchmark 是执行 benchmark run、预检和结构化运行报告时首选的控制界面。
 - benchmark 通过标准 Apache Kylin JDBC 驱动连接到 `query`（`jdbc:kylin://localhost:8092/<project>`）。额外的 JDBC 驱动 JAR 可通过 Benchmark UI 中的 Data Sources > Upload Driver 上传。
+- 默认元数据库改为 MySQL，监听 `localhost:3307`，本地默认账号仍为 `engine` / `engine123`。
 - SQL 中的保留元数据注释（例如 `YH_TARGET_ENGINE`）用于在 `query` 内部将请求路由到指定后端。
 - 如果本地修改了已经应用过的 migration，导致 Flyway 报 checksum mismatch，需要显式修复并重新迁移：
 
@@ -65,6 +66,6 @@ mvn -f benchmark/pom.xml compile flyway:repair flyway:migrate
 - `benchmark`: `8091`
 - `query`: `8092`
 - Redis: `6380`
-- PostgreSQL: `5433`
+- MySQL: `3307`
 - Kylin: `17070`
 - Presto: `18081`

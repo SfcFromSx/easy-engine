@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 压测冒烟（可选，面向 CI/无人值守）：日常请以 Benchmark 前端「控制台」发起压测并在「运行记录」查看结构化评价。
-# 依赖 Kylin 17070、Redis 6380、Postgres 5433、benchmark 8091。
+# 依赖 Kylin 17070、Redis 6380、MySQL 3307、benchmark 8091。
 set -euo pipefail
 
 JOB_NAME="${BENCHMARK_SMOKE_JOB:-benchmark-smoke-global}"
@@ -26,12 +26,12 @@ else
   docker exec engine-redis redis-cli ping 2>/dev/null | grep -q PONG || REDIS_FAIL=1
 fi
 [[ -z "${REDIS_FAIL:-}" ]] || { echo "Redis 不可用: 127.0.0.1:6380（或 docker 容器 engine-redis）" >&2; exit 1; }
-if command -v pg_isready >/dev/null 2>&1; then
-  pg_isready -h 127.0.0.1 -p 5433 -U engine -d engine_db >/dev/null 2>&1 || PG_FAIL=1
+if command -v mysqladmin >/dev/null 2>&1; then
+  mysqladmin ping -h 127.0.0.1 -P 3307 -uengine -pengine123 --silent >/dev/null 2>&1 || DB_FAIL=1
 else
-  docker exec engine-db pg_isready -U engine -d engine_db >/dev/null 2>&1 || PG_FAIL=1
+  docker exec engine-db mysqladmin ping -h 127.0.0.1 -uengine -pengine123 --silent >/dev/null 2>&1 || DB_FAIL=1
 fi
-[[ -z "${PG_FAIL:-}" ]] || { echo "Postgres 不可用: 127.0.0.1:5433 engine_db" >&2; exit 1; }
+[[ -z "${DB_FAIL:-}" ]] || { echo "MySQL 不可用: 127.0.0.1:3307 engine_db" >&2; exit 1; }
 curl -sf -m 3 "${BENCH_URL}/api/v1/jobs" >/dev/null \
   || { echo "Benchmark API 不可用: ${BENCH_URL}" >&2; exit 1; }
 

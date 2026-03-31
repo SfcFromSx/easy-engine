@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(
         classes = EngineQueryApplication.class,
         properties = {
-                "spring.datasource.url=jdbc:h2:mem:webtest_trace;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
+                "spring.datasource.url=jdbc:h2:mem:webtest_trace;MODE=MySQL;DB_CLOSE_DELAY=-1",
                 "spring.datasource.username=sa",
                 "spring.datasource.password=",
                 "spring.datasource.driver-class-name=org.h2.Driver",
@@ -34,13 +34,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 "engine.query.datasource.default.name=default",
                 "engine.query.datasource.default.type=h2",
                 "engine.query.datasource.default.driver-class=org.h2.Driver",
-                "engine.query.datasource.default.jdbc-url=jdbc:h2:mem:webtest;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
+                "engine.query.datasource.default.jdbc-url=jdbc:h2:mem:webtest;MODE=MySQL;DB_CLOSE_DELAY=-1",
                 "engine.query.datasource.default.username=sa",
                 "engine.query.datasource.default.password=",
                 "engine.query.datasource.named.presto_local.name=presto_local",
                 "engine.query.datasource.named.presto_local.type=presto",
                 "engine.query.datasource.named.presto_local.driver-class=org.h2.Driver",
-                "engine.query.datasource.named.presto_local.jdbc-url=jdbc:h2:mem:webtest_presto;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
+                "engine.query.datasource.named.presto_local.jdbc-url=jdbc:h2:mem:webtest_presto;MODE=MySQL;DB_CLOSE_DELAY=-1",
                 "engine.query.datasource.named.presto_local.username=sa",
                 "engine.query.datasource.named.presto_local.password=",
                 "engine.query.auth.username=ADMIN",
@@ -63,13 +63,13 @@ class QueryWebIntegrationTest {
     void setUp() throws Exception {
         infrastructure.clear();
         Class.forName("org.h2.Driver");
-        try (Connection connection = DriverManager.getConnection("jdbc:h2:mem:webtest;MODE=PostgreSQL;DB_CLOSE_DELAY=-1", "sa", "");
+        try (Connection connection = DriverManager.getConnection("jdbc:h2:mem:webtest;MODE=MySQL;DB_CLOSE_DELAY=-1", "sa", "");
              Statement statement = connection.createStatement()) {
             statement.execute("DROP TABLE IF EXISTS SALES");
             statement.execute("CREATE TABLE SALES (ID INT PRIMARY KEY, NAME VARCHAR(32))");
             statement.execute("INSERT INTO SALES (ID, NAME) VALUES (1, 'alpha'), (2, 'beta')");
         }
-        try (Connection connection = DriverManager.getConnection("jdbc:h2:mem:webtest_presto;MODE=PostgreSQL;DB_CLOSE_DELAY=-1", "sa", "");
+        try (Connection connection = DriverManager.getConnection("jdbc:h2:mem:webtest_presto;MODE=MySQL;DB_CLOSE_DELAY=-1", "sa", "");
              Statement statement = connection.createStatement()) {
             statement.execute("DROP TABLE IF EXISTS NATION");
             statement.execute("CREATE TABLE NATION (NATIONKEY INT PRIMARY KEY, NAME VARCHAR(32))");

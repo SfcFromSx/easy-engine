@@ -37,8 +37,8 @@ public class JdbcSqlAdvisorService {
                 // If the refresh SQL contains our query, it's a candidate
                 if (t.getRefreshSql().contains(query)) {
                     out.setModified(true);
-                    // Suggest redirecting to the PG engine and the specific table
-                    out.setHintCommentBlock("/* engine=postgres, cache-table=" + t.getSchemaName() + "." + t.getName() + " */");
+                    // Suggest redirecting to the MySQL-backed acceleration table.
+                    out.setHintCommentBlock("/* engine=mysql, cache-table=" + t.getSchemaName() + "." + t.getName() + " */");
                     out.setExecutionSql(out.getHintCommentBlock() + " " + query);
                     out.setAdvisoryMessage("accelerated_by_" + t.getName());
                     return out;

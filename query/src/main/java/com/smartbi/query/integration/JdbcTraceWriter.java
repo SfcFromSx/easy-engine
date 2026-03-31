@@ -15,15 +15,15 @@ import org.springframework.util.StringUtils;
 import java.time.Instant;
 
 @Component
-public class PostgresTraceWriter implements TraceWriter {
+public class JdbcTraceWriter implements TraceWriter {
 
     private final ObjectMapper objectMapper;
     private final SqlExecutionRecordRepository recordRepository;
     private final SqlPatternStatsRepository patternStatsRepository;
 
-    public PostgresTraceWriter(ObjectMapper objectMapper,
-                               SqlExecutionRecordRepository recordRepository,
-                               SqlPatternStatsRepository patternStatsRepository) {
+    public JdbcTraceWriter(ObjectMapper objectMapper,
+                           SqlExecutionRecordRepository recordRepository,
+                           SqlPatternStatsRepository patternStatsRepository) {
         this.objectMapper = objectMapper;
         this.recordRepository = recordRepository;
         this.patternStatsRepository = patternStatsRepository;

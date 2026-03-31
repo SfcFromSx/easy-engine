@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS query_datasource_config (
-    id BIGSERIAL PRIMARY KEY,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(256) NOT NULL,
     type VARCHAR(64) NOT NULL,
     driver_class VARCHAR(512) NOT NULL,
@@ -10,11 +10,11 @@ CREATE TABLE IF NOT EXISTS query_datasource_config (
     min_idle INTEGER NOT NULL DEFAULT 1,
     connection_timeout_ms BIGINT NOT NULL DEFAULT 10000,
     is_default BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_query_datasource_name ON query_datasource_config (name);
+CREATE UNIQUE INDEX uq_query_datasource_name ON query_datasource_config (name);
 
 INSERT INTO query_datasource_config (
     name,

@@ -290,7 +290,7 @@ const messages = {
       dialogTitle: '提议创建物理加速实体',
       schema: '库名',
       table: '表名',
-      hint: '系统将基于指纹对应的 SQL 模式，在 PostgreSQL 中创建此物理汇总表。',
+      hint: '系统将基于指纹对应的 SQL 模式，在 MySQL 中创建此物理汇总表。',
       selectPatternFirst: '请选择一个模式后再创建加速草稿。',
       tableNameRequired: '请填写表名。',
       created: '已创建加速草稿',

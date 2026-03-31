@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(
         classes = EngineQueryApplication.class,
         properties = {
-                "spring.datasource.url=jdbc:h2:mem:trace_persistence;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
+                "spring.datasource.url=jdbc:h2:mem:trace_persistence;MODE=MySQL;DB_CLOSE_DELAY=-1",
                 "spring.datasource.username=sa",
                 "spring.datasource.password=",
                 "spring.datasource.driver-class-name=org.h2.Driver",
@@ -40,7 +40,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 "engine.query.datasource.default.name=default",
                 "engine.query.datasource.default.type=h2",
                 "engine.query.datasource.default.driver-class=org.h2.Driver",
-                "engine.query.datasource.default.jdbc-url=jdbc:h2:mem:trace_query;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
+                "engine.query.datasource.default.jdbc-url=jdbc:h2:mem:trace_query;MODE=MySQL;DB_CLOSE_DELAY=-1",
                 "engine.query.datasource.default.username=sa",
                 "engine.query.datasource.default.password=",
                 "engine.query.auth.username=ADMIN",
@@ -66,7 +66,7 @@ class QueryTracePersistenceIntegrationTest {
         patternStatsRepository.deleteAll();
 
         Class.forName("org.h2.Driver");
-        try (Connection connection = DriverManager.getConnection("jdbc:h2:mem:trace_query;MODE=PostgreSQL;DB_CLOSE_DELAY=-1", "sa", "");
+        try (Connection connection = DriverManager.getConnection("jdbc:h2:mem:trace_query;MODE=MySQL;DB_CLOSE_DELAY=-1", "sa", "");
              Statement statement = connection.createStatement()) {
             statement.execute("DROP TABLE IF EXISTS SALES");
             statement.execute("CREATE TABLE SALES (ID INT PRIMARY KEY, NAME VARCHAR(32))");

@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(
         classes = BenchmarkApplication.class,
         properties = {
-                "spring.datasource.url=jdbc:h2:mem:runcontrollerctx;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+                "spring.datasource.url=jdbc:h2:mem:runcontrollerctx;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
                 "spring.datasource.driver-class-name=org.h2.Driver",
                 "spring.datasource.username=sa",
                 "spring.datasource.password=",

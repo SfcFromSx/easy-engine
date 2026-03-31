@@ -7,7 +7,7 @@ This runbook describes the default local environment for Easy Engine.
 Start shared infrastructure first:
 
 ```bash
-docker compose up -d postgres redis
+docker compose up -d mysql redis
 ```
 
 If you need OLAP engines locally:
@@ -51,6 +51,7 @@ npm --prefix benchmark/frontend run dev
 - There is no standalone JDBC adapter service in the active architecture. JDBC clients connect directly to `query`.
 - Benchmark is the preferred control surface for benchmark runs, preflight checks, and structured run reports.
 - Benchmark connects to `query` using the standard Apache Kylin JDBC driver (`jdbc:kylin://localhost:8092/<project>`). Upload additional JDBC driver JARs via the Benchmark UI under Data Sources > Upload Driver before running datasource tests or benchmark jobs that depend on them.
+- The default metadata store is MySQL on `localhost:3307`; the shared local credentials remain `engine` / `engine123`.
 - Preserved metadata comments (e.g. `YH_TARGET_ENGINE`) in SQL are used to route requests to specific backends within `query`.
 - If Flyway reports a checksum mismatch after editing an applied migration during local work, repair and migrate explicitly:
 
@@ -64,6 +65,6 @@ mvn -f benchmark/pom.xml compile flyway:repair flyway:migrate
 - `benchmark`: `8091`
 - `query`: `8092`
 - Redis: `6380`
-- PostgreSQL: `5433`
+- MySQL: `3307`
 - Kylin: `17070`
 - Presto: `18081`

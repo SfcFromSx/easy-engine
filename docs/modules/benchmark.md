@@ -39,7 +39,7 @@ Benchmark connects to `query` using the standard Apache Kylin JDBC driver (`jdbc
 ## Run
 
 ```bash
-docker compose up -d postgres redis
+docker compose up -d mysql redis
 cd /Users/sfc/Documents/projects/engine/query && mvn spring-boot:run
 cd /Users/sfc/Documents/projects/engine/manager && mvn spring-boot:run
 cd /Users/sfc/Documents/projects/engine/benchmark && mvn spring-boot:run

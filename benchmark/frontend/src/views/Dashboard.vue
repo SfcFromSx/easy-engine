@@ -21,7 +21,7 @@
             <el-skeleton :rows="2" animated />
           </div>
           <el-descriptions v-else-if="pfResult" :column="1" border size="small">
-            <el-descriptions-item label="Postgres">
+            <el-descriptions-item label="MySQL">
               <div class="status-cell">
                 <span class="dot dot-online"></span>
                 <span class="status-text">Connected</span>

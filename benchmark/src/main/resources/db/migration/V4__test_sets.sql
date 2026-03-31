@@ -1,13 +1,13 @@
 CREATE TABLE benchmark_test_set (
-    id              BIGSERIAL PRIMARY KEY,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     name            VARCHAR(512) NOT NULL,
     description     VARCHAR(1024),
     source_filename VARCHAR(512)
 );
 
 CREATE TABLE benchmark_test_set_item (
-    id              BIGSERIAL PRIMARY KEY,
+    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
     test_set_id     BIGINT NOT NULL REFERENCES benchmark_test_set(id) ON DELETE CASCADE,
     sort_order      INT NOT NULL DEFAULT 0,
     label           VARCHAR(512),

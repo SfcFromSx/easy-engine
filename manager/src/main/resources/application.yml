@@ -2,10 +2,10 @@ spring:
   application:
     name: manager
   datasource:
-    url: jdbc:postgresql://${PG_HOST:localhost}:${PG_PORT:5433}/${PG_DB:engine_db}
-    username: ${PG_USER:engine}
-    password: ${PG_PASSWORD:engine123}
-    driver-class-name: org.postgresql.Driver
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3307}/${MYSQL_DB:engine_db}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${MYSQL_USER:engine}
+    password: ${MYSQL_PASSWORD:engine123}
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
       ddl-auto: validate

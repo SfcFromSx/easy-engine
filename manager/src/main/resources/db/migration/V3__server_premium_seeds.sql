@@ -4,18 +4,18 @@
 
 -- 1) 模拟原始 SQL 追踪 (Traces)
 INSERT INTO sql_execution_record (received_at, datasource_name, datasource_type, original_sql, clean_sql, sql_fingerprint, duration_ms, success, cache_hit, parse_status) VALUES
-(now() - interval '20 minutes', 'learn_kylin', 'KYLIN', 'SELECT count(*) FROM KYLIN_SALES', 'SELECT count(*) FROM KYLIN_SALES', 'f1_sum_count', 12, true, true, 'PARSED'),
-(now() - interval '18 minutes', 'learn_kylin', 'KYLIN', 'SELECT sum(price) FROM KYLIN_SALES', 'SELECT sum(price) FROM KYLIN_SALES', 'f2_sum_price', 45, true, false, 'PARSED'),
-(now() - interval '15 minutes', 'learn_kylin', 'KYLIN', 'SELECT lstg_format_name, sum(price) FROM KYLIN_SALES GROUP BY lstg_format_name', 'SELECT lstg_format_name, sum(price) FROM KYLIN_SALES GROUP BY lstg_format_name', 'f3_group_format', 88, true, false, 'PARSED'),
-(now() - interval '10 minutes', 'presto_local', 'PRESTO', 'SELECT count(*) FROM nation', 'SELECT count(*) FROM nation', 'f4_presto_nation', 560, true, false, 'PARSED'),
-(now() - interval '5 minutes', 'learn_kylin', 'KYLIN', 'SELECT seller_id, sum(price) FROM KYLIN_SALES GROUP BY seller_id ORDER BY 2 DESC LIMIT 10', 'SELECT seller_id, sum(price) FROM KYLIN_SALES GROUP BY seller_id ORDER BY 2 DESC LIMIT 10', 'f5_top_seller', 120, true, false, 'PARSED');
+(TIMESTAMPADD(MINUTE, -20, CURRENT_TIMESTAMP), 'learn_kylin', 'KYLIN', 'SELECT count(*) FROM KYLIN_SALES', 'SELECT count(*) FROM KYLIN_SALES', 'f1_sum_count', 12, true, true, 'PARSED'),
+(TIMESTAMPADD(MINUTE, -18, CURRENT_TIMESTAMP), 'learn_kylin', 'KYLIN', 'SELECT sum(price) FROM KYLIN_SALES', 'SELECT sum(price) FROM KYLIN_SALES', 'f2_sum_price', 45, true, false, 'PARSED'),
+(TIMESTAMPADD(MINUTE, -15, CURRENT_TIMESTAMP), 'learn_kylin', 'KYLIN', 'SELECT lstg_format_name, sum(price) FROM KYLIN_SALES GROUP BY lstg_format_name', 'SELECT lstg_format_name, sum(price) FROM KYLIN_SALES GROUP BY lstg_format_name', 'f3_group_format', 88, true, false, 'PARSED'),
+(TIMESTAMPADD(MINUTE, -10, CURRENT_TIMESTAMP), 'presto_local', 'PRESTO', 'SELECT count(*) FROM nation', 'SELECT count(*) FROM nation', 'f4_presto_nation', 560, true, false, 'PARSED'),
+(TIMESTAMPADD(MINUTE, -5, CURRENT_TIMESTAMP), 'learn_kylin', 'KYLIN', 'SELECT seller_id, sum(price) FROM KYLIN_SALES GROUP BY seller_id ORDER BY 2 DESC LIMIT 10', 'SELECT seller_id, sum(price) FROM KYLIN_SALES GROUP BY seller_id ORDER BY 2 DESC LIMIT 10', 'f5_top_seller', 120, true, false, 'PARSED');
 
 -- 2) 模拟核心模式分析结果 (Patterns)
 INSERT INTO sql_pattern_stats (sql_fingerprint, clean_sql_sample, execution_count, avg_duration_ms, last_seen_at) VALUES
-('f1_sum_count', 'SELECT count(*) FROM KYLIN_SALES', 850, 15.2, now()),
-('f2_sum_price', 'SELECT sum(price) FROM KYLIN_SALES', 420, 48.5, now()),
-('f3_group_format', 'SELECT lstg_format_name, sum(price) FROM KYLIN_SALES GROUP BY lstg_format_name', 125, 92.1, now()),
-('f5_top_seller', 'SELECT seller_id, sum(price) FROM KYLIN_SALES GROUP BY seller_id ORDER BY 2 DESC LIMIT 10', 88, 115.0, now());
+('f1_sum_count', 'SELECT count(*) FROM KYLIN_SALES', 850, 15.2, CURRENT_TIMESTAMP),
+('f2_sum_price', 'SELECT sum(price) FROM KYLIN_SALES', 420, 48.5, CURRENT_TIMESTAMP),
+('f3_group_format', 'SELECT lstg_format_name, sum(price) FROM KYLIN_SALES GROUP BY lstg_format_name', 125, 92.1, CURRENT_TIMESTAMP),
+('f5_top_seller', 'SELECT seller_id, sum(price) FROM KYLIN_SALES GROUP BY seller_id ORDER BY 2 DESC LIMIT 10', 88, 115.0, CURRENT_TIMESTAMP);
 
 -- 3) 模拟加速优化实体 (Accelerations)
 INSERT INTO acceleration_table (name, schema_name, ddl_text, refresh_sql, cron_expr, status, source, recommendation_note) VALUES

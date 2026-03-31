@@ -42,7 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(
         classes = BenchmarkApplication.class,
         properties = {
-                "spring.datasource.url=jdbc:h2:mem:benchmarkrunnermeta;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+                "spring.datasource.url=jdbc:h2:mem:benchmarkrunnermeta;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
                 "spring.datasource.driver-class-name=org.h2.Driver",
                 "spring.datasource.username=sa",
                 "spring.datasource.password=",
@@ -55,7 +55,7 @@ class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
 
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final String TARGET_JDBC_URL =
-            "jdbc:h2:mem:benchmarkrunnerexec;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
+            "jdbc:h2:mem:benchmarkrunnerexec;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
 
     @Autowired
     private BenchmarkJobRepository jobRepository;

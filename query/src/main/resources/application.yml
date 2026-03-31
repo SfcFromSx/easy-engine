@@ -2,10 +2,10 @@ spring:
   application:
     name: query
   datasource:
-    url: ${ENGINE_DB_JDBC_URL:jdbc:postgresql://localhost:15432/engine_db}
-    username: ${ENGINE_DB_USER:engine}
-    password: ${ENGINE_DB_PASSWORD:engine}
-    driver-class-name: org.postgresql.Driver
+    url: ${ENGINE_DB_JDBC_URL:jdbc:mysql://localhost:3307/engine_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${ENGINE_DB_USER:${MYSQL_USER:engine}}
+    password: ${ENGINE_DB_PASSWORD:${MYSQL_PASSWORD:engine123}}
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     open-in-view: false
     hibernate:

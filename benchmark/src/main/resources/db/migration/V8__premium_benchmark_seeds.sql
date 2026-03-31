@@ -5,10 +5,10 @@
 INSERT INTO benchmark_sql_template (name, sql_text, weight, description) VALUES
 ('kylin_agg_precise_count', 'SELECT count(distinct seller_id) FROM KYLIN_SALES', 5, 'Kylin: 高维精确去重统计 (Bitmap)'),
 ('kylin_agg_topn_seller', 'SELECT seller_id, sum(price) as total_sales FROM KYLIN_SALES GROUP BY seller_id ORDER BY total_sales DESC LIMIT 5', 5, 'Kylin: 卖家销售额 TopN (TopN Measure)'),
-('presto_lake_nation_region', E'-- engine=presto_local\nSELECT r.name as region, count(*) as nations FROM nation n JOIN region r ON n.regionkey = r.regionkey GROUP BY r.name', 4, 'Presto: 跨表关联查询 (Nation x Region)'),
-('presto_lake_lineitem_agg', E'-- engine=presto_local\nSELECT returnflag, linestatus, sum(quantity) as sum_qty FROM lineitem GROUP BY returnflag, linestatus', 3, 'Presto: TPCH Lineitem 大表聚合'),
+('presto_lake_nation_region', '/* YH_TARGET_ENGINE=presto_local */ SELECT r.name as region, count(*) as nations FROM nation n JOIN region r ON n.regionkey = r.regionkey GROUP BY r.name', 4, 'Presto: 跨表关联查询 (Nation x Region)'),
+('presto_lake_lineitem_agg', '/* YH_TARGET_ENGINE=presto_local */ SELECT returnflag, linestatus, sum(quantity) as sum_qty FROM lineitem GROUP BY returnflag, linestatus', 3, 'Presto: TPCH Lineitem 大表聚合'),
 ('cache_stress_heavy_agg', 'SELECT part_dt, lstg_format_name, sum(price), avg(price), count(*) FROM KYLIN_SALES GROUP BY part_dt, lstg_format_name', 5, 'Cache Stress: 复杂维度组合聚合 (测试缓存命中)'),
-('cache_penetration_no_cache', E'-- no-cache\nSELECT count(*) FROM KYLIN_SALES WHERE part_dt = ''2013-01-01''', 3, 'Cache Stress: 显式禁缓存单点查询');
+('cache_penetration_no_cache', '/* no-cache */ SELECT count(*) FROM KYLIN_SALES WHERE part_dt = ''2013-01-01''', 3, 'Cache Stress: 显式禁缓存单点查询');
 
 -- 2) 预置「极速 Kylin」测试集
 INSERT INTO benchmark_test_set (name, description, source_filename) VALUES
@@ -28,9 +28,9 @@ INSERT INTO benchmark_test_set (name, description, source_filename) VALUES
 ('Presto-Lake-Exploration', '直接透传至 Presto 的原生 SQL 测试集，验证逻辑路由与数据湖查询能力。', 'V8-Premium');
 
 INSERT INTO benchmark_test_set_item (test_set_id, sort_order, label, sql_text, weight)
-SELECT (SELECT id FROM benchmark_test_set WHERE name = 'Presto-Lake-Exploration'), 0, 'presto_nation', E'-- engine=presto_local\nSELECT count(*) FROM nation', 5;
+SELECT (SELECT id FROM benchmark_test_set WHERE name = 'Presto-Lake-Exploration'), 0, 'presto_nation', '/* YH_TARGET_ENGINE=presto_local */ SELECT count(*) FROM nation', 5;
 INSERT INTO benchmark_test_set_item (test_set_id, sort_order, label, sql_text, weight)
-SELECT (SELECT id FROM benchmark_test_set WHERE name = 'Presto-Lake-Exploration'), 1, 'presto_join', E'-- engine=presto_local\nSELECT n.name, r.name FROM nation n JOIN region r ON n.regionkey = r.regionkey', 4;
+SELECT (SELECT id FROM benchmark_test_set WHERE name = 'Presto-Lake-Exploration'), 1, 'presto_join', '/* YH_TARGET_ENGINE=presto_local */ SELECT n.name, r.name FROM nation n JOIN region r ON n.regionkey = r.regionkey', 4;
 
 -- 4) 预置核心任务 (Jobs)
 -- a) Kylin 黄金基准 (并发 4, 100 轮)

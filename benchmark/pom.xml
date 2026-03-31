@@ -20,7 +20,7 @@
     <properties>
         <java.version>1.8</java.version>
         <kylin.jdbc.version>4.0.1</kylin.jdbc.version>
-        <flyway.url>jdbc:postgresql://localhost:5433/engine_db</flyway.url>
+        <flyway.url>jdbc:mysql://localhost:3307/engine_db?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=UTC</flyway.url>
         <flyway.user>engine</flyway.user>
         <flyway.password>engine123</flyway.password>
     </properties>
@@ -39,8 +39,8 @@
             <artifactId>flyway-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -75,7 +75,7 @@
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>postgresql</artifactId>
+            <artifactId>mysql</artifactId>
             <version>1.19.8</version>
             <scope>test</scope>
         </dependency>

@@ -1,6 +1,6 @@
 # Query Module
 
-`query` is the Easy Engine query execution service. It accepts read-only query traffic via the standard Apache Kylin JDBC protocol, parses comments and preserved metadata, routes to the selected datasource, manages Redis-backed result cache, and writes trace records directly to PostgreSQL.
+`query` is the Easy Engine query execution service. It accepts read-only query traffic via the standard Apache Kylin JDBC protocol, parses comments and preserved metadata, routes to the selected datasource, manages Redis-backed result cache, and writes trace records directly to MySQL.
 
 ## Responsibilities
 

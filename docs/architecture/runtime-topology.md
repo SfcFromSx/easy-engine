@@ -16,7 +16,7 @@ flowchart LR
 
   subgraph ControlPlane
     Manager["manager"]
-    PG["PostgreSQL"]
+    DB["MySQL"]
   end
 
   subgraph Engines
@@ -31,8 +31,8 @@ flowchart LR
   Query --> Kylin
   Query --> Presto
   Query --> Hive
-  Query --> PG
-  Manager --> PG
+  Query --> DB
+  Manager --> DB
   Query -.->|polls datasource configs| Manager
 ```
 
@@ -41,7 +41,7 @@ flowchart LR
 - `manager`: `8090`
 - `benchmark`: `8091`
 - `query`: `8092`
-- `postgres`: `5433`
+- `mysql`: `3307`
 - `redis`: `6380`
 - `kylin`: `17070`
 - `presto`: `18081`
@@ -50,7 +50,7 @@ flowchart LR
 
 - `benchmark` connects to `query` using the standard Apache Kylin JDBC driver (`jdbc:kylin://localhost:8092/<project>`).
 - `query` fetches datasource configurations from `manager` on startup. It falls back to static config if manager is unreachable.
-- `query` writes execution trace records directly to PostgreSQL; no Redis trace queue is used.
+- `query` writes execution trace records directly to MySQL; no Redis trace queue is used.
 - `query` should keep serving traffic if Redis is unavailable by degrading to direct datasource execution.
 - `manager` should not bring down the runtime when Calcite parsing has transient failures.
 - The root harness should run from the repository root, not from individual submodules.
