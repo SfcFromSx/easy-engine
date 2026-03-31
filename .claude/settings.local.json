@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(echo EXIT_CODE:$?)",
+      "WebFetch(domain:openai.com)",
+      "Bash(python -m pytest tests/test_agent_loop.py -x -q)",
+      "Bash(python:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(python3:*)"
+    ]
+  }
+}

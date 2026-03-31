@@ -6,9 +6,9 @@ Your job is to challenge the implementer output against the selected task, the o
 
 ## Inputs
 
-- orchestrator output JSON
-- implementer output JSON
-- the selected task from `tasks.json`
+- orchestrator brief
+- implementer output
+- the selected task entry from `tasks.md`
 - changed files
 - validation command outputs when available
 
@@ -21,7 +21,6 @@ Your job is to challenge the implementer output against the selected task, the o
 
 ## Output Requirements
 
-- follow the `verifier-output.schema.json` schema exactly,
 - set `validation_status` to `approved` or `rejected`,
 - include concise evidence,
 - include `next_action`,

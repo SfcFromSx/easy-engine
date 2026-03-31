@@ -1,78 +1,96 @@
-# Agent Loop Runbook
+# Agent Workflow Runbook
 
-The autonomous loop is driven by [scripts/agent_loop.py](/Users/sfc/Documents/projects/engine/scripts/agent_loop.py).
+The foreman model drives task execution manually from `tasks.md`. It receives a task assignment from the human, then calls `claude` and `codex` from the command line.
 
-## Commands
+See [AGENTS.md](../../AGENTS.md) for the full foreman workflow and CLI command templates, and [human-collaboration.md](/Users/sfc/Documents/projects/engine/docs/operations/human-collaboration.md) for the human-side guardrails.
+
+## Stage Shape
+
+Each task runs through up to four stages:
+
+1. **Orchestrator** — reads the task, produces an implementation brief. Runner: claude.
+2. **Implementer** — makes code changes per the brief. Runner: codex (backend/test/docs) or claude (frontend).
+3. **Verifier** — challenges the implementation against acceptance criteria. Runner: codex.
+4. **Doc-gardener** — updates canonical docs when behavior or APIs changed. Runner: codex. Optional.
+
+After verifier approval: commit, then optionally run doc-gardener.
+
+## Runner Commands
+
+### claude
 
 ```bash
-python3 scripts/agent_loop.py doctor
-python3 scripts/agent_loop.py smoke-runner --runner codex
-python3 scripts/agent_loop.py step --runner codex
-python3 scripts/agent_loop.py start --runner codex
-python3 scripts/agent_loop.py status
-python3 scripts/agent_loop.py stop
-python3 scripts/agent_loop.py run --runner codex
-python3 scripts/agent_loop.py run --runner codex --max-iterations 8
-python3 scripts/agent_loop.py run --runner claude --max-iterations 8
-python3 scripts/agent_loop.py sync-doc-cn
+claude -p --model opus4.6 "<prompt>"
 ```
 
-## Loop Shape
+### codex
 
-`step` is the single-task primitive. `run` is the foreground loop for debugging. `start` is the supported long-lived mode for unattended work: it launches `run` as a detached managed process, writes `.agent/runtime/loop-process.json`, and appends output to `.agent/runtime/loop-<runner>.log`. Use `status` and `stop` to inspect or control that managed process.
+```bash
+codex exec --sandbox danger-full-access \
+  --model gpt-5.4 \
+  -c 'model_reasoning_effort="high"' \
+  "<prompt>"
+```
 
-The earlier auto-drive stoppage was traced to process supervision rather than queue selection: running `run` inside a transient interactive session is not reliable for unattended execution. Use `start` for production autonomous runs.
+Codex runs with MCP servers and plugins disabled. Model and flag values are in `.agent/config.json` under `runners.codex`.
 
-Each successful polling cycle follows:
+## Stage Routing
 
-1. `doctor`
-2. select the next eligible task from `tasks.json`
-3. run the orchestrator prompt
-4. run the implementer prompt
-5. run the verifier prompt
-6. update task state
-7. commit verified work if Git is ready
-8. push the current branch when auto-push is enabled
-9. run best-effort local refresh commands for affected modules
-10. confirm affected local services and frontends are healthy, starting configured frontend dev servers when needed
-11. trigger doc gardening when required
+Default routing is defined in `tasks.md` header and `.agent/config.json`. Per-task overrides are noted in the task entry.
 
-If another valid loop currently holds `.agent/lock.json`, `run` waits and polls using the configured `lock_poll_seconds` interval instead of failing immediately.
+| Task type | Orchestrator | Implementer | Verifier | Doc-gardener |
+|-----------|-------------|-------------|----------|--------------|
+| backend / test / docs / architecture | claude | codex | codex | codex |
+| frontend | claude | claude | codex | codex |
 
-## Halt Conditions
+## Progress Logging
 
-- `doctor` fails
-- `.agent/PAUSE` exists
-- no eligible tasks remain
-- schema validation fails
-- verifier retry ceiling is hit
-- a stray `agent_loop.py` process is detected while `.agent/lock.json` is unlocked
-- `--max-iterations` is exhausted when that cap is provided
+After each stage the foreman appends a dated entry to the task's **Progress log** in `tasks.md`. See AGENTS.md for the log format.
 
-## State Files
+## Commit
 
-- `tasks.json`: task graph and retry ledger
-- `.agent/config.json`: runtime policy
-- `.agent/lock.json`: active-loop lock
-- `.agent/history/*.jsonl`: iteration logs
-- `.agent/runtime/loop-process.json`: detached loop PID and log metadata
-- `.agent/runtime/quarantine/`: parked patch bundles and manifests for interrupted mixed task work
+One verified task = one commit.
 
-## Safety Notes
+```bash
+git add -p
+git commit -m "<task-id>: <short title>"
+```
 
-- The harness must never mutate `tasks.json` without recording timestamps and last results.
-- The harness must never continue when root Git is invalid.
-- The harness should prefer deterministic task selection over free-form prioritization.
-- Runner timeouts and runner logs under `.agent/runtime/runner-logs/` should make stalled model calls diagnosable instead of silent.
-- Codex runs are launched through `scripts/codex_harness.py`, which builds an isolated local Codex home for project runs, strips inherited plugin and MCP configuration, and pins Codex to `gpt-5.4` with high reasoning via harness config overrides.
-- Codex currently runs in best-effort mode for production work on unstable networks: long stage timeouts, automatic retries, backoff, and explicit runner logs are enabled by default.
-- For Codex on unstable provider paths, prefer fewer but longer attempts over many short retries. The default profile uses long single-stage windows before giving up.
-- The Codex verifier stage uses a longer timeout window than orchestrator and implementer, because the verification payload is larger and provider latency is higher in practice.
-- When `auto_push_after_commit` is enabled, successful task commits are pushed to the configured remote immediately after the task is marked `done`.
-- After successful task completion, the harness can run best-effort local refresh commands for affected modules so local compiled/backend/frontend artifacts stay close to the newest committed logic.
-- For changed frontend modules, the harness should also verify the local dev surface is available and start the configured frontend dev server if it is missing.
-- When the todo queue drops to the configured warning threshold, the harness emits a warning with the remaining task IDs so humans can decide whether to add more work.
-- When a mixed task worktree must be parked before harness maintenance, capture the patches and manifest under `.agent/runtime/quarantine/` before restoring the repo to a clean `HEAD`.
-- `doctor` and `run` now treat an unlocked `.agent/lock.json` plus another live `agent_loop.py` process as a recovery error. Resolve or quarantine that stale process state before starting a new loop.
-- `start` also recovers a stale lock automatically when `.agent/lock.json` is still marked locked but no harness process remains alive.
-- Prefer `smoke-runner` and `step` for debugging one stage in isolation. For normal autonomous work, `start --runner codex` is the supported default.
+Do not push automatically. The human reviews and merges.
+
+## Validation Commands Reference
+
+See `.agent/config.json` `validation_commands` for the authoritative per-module command set.
+
+| Module | Commands |
+|--------|----------|
+| manager | `mvn -q -f manager/pom.xml test` · `npm --prefix manager/frontend run build` |
+| query | `mvn -q -f query/pom.xml test` |
+| benchmark | `mvn -q -f benchmark/pom.xml test` · `npm --prefix benchmark/frontend run build` |
+| smoke | `bash scripts/benchmark-smoke.sh` |
+
+## Stop Conditions
+
+- Human says to stop.
+- Verifier rejects and attempts ≥ 3 → mark task `blocked`, stop.
+- No unblocked `todo` tasks remain.
+- Git state is invalid (nested .git hazard, dirty tree that cannot be attributed to the active task).
+
+## Retry Policy
+
+- On transient failures (network, timeout, process crash): retry up to 2 times with 30-second backoff. Do not count against task attempts.
+- On permanent failures (wrong output, schema error, test failure): increment task attempts. Block after 3 permanent failures.
+
+## Codex Best Practices
+
+- Prefer single-stage execution for debugging.
+- Codex runs are best-effort under unstable networks — expect retries.
+- Do not run codex with MCP or plugin flags; the isolation is intentional.
+
+## Doc Gardening
+
+Run the doc-gardener stage after any task that changes behavior, APIs, or architecture. Refresh Chinese mirrors only for the configured human-facing document set (see `.agent/config.json` `mirror_docs`).
+
+## History Logs
+
+Stage history is recorded in `.agent/history/` as append-only JSONL files. Detailed runner transcripts live under `.agent/runtime/runner-logs/`.

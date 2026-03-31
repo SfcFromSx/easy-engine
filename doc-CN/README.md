@@ -2,7 +2,7 @@
 
 # Easy Engine
 
-Easy Engine 是一个以 agent 为中心的工程工作区，覆盖查询执行、控制面分析、基准测试编排，以及 `kylin-jdbc-cache` 适配层。仓库结构的目标是让自治编码 agent 可以安全地持续运行优化循环，同时仍然保留清晰的人类暂停、审查与合并控制点。
+Easy Engine 是一个以 agent 为中心的工程工作区，覆盖查询执行、控制面分析、基准测试编排，以及 `kylin-jdbc-cache` 适配层。仓库结构的目标是让任务驱动的监工工作流保持清晰、可审查，并保留明确的人类暂停与审批控制点。
 
 ## 模块
 
@@ -14,35 +14,26 @@ Easy Engine 是一个以 agent 为中心的工程工作区，覆盖查询执行�
 ## 规范文档入口
 
 - [AGENTS.md](/Users/sfc/Documents/projects/engine/AGENTS.md)：面向 agent 的简要仓库地图和操作契约。
-- [HUMAN.MD](/Users/sfc/Documents/projects/engine/HUMAN.MD)：面向人类的协作护栏。
+- [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md)：规范任务台账。
+- [INBOX.md](/Users/sfc/Documents/projects/engine/INBOX.md)：等待人类决定的 issue 与建议收件箱。
 - [docs/README.md](/Users/sfc/Documents/projects/engine/docs/README.md)：完整英文文档索引。
 - [docs/architecture/README.md](/Users/sfc/Documents/projects/engine/docs/architecture/README.md)：架构导航。
 - [docs/operations/README.md](/Users/sfc/Documents/projects/engine/docs/operations/README.md)：运行手册与开发策略。
+- [docs/operations/human-collaboration.md](/Users/sfc/Documents/projects/engine/docs/operations/human-collaboration.md)：详细的人类协作规则。
 - [docs/agent/README.md](/Users/sfc/Documents/projects/engine/docs/agent/README.md)：规范 prompt 与 schema 资产。
 
-## 自治循环
+## 任务驱动工作流
 
-自治 harness 由 [scripts/agent_loop.py](/Users/sfc/Documents/projects/engine/scripts/agent_loop.py) 驱动。
+任务由 [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md) 管理。监工模型读取任务，在人类指定任务后，通过命令行调用 `claude` 和 `codex` 完成各阶段工作，并将进展写回 `tasks.md`。
 
-常用命令：
+详见 [AGENTS.md](/Users/sfc/Documents/projects/engine/AGENTS.md)。
 
-```bash
-python3 scripts/agent_loop.py doctor
-python3 scripts/agent_loop.py smoke-runner --runner codex
-python3 scripts/agent_loop.py step --runner codex
-python3 scripts/agent_loop.py run --runner codex --max-iterations 1
-python3 scripts/agent_loop.py run --runner claude --max-iterations 8
-python3 scripts/agent_loop.py sync-doc-cn
-```
+## 给人类的提示
 
-在满足以下条件前，循环不会进入完整自治模式：
-
-- 仓库根目录是有效的 Git 仓库。
-- 所有嵌套仓库元数据都已经处理或显式归档到活跃模块路径之外。
-- 必需的 CLI runner 可用。
-- 机器状态文件通过校验。
-
-当前仓库将 Codex 配置为尽力而为的生产 runner：模型固定为 `gpt-5.4`，启用高推理强度，并对瞬时的供应商或网络错误执行重试和退避。
+- 在 [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md) 里分配或调整任务优先级。
+- 直接告诉监工停止或继续，不再依赖单独的暂停文件。
+- 在推送、合并或发布前先审查 diff 并补充验证。
+- 在 [INBOX.md](/Users/sfc/Documents/projects/engine/INBOX.md) 查看 agent 发现但需要人类判断的问题与建议。
 
 ## 中文镜像
 

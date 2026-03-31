@@ -4,6 +4,7 @@ This is the canonical English documentation entrypoint for Easy Engine.
 
 ## Start Here
 
+- [../README.md](/Users/sfc/Documents/projects/engine/README.md)
 - [architecture/README.md](/Users/sfc/Documents/projects/engine/docs/architecture/README.md)
 - [operations/README.md](/Users/sfc/Documents/projects/engine/docs/operations/README.md)
 - [agent/README.md](/Users/sfc/Documents/projects/engine/docs/agent/README.md)

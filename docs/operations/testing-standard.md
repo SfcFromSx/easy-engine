@@ -8,7 +8,7 @@ Every task must finish with evidence, not only implementation.
 
 Agents should validate at four layers when relevant:
 
-1. task-scoped automated commands from `tasks.json`
+1. task-scoped automated commands from the task entry in `tasks.md`
 2. scenario-level behavior for the changed path
 3. structured record or API artifact verification after the scenario runs
 4. local refresh and service health confirmation when the harness applies them
@@ -17,7 +17,7 @@ If a task changes structured telemetry, reports, traces, or operator-visible JSO
 
 ## Required Checklist
 
-- Read the task's `validation_commands` in [tasks.json](/Users/sfc/Documents/projects/engine/tasks.json) before implementation.
+- Read the task's `validation_commands` in [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md) before implementation.
 - Keep validation module-scoped unless the task changes a shared contract.
 - Prefer adding or extending automated tests in the touched module over manual-only verification.
 - When a scenario produces structured records, query them after execution and assert they exist with the expected shape and values.
@@ -44,13 +44,6 @@ mvn -q -f query/pom.xml test
 ```bash
 mvn -q -f manager/pom.xml test
 npm --prefix manager/frontend run build
-```
-
-### Harness
-
-```bash
-python3 -m unittest -v tests/test_agent_loop.py
-python3 scripts/agent_loop.py doctor
 ```
 
 ## Module Inventory
@@ -122,17 +115,6 @@ Manager-specific checklist:
 - If a task changes schema-backed fields, prefer a Flyway-backed integration path, not only `create-drop` tests.
 - For frontend tasks, confirm the backend contract is unchanged or explicitly updated in docs.
 
-### Harness
-
-Current harness inventory:
-
-- [`tests/test_agent_loop.py`](/Users/sfc/Documents/projects/engine/tests/test_agent_loop.py): run-loop, lock, retry, doctor, and process-supervision behavior.
-
-Harness-specific checklist:
-
-- Any change to loop lifecycle, locking, retries, or detached supervision must extend `tests/test_agent_loop.py`.
-- Verify `python3 scripts/agent_loop.py doctor` after harness changes.
-
 ## Required Structured Artifact Checks
 
 Use these as the default expectations when a task touches structured output.
@@ -165,6 +147,6 @@ Escalate beyond the default module command set when:
 - the task changes cross-service contracts
 - the task changes structured records consumed by another module
 - the task changes active-run, reconciliation, or recovery logic
-- the task changes agent-loop or machine-state behavior
+- the task changes harness workflow or machine-state behavior
 
 When in doubt, prefer one realistic integration scenario plus explicit structured-artifact assertions over adding another shallow status-only test.

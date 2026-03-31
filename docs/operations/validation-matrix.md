@@ -1,6 +1,6 @@
 # Validation Matrix
 
-The autonomous loop should prefer module-scoped validation over blanket repository-wide validation unless a task changes shared contracts.
+The foreman workflow should prefer module-scoped validation over blanket repository-wide validation unless a task changes shared contracts.
 
 Use [testing-standard.md](/Users/sfc/Documents/projects/engine/docs/operations/testing-standard.md) for the required checklist on scenario coverage and structured-artifact verification after those commands run.
 

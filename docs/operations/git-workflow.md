@@ -1,8 +1,8 @@
 # Git Workflow
 
-The autonomous loop uses the repository root as the canonical Git boundary.
+The foreman workflow uses the repository root as the canonical Git boundary.
 
-## Required State for Full Autonomous Mode
+## Required State
 
 - `/Users/sfc/Documents/projects/engine/.git` exists and is the active repository root.
 - `git rev-parse --show-toplevel` resolves to `/Users/sfc/Documents/projects/engine`.
@@ -22,4 +22,6 @@ The previous nested `kylin-jdbc-cache/.git` metadata has been archived under `.a
 
 - One verified task per commit.
 - Use long-lived run branches such as `codex/autoloop/<timestamp>`.
-- Do not force-push active autonomous branches.
+- Do not auto-push after commit.
+- Do not force-push active branches.
+- Humans review before push, merge, or publish.

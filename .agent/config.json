@@ -3,13 +3,37 @@
   "branch_prefix": "codex/autoloop",
   "commit_message_template": "autoloop: {task_id} {title}",
   "push_remote": "origin",
-  "auto_push_after_commit": true,
+  "auto_push_after_commit": false,
   "todo_warning_threshold": 3,
   "max_iterations": 8,
   "lock_poll_seconds": 5,
   "max_task_attempts": 3,
   "doc_gardening_interval": 2,
   "runner_timeout_seconds": 300,
+  "default_stage_routing": {
+    "orchestrator": {
+      "runner": "claude",
+      "model": "opus4.6"
+    },
+    "implementer": {
+      "runner": "codex",
+      "model": "gpt-5.4"
+    },
+    "verifier": {
+      "runner": "codex",
+      "model": "gpt-5.4"
+    },
+    "doc_gardener": {
+      "runner": "codex",
+      "model": "gpt-5.4"
+    }
+  },
+  "frontend_stage_overrides": {
+    "implementer": {
+      "runner": "claude",
+      "model": "opus4.6"
+    }
+  },
   "architecture_trigger_paths": [
     "docs/architecture/overview.md",
     "docs/architecture/service-capabilities.md",
@@ -21,11 +45,6 @@
       "source": "README.md",
       "target": "doc-CN/README.md",
       "title": "README"
-    },
-    {
-      "source": "HUMAN.MD",
-      "target": "doc-CN/HUMAN.md",
-      "title": "HUMAN"
     },
     {
       "source": "docs/operations/local-development.md",
@@ -115,8 +134,8 @@
     },
     "claude": {
       "bin": "claude",
-      "model": "sonnet",
-      "timeout_seconds": 180,
+      "model": "opus4.6",
+      "timeout_seconds": 1800,
       "retry_attempts": 1,
       "retry_backoff_seconds": 5,
       "retry_on_timeout": false,

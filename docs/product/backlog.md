@@ -53,5 +53,5 @@ This file merges the durable backlog signals from the previous root `todo.md` an
 
 ## Issue Intake
 
-- `ISSUE-COLLECT-001`: collect newly discovered but still unconfirmed issues into [issues-inbox.md](/Users/sfc/Documents/projects/engine/docs/product/issues-inbox.md) for human review before task creation.
+- `ISSUE-COLLECT-001`: collect newly discovered but still unconfirmed issues into [INBOX.md](/Users/sfc/Documents/projects/engine/INBOX.md) for human review before task creation.
 - Harness-framework issues should be collected into the inbox first and only turned into implementation work after explicit human confirmation.

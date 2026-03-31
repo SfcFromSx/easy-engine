@@ -13,7 +13,7 @@ Doc gardening keeps the canonical docs current without turning `AGENTS.md` into 
 
 ## Trigger Points
 
-- After every two successful autonomous tasks.
+- After every two successful verified tasks.
 - Whenever architecture or interface files change.
 - Whenever a verifier rejection reveals missing or stale docs.
 
@@ -22,3 +22,8 @@ Doc gardening keeps the canonical docs current without turning `AGENTS.md` into 
 - `docs/` is canonical.
 - `doc-CN/` is a selective mirror for human-facing docs.
 - Do not introduce a parallel legacy English doc tree.
+
+## Runner
+
+- The default doc-gardener runner is `codex`.
+- Run doc gardening only after implementation and verification are complete.

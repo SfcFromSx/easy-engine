@@ -4,7 +4,7 @@ This file is a cheap-to-refresh context snapshot for agents.
 
 ## Top-Level Layout
 
-- `.agent/`: autonomous loop config, lock, and history
+- `.agent/`: harness config, history, and runtime logs
 - `benchmark/`: benchmark backend and frontend
 - `doc-CN/`: selected Chinese mirrors
 - `docker/`: local infrastructure assets
@@ -20,4 +20,4 @@ This file is a cheap-to-refresh context snapshot for agents.
 - Root Git is established at `/Users/sfc/Documents/projects/engine/.git`.
 - Archived nested repository metadata for `kylin-jdbc-cache` lives under `.agent/runtime/archived-git/`.
 - There is no supported legacy English documentation tree outside `docs/`.
-- The root keeps only the minimal human and agent entrypoints.
+- The root keeps only the minimal human and agent entrypoints: `README.md`, `AGENTS.md`, `tasks.md`, and `INBOX.md`.

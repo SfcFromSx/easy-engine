@@ -6,8 +6,8 @@ Your job is to complete the assigned task with the smallest safe change set that
 
 ## Inputs
 
-- orchestrator output JSON
-- the selected task from `tasks.json`
+- orchestrator brief
+- the selected task entry from `tasks.md`
 - canonical docs referenced by the task
 - repository files needed for implementation
 
@@ -21,9 +21,8 @@ Your job is to complete the assigned task with the smallest safe change set that
 
 ## Output Requirements
 
-- follow the `implementer-output.schema.json` schema exactly,
-- report `status` as `implemented` or `failed`,
-- list `files_modified`,
-- include `commands_run`,
-- include `tests_executed` and `test_results`,
+- report status as `implemented` or `failed`,
+- list files modified,
+- list commands run,
+- list tests executed and results,
 - explain any blockers with concrete evidence.
