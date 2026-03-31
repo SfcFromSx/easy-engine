@@ -1,0 +1,83 @@
+.datasource-table :deep(.el-table__row) {
+  height: 40px !important;
+}
+
+.page-button-icon {
+  margin-right: 4px;
+}
+
+.datasource-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.datasource-tag {
+  font-size: 10px;
+}
+
+.datasource-meta {
+  color: var(--color-subtitle);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.datasource-code {
+  display: inline-block;
+  max-width: 100%;
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1;
+}
+
+.pool-stack {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+}
+
+.form-span-2 {
+  grid-column: span 2;
+}
+
+.default-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+}
+
+.mobile-record-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mobile-record-label {
+  display: inline-block;
+  margin-bottom: 4px;
+  color: var(--color-subtitle);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 900px) {
+  .form-grid,
+  .mobile-record-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-span-2 {
+    grid-column: span 1;
+  }
+}

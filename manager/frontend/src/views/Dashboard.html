@@ -1,0 +1,151 @@
+<section class="page-shell">
+  <div class="page-header">
+    <div class="title-group">
+      <h1>{{ t('dashboard.title') }}</h1>
+      <p class="subtitle">{{ t('dashboard.subtitle') }}</p>
+    </div>
+    <div class="page-header-actions system-status">
+      <el-tag :type="healthTagType" effect="plain" class="status-badge">
+        <refresh-cw :size="14" class="status-badge-icon" :class="{ spin: refreshing }" />
+        <span class="status-badge-text">{{ healthText }}</span>
+      </el-tag>
+    </div>
+  </div>
+
+  <el-alert
+    v-if="summaryState.error"
+    class="status-banner"
+    type="error"
+    show-icon
+    :closable="false"
+    :title="summaryState.error"
+  />
+
+  <el-row :gutter="20" class="mb-24">
+    <el-col :xs="12" :sm="12" :lg="6">
+      <div class="glass-card stat-card">
+        <div class="stat-icon bg-blue">
+          <activity :size="24" />
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">{{ t('dashboard.totalTraces') }}</div>
+          <div class="stat-value">{{ totalTracesValue }}</div>
+          <div class="stats-grid-note">{{ lastTraceNote }}</div>
+        </div>
+      </div>
+    </el-col>
+    <el-col :xs="12" :sm="12" :lg="6">
+      <div class="glass-card stat-card">
+        <div class="stat-icon bg-purple">
+          <database :size="24" />
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">{{ t('dashboard.patternCount') }}</div>
+          <div class="stat-value">{{ patternCountValue }}</div>
+          <div class="stats-grid-note">{{ patternNote }}</div>
+        </div>
+      </div>
+    </el-col>
+    <el-col :xs="12" :sm="12" :lg="6">
+      <div class="glass-card stat-card">
+        <div class="stat-icon bg-emerald">
+          <rocket :size="24" />
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">{{ t('dashboard.activeAcceleration') }}</div>
+          <div class="stat-value">{{ activeAccelerationValue }}</div>
+          <div class="stats-grid-note">{{ accelerationNote }}</div>
+        </div>
+      </div>
+    </el-col>
+    <el-col :xs="12" :sm="12" :lg="6">
+      <div class="glass-card stat-card">
+        <div class="stat-icon bg-amber">
+          <target :size="24" />
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">{{ t('dashboard.parseSuccessRate') }}</div>
+          <div class="stat-value">{{ parseSuccessRate }}</div>
+          <div class="stats-grid-note">{{ rateNote }}</div>
+        </div>
+      </div>
+    </el-col>
+  </el-row>
+
+  <el-row :gutter="20">
+    <el-col :xs="24" :lg="12" class="dashboard-panel-column">
+      <div
+        v-loading="tracesState.loading"
+        class="glass-card panel-card dashboard-panel-card"
+        :element-loading-text="t('dashboard.refreshing')"
+      >
+        <div class="card-header">
+          <h3>{{ t('dashboard.recentTraces') }}</h3>
+          <el-button text :loading="refreshing" @click="load">{{ t('common.refresh') }}</el-button>
+        </div>
+        <div class="dashboard-panel-body">
+          <el-alert
+            v-if="tracesState.error"
+            class="panel-status"
+            type="error"
+            show-icon
+            :closable="false"
+            :title="tracesState.error"
+          />
+          <el-empty v-if="showRecentTracesEmpty" :description="t('dashboard.noRecentTraces')" />
+          <div v-else-if="recentTraces.length" class="panel-list">
+            <div v-for="trace in recentTraces" :key="trace.id" class="panel-item">
+              <div>
+                <div class="panel-item-title panel-item-title--inline">
+                  <span>{{ trace.datasourceName || t('common.unnamedDatasource') }}</span>
+                  <span class="panel-item-separator">·</span>
+                  <span>{{ shortFingerprint(trace.sqlFingerprint) }}</span>
+                </div>
+                <div class="panel-item-meta">{{ trace.originalSql || t('common.noSqlText') }}</div>
+              </div>
+              <div class="panel-item-side">
+                <div class="panel-item-title">{{ formatDuration(trace.durationMs) }}</div>
+                <div class="panel-item-meta">{{ formatDateTime(trace.receivedAt) }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </el-col>
+    <el-col :xs="24" :lg="12" class="dashboard-panel-column">
+      <div
+        v-loading="patternsState.loading"
+        class="glass-card panel-card dashboard-panel-card"
+        :element-loading-text="t('dashboard.refreshing')"
+      >
+        <div class="card-header">
+          <h3>{{ t('dashboard.hotPatterns') }}</h3>
+          <el-tag size="small" type="info">{{ t('dashboard.top5') }}</el-tag>
+        </div>
+        <div class="dashboard-panel-body">
+          <el-alert
+            v-if="patternsState.error"
+            class="panel-status"
+            type="error"
+            show-icon
+            :closable="false"
+            :title="patternsState.error"
+          />
+          <el-empty v-if="showTopPatternsEmpty" :description="t('dashboard.noPatterns')" />
+          <div v-else-if="topPatterns.length" class="panel-list">
+            <div v-for="pattern in topPatterns" :key="pattern.id" class="panel-item">
+              <div>
+                <div class="panel-item-title">{{ shortFingerprint(pattern.sqlFingerprint) }}</div>
+                <div class="panel-item-meta">{{ pattern.cleanSqlSample || t('common.noData') }}</div>
+              </div>
+              <div class="panel-item-side">
+                <div class="panel-item-title">{{ pattern.executionCount }}</div>
+                <div class="panel-item-meta">{{ formatDuration(Math.round(pattern.avgDurationMs || 0)) }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </el-col>
+  </el-row>
+</section>

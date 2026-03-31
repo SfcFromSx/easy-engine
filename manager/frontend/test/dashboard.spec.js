@@ -29,7 +29,7 @@ describe('Dashboard view', () => {
   })
 
   test('loads summary, patterns, and traces and renders healthy metrics', async () => {
-    // Covers src/views/Dashboard.vue:applySummary, src/views/Dashboard.vue:loadSummary, src/views/Dashboard.vue:loadPatterns, src/views/Dashboard.vue:loadTraces, src/views/Dashboard.vue:metricValue, and src/views/Dashboard.vue:metricPercent.
+    // Covers src/views/Dashboard.js:applySummary, src/views/Dashboard.js:loadSummary, src/views/Dashboard.js:loadPatterns, src/views/Dashboard.js:loadTraces, src/views/Dashboard.js:metricValue, and src/views/Dashboard.js:metricPercent.
     client.get.mockImplementation((url) => {
       if (url === API_ENDPOINTS.STATS_SUMMARY) {
         return Promise.resolve({
@@ -72,7 +72,7 @@ describe('Dashboard view', () => {
   })
 
   test('shows summary failure state and fallback note text before first successful load', async () => {
-    // Covers src/views/Dashboard.vue:loadSummary error handling and derived health text/tag state.
+    // Covers src/views/Dashboard.js:loadSummary error handling and derived health text/tag state.
     client.get.mockImplementation((url) => {
       if (url === API_ENDPOINTS.STATS_SUMMARY) {
         return Promise.reject({ response: { data: { message: 'summary exploded' } } })
@@ -90,7 +90,7 @@ describe('Dashboard view', () => {
   })
 
   test('shows the hot patterns empty state when the API has no live aggregates yet', async () => {
-    // Covers src/views/Dashboard.vue empty-state rendering for recent traces and hot patterns.
+    // Covers src/views/Dashboard.js empty-state rendering for recent traces and hot patterns.
     client.get.mockImplementation((url) => {
       if (url === API_ENDPOINTS.STATS_SUMMARY) {
         return Promise.resolve({
@@ -118,7 +118,7 @@ describe('Dashboard view', () => {
   })
 
   test('keeps recent traces and hot patterns panels on matching half-width columns', async () => {
-    // Covers src/views/Dashboard.vue dashboard panel layout props for matched column sizing.
+    // Covers src/views/Dashboard.js dashboard panel layout props for matched column sizing.
     client.get.mockResolvedValue({ data: { content: [] } })
 
     const { wrapper } = await mountView(Dashboard)

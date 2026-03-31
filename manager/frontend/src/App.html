@@ -1,0 +1,59 @@
+<el-container class="main-layout">
+  <el-aside width="240px">
+    <div class="brand">
+      <div class="logo-box">
+        <zap :size="20" color="#3b82f6" />
+      </div>
+      <div class="brand-text">
+        <div class="title">Easy Engine</div>
+        <div class="subtitle">{{ t('app.subtitle') }}</div>
+      </div>
+    </div>
+
+    <div class="menu-label">{{ t('app.section') }}</div>
+    <el-menu router :default-active="menuActive">
+      <el-menu-item index="/">
+        <el-icon><layout-dashboard :size="18" /></el-icon>
+        <span>{{ t('nav.dashboard') }}</span>
+      </el-menu-item>
+      <el-menu-item index="/traces">
+        <el-icon><activity :size="18" /></el-icon>
+        <span>{{ t('nav.traces') }}</span>
+      </el-menu-item>
+      <el-menu-item index="/patterns">
+        <el-icon><terminal :size="18" /></el-icon>
+        <span>{{ t('nav.patterns') }}</span>
+      </el-menu-item>
+      <el-menu-item index="/query-datasources">
+        <el-icon><server :size="18" /></el-icon>
+        <span>{{ t('nav.datasources') }}</span>
+      </el-menu-item>
+      <el-menu-item index="/acceleration">
+        <el-icon><rocket :size="18" /></el-icon>
+        <span>{{ t('nav.acceleration') }}</span>
+      </el-menu-item>
+    </el-menu>
+
+    <div class="sidebar-footer">
+      <div class="lang-switcher">
+        <el-radio-group v-model="locale" size="small" class="custom-radio">
+          <el-radio-button value="en">{{ t('app.english') }}</el-radio-button>
+          <el-radio-button value="zh">{{ t('app.chinese') }}</el-radio-button>
+        </el-radio-group>
+      </div>
+      <div class="status-indicator">
+        <span class="dot dot-online"></span>
+        <span>{{ t('app.console') }}</span>
+      </div>
+    </div>
+  </el-aside>
+  <el-main>
+    <div class="content-shell">
+      <router-view v-slot="{ Component }">
+        <transition name="fade" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
+    </div>
+  </el-main>
+</el-container>

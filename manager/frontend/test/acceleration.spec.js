@@ -44,7 +44,7 @@ describe('Acceleration view', () => {
   })
 
   test('loads list and summary data and computes disabled counts', async () => {
-    // Covers src/views/Acceleration.vue:load and route-backed list params.
+    // Covers src/views/Acceleration.js:load and route-backed list params.
     client.get.mockImplementation((url) => {
       if (url === API_ENDPOINTS.STATS_SUMMARY) {
         return Promise.resolve({ data: { activeAccelerationCount: 1, draftAccelerationCount: 1 } })
@@ -73,7 +73,7 @@ describe('Acceleration view', () => {
   })
 
   test('validates manual creation before posting', async () => {
-    // Covers src/views/Acceleration.vue:openCreate and src/views/Acceleration.vue:save validation branch.
+    // Covers src/views/Acceleration.js:openCreate and src/views/Acceleration.js:save validation branch.
     client.get.mockImplementation((url) => {
       if (url === API_ENDPOINTS.STATS_SUMMARY) {
         return Promise.resolve({ data: { activeAccelerationCount: 0, draftAccelerationCount: 0 } })
@@ -96,7 +96,7 @@ describe('Acceleration view', () => {
   })
 
   test('toggles activation and uses the status endpoint', async () => {
-    // Covers src/views/Acceleration.vue:toggleStatus.
+    // Covers src/views/Acceleration.js:toggleStatus.
     client.get.mockImplementation((url) => {
       if (url === API_ENDPOINTS.STATS_SUMMARY) {
         return Promise.resolve({ data: { activeAccelerationCount: 0, draftAccelerationCount: 1 } })
@@ -122,7 +122,7 @@ describe('Acceleration view', () => {
   })
 
   test('saves edited rows with a public schema fallback and removes rows', async () => {
-    // Covers src/views/Acceleration.vue:edit, src/views/Acceleration.vue:save success path, and src/views/Acceleration.vue:remove.
+    // Covers src/views/Acceleration.js:edit, src/views/Acceleration.js:save success path, and src/views/Acceleration.js:remove.
     client.get.mockImplementation((url) => {
       if (url === API_ENDPOINTS.STATS_SUMMARY) {
         return Promise.resolve({ data: { activeAccelerationCount: 0, draftAccelerationCount: 1 } })
@@ -162,7 +162,7 @@ describe('Acceleration view', () => {
   })
 
   test('clears route-backed filters before reloading the list', async () => {
-    // Covers src/views/Acceleration.vue:clearFilter and route-backed query reset.
+    // Covers src/views/Acceleration.js:clearFilter and route-backed query reset.
     client.get.mockImplementation((url) => {
       if (url === API_ENDPOINTS.STATS_SUMMARY) {
         return Promise.resolve({ data: { activeAccelerationCount: 0, draftAccelerationCount: 0 } })

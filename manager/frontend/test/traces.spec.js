@@ -26,7 +26,7 @@ describe('Traces view', () => {
   })
 
   test('loads using route-backed filters and updates the route when filtering', async () => {
-    // Covers src/views/Traces.vue:load, src/views/Traces.vue:buildQuery, src/views/Traces.vue:applyFilter, and route-backed filter normalization.
+    // Covers src/views/Traces.js:load, src/views/Traces.js:buildQuery, src/views/Traces.js:applyFilter, and route-backed filter normalization.
     client.get.mockResolvedValue({
       data: {
         content: [{ id: 1, datasourceName: 'default', sqlFingerprint: 'fp-1', originalSql: 'SELECT 1', durationMs: 20, receivedAt: '2026-03-31T00:00:00Z' }],
@@ -56,7 +56,7 @@ describe('Traces view', () => {
   })
 
   test('clears the filter and resets rows after a failed load', async () => {
-    // Covers src/views/Traces.vue:clearFilter, src/views/Traces.vue:statusType, src/views/Traces.vue:sourceFlagType, and src/views/Traces.vue:load error handling.
+    // Covers src/views/Traces.js:clearFilter, src/views/Traces.js:statusType, src/views/Traces.js:sourceFlagType, and src/views/Traces.js:load error handling.
     client.get
       .mockResolvedValueOnce({
         data: {

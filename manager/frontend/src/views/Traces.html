@@ -1,0 +1,207 @@
+<section class="page-shell">
+  <div class="page-header">
+    <div class="title-group">
+      <h1>{{ t('traces.title') }}</h1>
+      <p class="subtitle">{{ t('traces.subtitle') }}</p>
+    </div>
+    <div class="page-header-actions">
+      <el-button @click="load" :loading="loading">
+        <el-icon><refresh-cw :size="16" /></el-icon>
+      </el-button>
+    </div>
+  </div>
+
+  <el-alert
+    v-if="error"
+    class="status-banner"
+    type="error"
+    show-icon
+    :closable="false"
+    :title="error"
+  />
+
+  <div class="glass-card table-card">
+    <div class="filter-bar">
+      <div class="filter-controls">
+        <el-input
+          v-model="filterDraft.fingerprint"
+          class="filter-input"
+          clearable
+          :placeholder="t('traces.filterPlaceholder')"
+          @keyup.enter="applyFilter"
+        >
+          <template #prefix>
+            <terminal :size="14" />
+          </template>
+        </el-input>
+        <el-input
+          v-model="filterDraft.datasource"
+          class="filter-input"
+          clearable
+          :placeholder="t('traces.filterDatasourcePlaceholder')"
+          @keyup.enter="applyFilter"
+        />
+        <el-select v-model="filterDraft.sourceFlag" class="filter-select" clearable :placeholder="t('traces.allSourceFlags')">
+          <el-option :label="t('traces.allSourceFlags')" value="" />
+          <el-option label="SEED" value="SEED" />
+          <el-option label="SELF" value="SELF" />
+          <el-option label="JDBC" value="JDBC" />
+        </el-select>
+        <el-select v-model="filterDraft.cacheHit" class="filter-select" clearable :placeholder="t('traces.allCacheStates')">
+          <el-option :label="t('traces.allCacheStates')" value="" />
+          <el-option :label="t('traces.cacheHitOnly')" value="true" />
+          <el-option :label="t('traces.cacheMissOnly')" value="false" />
+        </el-select>
+        <el-select v-model="filterDraft.parseStatus" class="filter-select" clearable :placeholder="t('traces.allParseStates')">
+          <el-option :label="t('traces.allParseStates')" value="" />
+          <el-option label="OK" value="OK" />
+          <el-option label="ERROR" value="ERROR" />
+          <el-option label="SKIPPED" value="SKIPPED" />
+        </el-select>
+        <el-input
+          v-model="filterDraft.sqlKeyword"
+          class="filter-input"
+          clearable
+          :placeholder="t('traces.filterSqlPlaceholder')"
+          @keyup.enter="applyFilter"
+        />
+        <el-button type="primary" plain @click="applyFilter">
+          {{ t('common.search') }}
+        </el-button>
+      </div>
+      <div v-if="hasActiveFilters" class="filter-actions">
+        <div class="filter-summary">
+          <terminal :size="14" />
+          <span>{{ t('traces.filteredBy') }}</span>
+          <el-tag v-for="entry in activeFilterEntries" :key="entry.label" size="small" effect="plain">
+            {{ entry.label }}: {{ entry.value }}
+          </el-tag>
+        </div>
+        <el-button text @click="clearFilter">{{ t('common.clearFilter') }}</el-button>
+      </div>
+    </div>
+
+    <div class="table-content" v-loading="loading">
+      <div class="table-shell desktop-table">
+        <el-table class="data-table traces-table" :data="rows" stripe row-key="id" :empty-text="t('traces.empty')">
+          <el-table-column :label="t('traces.time')" width="180">
+            <template #default="{ row }">
+              <span class="text-small">{{ formatDateTime(row.receivedAt) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('traces.flag')" width="92" align="center">
+            <template #default="{ row }">
+              <el-tag size="small" effect="plain" :type="sourceFlagType(row.sourceFlag)">
+                {{ row.sourceFlag || '--' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('traces.datasource')" width="160">
+            <template #default="{ row }">
+              <el-tag size="small" :type="row.datasourceType?.toUpperCase() === 'KYLIN' ? 'primary' : 'warning'">
+                {{ row.datasourceName || t('common.unnamedDatasource') }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('traces.duration')" width="100">
+            <template #default="{ row }">
+              <span :class="['status-text', 'text-mono', (row.durationMs || 0) > 500 ? 'text-amber' : 'text-blue']">
+                {{ formatDuration(row.durationMs) }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('traces.cache')" width="80">
+            <template #default="{ row }">
+              <el-tag v-if="row.cacheHit" type="success" size="small" effect="plain">HIT</el-tag>
+              <el-tag v-else type="info" size="small" effect="plain">MISS</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('traces.parseResult')" width="110">
+            <template #default="{ row }">
+              <el-tag :type="statusType(row.parseStatus)" size="small">
+                {{ row.parseStatus || t('common.noData') }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('traces.fingerprint')" width="160">
+            <template #default="{ row }">
+              <el-link
+                v-if="row.sqlFingerprint"
+                type="primary"
+                class="text-mono trace-fingerprint-link"
+                @click="goPattern(row.sqlFingerprint)"
+              >
+                {{ shortFingerprint(row.sqlFingerprint) }}
+              </el-link>
+              <span v-else class="text-small">{{ t('traces.noFingerprint') }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('traces.sql')" min-width="320" show-overflow-tooltip>
+            <template #default="{ row }">
+              <code class="mini-code text-mono">{{ row.originalSql || '--' }}</code>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <div v-if="!loading && rows.length" class="mobile-records">
+        <article v-for="row in rows" :key="row.id" class="glass-card mobile-record">
+          <div class="mobile-record-header">
+            <div>
+              <div class="mobile-record-title">{{ row.datasourceName || t('common.unnamedDatasource') }}</div>
+              <div class="mobile-record-subtitle">{{ formatDateTime(row.receivedAt) }}</div>
+            </div>
+            <span :class="['status-text', (row.durationMs || 0) > 500 ? 'text-amber' : 'text-blue']">
+              {{ formatDuration(row.durationMs) }}
+            </span>
+          </div>
+
+          <div class="mobile-record-tags">
+            <el-tag size="small" effect="plain" :type="sourceFlagType(row.sourceFlag)">
+              {{ row.sourceFlag || '--' }}
+            </el-tag>
+            <el-tag size="small" :type="row.datasourceType?.toUpperCase() === 'KYLIN' ? 'primary' : 'warning'">
+              {{ row.datasourceType || t('common.noData') }}
+            </el-tag>
+            <el-tag v-if="row.cacheHit" type="success" size="small" effect="plain">HIT</el-tag>
+            <el-tag v-else type="info" size="small" effect="plain">MISS</el-tag>
+            <el-tag :type="statusType(row.parseStatus)" size="small">
+              {{ row.parseStatus || t('common.noData') }}
+            </el-tag>
+          </div>
+
+          <div class="mobile-record-field">
+            <span class="mobile-record-label">{{ t('traces.fingerprint') }}</span>
+            <div class="mobile-record-value">
+              <el-link v-if="row.sqlFingerprint" type="primary" class="trace-mobile-link" @click="goPattern(row.sqlFingerprint)">
+                <terminal :size="12" class="trace-mobile-link-icon" />
+                {{ shortFingerprint(row.sqlFingerprint) }}
+              </el-link>
+              <span v-else class="muted-text">{{ t('traces.noFingerprint') }}</span>
+            </div>
+          </div>
+
+          <div class="mobile-record-code">
+            <span class="mobile-record-label">{{ t('traces.sql') }}</span>
+            <code class="mini-code">{{ row.originalSql || '--' }}</code>
+          </div>
+
+          <div v-if="row.parseError" class="mini-muted">{{ t('traces.parseError', { message: row.parseError }) }}</div>
+        </article>
+      </div>
+
+      <el-empty v-else-if="!loading" class="mobile-only-empty" :description="t('traces.empty')" />
+    </div>
+
+    <div class="pagination-container">
+      <el-pagination
+        background
+        layout="total, prev, pager, next"
+        :total="total"
+        :page-size="size"
+        v-model:current-page="page"
+        @current-change="load"
+      />
+    </div>
+  </div>
+</section>

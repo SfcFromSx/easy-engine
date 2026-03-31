@@ -1,0 +1,38 @@
+.accel-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hint {
+  margin-top: 8px;
+  color: var(--color-subtitle);
+  font-size: 11px;
+}
+
+.page-button-icon {
+  margin-right: 4px;
+}
+
+.acceleration-schema-row {
+  gap: 8px;
+}
+
+.acceleration-source-tag {
+  font-size: 10px;
+}
+
+.acceleration-sql-preview {
+  font-size: 11px;
+}
+
+.row-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+:deep(.el-table .el-button--link) {
+  padding: 2px 0;
+  font-weight: 600;
+}

@@ -1,0 +1,177 @@
+<section class="page-shell">
+  <div class="page-header">
+    <div class="title-group">
+      <h1>{{ t('patterns.title') }}</h1>
+      <p class="subtitle">{{ t('patterns.subtitle') }}</p>
+    </div>
+    <div class="page-header-actions">
+      <el-button @click="load" :loading="loading">
+        <el-icon><refresh-cw :size="16" /></el-icon>
+      </el-button>
+    </div>
+  </div>
+
+  <el-alert
+    v-if="error"
+    class="status-banner"
+    type="error"
+    show-icon
+    :closable="false"
+    :title="error"
+  />
+
+  <div class="glass-card table-card">
+    <div class="filter-bar">
+      <div class="filter-controls">
+        <el-input
+          v-model="filterDraft.fingerprint"
+          class="filter-input"
+          clearable
+          :placeholder="t('patterns.filterPlaceholder')"
+          @keyup.enter="applyFilter"
+        >
+          <template #prefix>
+            <terminal :size="14" />
+          </template>
+        </el-input>
+        <el-input
+          v-model="filterDraft.sqlKeyword"
+          class="filter-input"
+          clearable
+          :placeholder="t('patterns.filterSqlPlaceholder')"
+          @keyup.enter="applyFilter"
+        />
+        <el-input
+          v-model="filterDraft.minExecutionCount"
+          class="filter-select"
+          clearable
+          :placeholder="t('patterns.minExecutionPlaceholder')"
+          @keyup.enter="applyFilter"
+        />
+        <el-button type="primary" plain @click="applyFilter">
+          {{ t('common.search') }}
+        </el-button>
+      </div>
+      <div v-if="hasActiveFilters" class="filter-actions">
+        <div class="filter-summary">
+          <terminal :size="14" />
+          <span>{{ t('patterns.filteredBy') }}</span>
+          <el-tag v-for="entry in activeFilterEntries" :key="entry.label" size="small" effect="plain">
+            {{ entry.label }}: {{ entry.value }}
+          </el-tag>
+        </div>
+        <el-button text @click="clearFilter">{{ t('common.viewAll') }}</el-button>
+      </div>
+    </div>
+
+    <div class="table-content" v-loading="loading">
+      <div class="table-shell desktop-table">
+        <el-table
+          class="data-table patterns-table"
+          :data="patterns"
+          stripe
+          row-key="id"
+          :empty-text="t('patterns.empty')"
+          :row-class-name="rowClassName"
+        >
+          <el-table-column prop="sqlFingerprint" :label="t('patterns.fingerprintId')" width="140">
+            <template #default="{ row }">
+              <code class="mini-code text-mono pattern-fingerprint-code">{{ shortFingerprint(row.sqlFingerprint, 12) }}</code>
+            </template>
+          </el-table-column>
+          <el-table-column prop="executionCount" :label="t('patterns.executionCount')" width="90" align="right">
+            <template #default="{ row }">
+              <span class="text-mono pattern-execution-count">{{ row.executionCount }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="avgDurationMs" :label="t('patterns.avgDuration')" width="100">
+            <template #default="{ row }">
+              <span :class="['status-text', 'text-mono', row.avgDurationMs > 300 ? 'text-amber' : 'text-blue']">
+                {{ Math.round(row.avgDurationMs || 0) }}ms
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="cleanSqlSample" :label="t('patterns.sampleSql')" min-width="320" show-overflow-tooltip>
+            <template #default="{ row }">
+              <code class="text-mono text-small">{{ row.cleanSqlSample || t('common.noData') }}</code>
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('patterns.actions')" width="180">
+            <template #default="{ row }">
+              <div class="row-actions">
+                <el-button size="small" type="primary" plain @click="goTraces(row)">{{ t('patterns.viewTraces') }}</el-button>
+                <el-button size="small" type="success" plain @click="openDialog(row)">{{ t('patterns.accel') }}</el-button>
+              </div>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <div v-if="!loading && patterns.length" class="mobile-records">
+        <article
+          v-for="row in patterns"
+          :key="row.id"
+          :class="['glass-card', 'mobile-record', { 'mobile-record--selected': row.sqlFingerprint === activeFilters.fingerprint }]"
+        >
+          <div class="mobile-record-header">
+            <div>
+              <div class="mobile-record-title">{{ shortFingerprint(row.sqlFingerprint, 16) }}</div>
+              <div class="mobile-record-subtitle">{{ row.cleanSqlSample || t('common.noData') }}</div>
+            </div>
+            <span :class="['status-text', row.avgDurationMs > 300 ? 'text-amber' : 'text-blue']">
+              {{ Math.round(row.avgDurationMs || 0) }}ms
+            </span>
+          </div>
+
+          <div class="mobile-record-grid">
+            <div class="mobile-record-field">
+              <span class="mobile-record-label">{{ t('patterns.executionCount') }}</span>
+              <span class="mobile-record-value">{{ row.executionCount }}</span>
+            </div>
+            <div class="mobile-record-field">
+              <span class="mobile-record-label">{{ t('patterns.fingerprintId') }}</span>
+              <code class="mini-code">{{ shortFingerprint(row.sqlFingerprint, 12) }}</code>
+            </div>
+          </div>
+
+          <div class="mobile-record-actions">
+            <el-button size="small" type="primary" plain @click="goTraces(row)">{{ t('patterns.viewTraces') }}</el-button>
+            <el-button size="small" type="success" @click="openDialog(row)">{{ t('patterns.createAcceleration') }}</el-button>
+          </div>
+        </article>
+      </div>
+
+      <el-empty v-else-if="!loading" class="mobile-only-empty" :description="t('patterns.empty')" />
+    </div>
+
+    <div class="pagination-container">
+      <el-pagination
+        background
+        layout="total, sizes, prev, pager, next"
+        :total="total"
+        :page-size="size"
+        :page-sizes="[10, 20, 50]"
+        v-model:current-page="page"
+        v-model:page-size="size"
+        @current-change="load"
+        @size-change="load"
+      />
+    </div>
+
+    <el-dialog v-model="visible" :title="t('patterns.dialogTitle')" width="480px">
+      <el-form :model="form" label-width="100px" label-position="top">
+        <el-form-item :label="t('patterns.schema')">
+          <el-input v-model="form.schemaName" placeholder="public" />
+        </el-form-item>
+        <el-form-item :label="t('patterns.table')">
+          <el-input v-model="form.tableName" placeholder="rollup_xxx" />
+        </el-form-item>
+        <div class="hint">{{ t('patterns.hint') }}</div>
+      </el-form>
+      <template #footer>
+        <el-button @click="visible = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="submitting" @click="submit">{{ t('common.create') }}</el-button>
+      </template>
+    </el-dialog>
+  </div>
+</section>

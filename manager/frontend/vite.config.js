@@ -13,11 +13,12 @@ export default defineConfig({
       reportsDirectory: './coverage',
       include: [
         'src/utils/formatters.js',
-        'src/views/Dashboard.vue',
-        'src/views/Traces.vue',
-        'src/views/Patterns.vue',
-        'src/views/QueryDatasources.vue',
-        'src/views/Acceleration.vue'
+        'src/App.js',
+        'src/views/Dashboard.js',
+        'src/views/Traces.js',
+        'src/views/Patterns.js',
+        'src/views/QueryDatasources.js',
+        'src/views/Acceleration.js'
       ]
     }
   },

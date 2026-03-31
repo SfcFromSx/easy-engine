@@ -1,0 +1,14 @@
+.hint {
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.pattern-fingerprint-code {
+  font-size: 11px;
+}
+
+.pattern-execution-count {
+  font-weight: 700;
+  color: var(--primary-color);
+}

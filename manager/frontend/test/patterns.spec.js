@@ -38,7 +38,7 @@ describe('Patterns view', () => {
   })
 
   test('loads route-backed filters and highlights the matching mobile record', async () => {
-    // Covers src/views/Patterns.vue:load, src/views/Patterns.vue:rowClassName, and route-backed filter normalization.
+    // Covers src/views/Patterns.js:load, src/views/Patterns.js:rowClassName, and route-backed filter normalization.
     client.get.mockResolvedValue({
       data: {
         content: [{ id: 1, sqlFingerprint: 'fp-1', cleanSqlSample: 'SELECT 1', executionCount: 5, avgDurationMs: 80 }],
@@ -56,7 +56,7 @@ describe('Patterns view', () => {
   })
 
   test('opens the dialog with default rollup values and submits an acceleration draft', async () => {
-    // Covers src/views/Patterns.vue:openDialog, src/views/Patterns.vue:submit, and src/views/Patterns.vue:goTraces.
+    // Covers src/views/Patterns.js:openDialog, src/views/Patterns.js:submit, and src/views/Patterns.js:goTraces.
     client.get.mockResolvedValue({
       data: {
         content: [{ id: 9, sqlFingerprint: 'abcdef1234567890', cleanSqlSample: 'SELECT 1', executionCount: 2, avgDurationMs: 10 }],
@@ -95,7 +95,7 @@ describe('Patterns view', () => {
   })
 
   test('rejects empty table names before posting', async () => {
-    // Covers src/views/Patterns.vue:submit validation branch for empty table names.
+    // Covers src/views/Patterns.js:submit validation branch for empty table names.
     client.get.mockResolvedValue({
       data: {
         content: [{ id: 9, sqlFingerprint: 'abcdef1234567890', cleanSqlSample: 'SELECT 1', executionCount: 2, avgDurationMs: 10 }],
@@ -120,7 +120,7 @@ describe('Patterns view', () => {
   })
 
   test('updates the route when multiple filters are submitted', async () => {
-    // Covers src/views/Patterns.vue:buildQuery and src/views/Patterns.vue:applyFilter with multiple filter params.
+    // Covers src/views/Patterns.js:buildQuery and src/views/Patterns.js:applyFilter with multiple filter params.
     client.get.mockResolvedValue({ data: { content: [], totalElements: 0 } })
 
     const { wrapper, router } = await mountView(Patterns)

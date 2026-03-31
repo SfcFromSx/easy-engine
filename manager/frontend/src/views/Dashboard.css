@@ -1,0 +1,104 @@
+.mb-24 {
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 14px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.bg-blue {
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+}
+
+.bg-purple {
+  background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+}
+
+.bg-emerald {
+  background: linear-gradient(135deg, #34d399, #10b981);
+}
+
+.bg-amber {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  height: 28px;
+  line-height: normal;
+}
+
+.status-badge-icon {
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.status-badge-text {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.stat-icon svg {
+  display: block;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.dashboard-panel-body {
+  min-height: 200px;
+}
+
+.dashboard-panel-column {
+  display: flex;
+}
+
+.dashboard-panel-card {
+  width: 100%;
+  height: 100%;
+}
+
+.panel-status {
+  margin-bottom: 12px;
+}
+
+.panel-item-side {
+  text-align: right;
+}
+
+.spin {
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}

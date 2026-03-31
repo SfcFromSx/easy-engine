@@ -39,7 +39,7 @@ docker compose up -d mysql redis
 cd /Users/sfc/Documents/projects/engine/manager
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 cd /Users/sfc/Documents/projects/engine/manager/frontend
-npm run dev -- --host 127.0.0.1 --port 4173
+npm run dev -- --host 127.0.0.1 --port 5173
 ```
 
 ## Verify

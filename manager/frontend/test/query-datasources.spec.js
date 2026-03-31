@@ -49,7 +49,7 @@ describe('QueryDatasources view', () => {
   })
 
   test('loads datasource counts, filters locally, and validates empty saves', async () => {
-    // Covers src/views/QueryDatasources.vue:load, src/views/QueryDatasources.vue:matchesFilters, src/views/QueryDatasources.vue:clearFilters, src/views/QueryDatasources.vue:openCreate, src/views/QueryDatasources.vue:resetForm, and src/views/QueryDatasources.vue:save validation.
+    // Covers src/views/QueryDatasources.js:load, src/views/QueryDatasources.js:matchesFilters, src/views/QueryDatasources.js:clearFilters, src/views/QueryDatasources.js:openCreate, src/views/QueryDatasources.js:resetForm, and src/views/QueryDatasources.js:save validation.
     client.get.mockResolvedValue({
       data: [
         { id: 1, name: 'default', type: 'kylin', isDefault: true, driverClass: 'driver', jdbcUrl: 'jdbc:1', maxPoolSize: 4, minIdle: 1, connectionTimeoutMs: 10000 },
@@ -87,7 +87,7 @@ describe('QueryDatasources view', () => {
   })
 
   test('edits and promotes a datasource through the save path', async () => {
-    // Covers src/views/QueryDatasources.vue:edit, src/views/QueryDatasources.vue:promote, and src/views/QueryDatasources.vue:save success path.
+    // Covers src/views/QueryDatasources.js:edit, src/views/QueryDatasources.js:promote, and src/views/QueryDatasources.js:save success path.
     client.get.mockResolvedValue({
       data: [
         { id: 2, name: 'analytics', type: 'mysql', isDefault: false, driverClass: 'driver', jdbcUrl: 'jdbc:mysql://db', username: 'svc', password: '', maxPoolSize: 6, minIdle: 2, connectionTimeoutMs: 15000 }
@@ -111,7 +111,7 @@ describe('QueryDatasources view', () => {
   })
 
   test('confirms removal and reloads after delete', async () => {
-    // Covers src/views/QueryDatasources.vue:remove error-free branch.
+    // Covers src/views/QueryDatasources.js:remove error-free branch.
     client.get.mockResolvedValue({
       data: [
         { id: 2, name: 'analytics', type: 'mysql', isDefault: false, driverClass: 'driver', jdbcUrl: 'jdbc:mysql://db', maxPoolSize: 6, minIdle: 2, connectionTimeoutMs: 15000 }

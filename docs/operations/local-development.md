@@ -48,7 +48,7 @@ mvn spring-boot:run
 4. Start frontends as needed:
 
 ```bash
-npm --prefix manager/frontend run dev -- --host 127.0.0.1 --port 4173
+npm --prefix manager/frontend run dev -- --host 127.0.0.1 --port 5173
 npm --prefix benchmark/frontend run dev
 ```
 
