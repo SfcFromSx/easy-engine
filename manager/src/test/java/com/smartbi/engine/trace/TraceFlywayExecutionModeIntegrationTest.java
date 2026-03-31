@@ -30,10 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest(
         classes = EngineApplication.class,
-        properties = {
-                "spring.jpa.hibernate.ddl-auto=validate",
-                "engine.consumer.enabled=false"
-        }
+        properties = "spring.jpa.hibernate.ddl-auto=validate"
 )
 @AutoConfigureMockMvc
 class TraceFlywayExecutionModeIntegrationTest {

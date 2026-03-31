@@ -15,38 +15,6 @@ This is the canonical task ledger for Easy Engine. The foreman model reads this 
 
 ## Todo
 
-### ARCH-002
-
-- **Status:** todo
-- **Module:** manager | **Type:** backend | **Priority:** 20
-- **Title:** REMOVE REDIS TRACE CONSUMER FROM MANAGER
-- **Attempts:** 0
-
-**Context files**
-
-- `manager/src/main/java/com/smartbi/engine/trace/RedisTraceConsumer.java`
-- `manager/src/main/resources/application.yml`
-- `manager/pom.xml`
-
-**Acceptance criteria**
-
-1. `RedisTraceConsumer.java` is deleted.
-2. `engine.redis.*` and `engine.consumer.*` config blocks removed from manager `application.yml`.
-3. Redis dependency removed from manager `pom.xml` if no other feature uses it.
-4. Manager starts and passes tests without a Redis connection.
-
-**Validation commands**
-
-```bash
-mvn -q -f manager/pom.xml test
-```
-
-**Progress log**
-
-<!-- Foreman appends stage outcomes here during execution -->
-
----
-
 ### ARCH-003
 
 - **Status:** todo
@@ -405,6 +373,7 @@ npm --prefix manager/frontend run build
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| ARCH-002 | REMOVE REDIS TRACE CONSUMER FROM MANAGER | manager | Redis consumer path removed; manager tests pass without Redis |
 | BENCH-UX-004 | STANDARDIZE TYPOGRAPHY ACROSS ALL BENCHMARK PAGES | benchmark | Typography consistent across all pages |
 | ARCH-001 | REMOVE KYLIN-JDBC-CACHE MODULE | docs | Module directory deleted; manager/query/benchmark tests pass |
 | BENCH-UX-003 | OPTIMIZE ALL BENCHMARK PAGES FOR SINGLE-SCREEN VIEW | benchmark | All pages fit in one screen |
