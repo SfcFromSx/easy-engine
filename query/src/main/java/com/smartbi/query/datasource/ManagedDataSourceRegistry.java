@@ -1,5 +1,6 @@
 package com.smartbi.query.datasource;
 
+import com.smartbi.query.config.ManagerConfigClient;
 import com.smartbi.query.config.QueryProperties;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -11,6 +12,8 @@ import org.springframework.util.StringUtils;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,16 +27,11 @@ public class ManagedDataSourceRegistry implements AutoCloseable {
     private final Map<String, DataSource> dataSources = new ConcurrentHashMap<String, DataSource>();
     private final String defaultName;
 
-    public ManagedDataSourceRegistry(QueryProperties queryProperties) {
-        QueryProperties.NamedDatasource defaultDatasource = queryProperties.getDatasource().getDefault();
-        String resolvedDefaultName = StringUtils.hasText(defaultDatasource.getName()) ? defaultDatasource.getName() : "default";
-        this.defaultName = resolvedDefaultName;
-        definitions.put(resolvedDefaultName, toDefinition(resolvedDefaultName, defaultDatasource));
-
-        for (Map.Entry<String, QueryProperties.NamedDatasource> entry : queryProperties.getDatasource().getNamed().entrySet()) {
-            String name = StringUtils.hasText(entry.getValue().getName()) ? entry.getValue().getName() : entry.getKey();
-            definitions.put(name, toDefinition(name, entry.getValue()));
-        }
+    public ManagedDataSourceRegistry(QueryProperties queryProperties,
+                                     ManagerConfigClient managerConfigClient) {
+        RegistryBootstrap bootstrap = loadDefinitions(queryProperties, managerConfigClient);
+        this.defaultName = bootstrap.defaultName;
+        this.definitions.putAll(bootstrap.definitions);
     }
 
     public String getDefaultName() {
@@ -101,6 +99,85 @@ public class ManagedDataSourceRegistry implements AutoCloseable {
                 source.getMinIdle(),
                 source.getConnectionTimeoutMs()
         );
+    }
+
+    private RegistryBootstrap loadDefinitions(QueryProperties queryProperties,
+                                              ManagerConfigClient managerConfigClient) {
+        try {
+            List<ManagerConfigClient.ManagerDatasourceConfig> remoteConfigs = managerConfigClient.fetchDatasourceConfigs();
+            RegistryBootstrap remoteBootstrap = remoteBootstrap(remoteConfigs);
+            if (remoteBootstrap != null) {
+                log.info("Loaded {} datasource configs from manager {}", Integer.valueOf(remoteBootstrap.definitions.size()),
+                        queryProperties.getManagerUrl());
+                return remoteBootstrap;
+            }
+            log.warn("Manager returned no usable datasource configs, falling back to static query config");
+        } catch (Exception ex) {
+            log.warn("Manager datasource config fetch failed, fallback to static query config: {}", ex.getMessage());
+        }
+        return fallbackBootstrap(queryProperties);
+    }
+
+    private RegistryBootstrap remoteBootstrap(List<ManagerConfigClient.ManagerDatasourceConfig> configs) {
+        List<ManagerConfigClient.ManagerDatasourceConfig> safeConfigs = configs == null
+                ? Collections.<ManagerConfigClient.ManagerDatasourceConfig>emptyList()
+                : configs;
+        Map<String, DataSourceDefinition> resolved = new LinkedHashMap<String, DataSourceDefinition>();
+        String resolvedDefaultName = null;
+        for (ManagerConfigClient.ManagerDatasourceConfig config : safeConfigs) {
+            if (config == null) {
+                continue;
+            }
+            String name = StringUtils.hasText(config.getName()) ? config.getName().trim() : null;
+            if (!StringUtils.hasText(name)) {
+                continue;
+            }
+            resolved.put(name, toDefinition(name, config));
+            if (resolvedDefaultName == null || Boolean.TRUE.equals(config.getIsDefault())) {
+                resolvedDefaultName = name;
+            }
+        }
+        if (resolved.isEmpty()) {
+            return null;
+        }
+        return new RegistryBootstrap(resolved, resolvedDefaultName);
+    }
+
+    private RegistryBootstrap fallbackBootstrap(QueryProperties queryProperties) {
+        Map<String, DataSourceDefinition> resolved = new LinkedHashMap<String, DataSourceDefinition>();
+        QueryProperties.NamedDatasource defaultDatasource = queryProperties.getDatasource().getDefault();
+        String resolvedDefaultName = StringUtils.hasText(defaultDatasource.getName()) ? defaultDatasource.getName() : "default";
+        resolved.put(resolvedDefaultName, toDefinition(resolvedDefaultName, defaultDatasource));
+
+        for (Map.Entry<String, QueryProperties.NamedDatasource> entry : queryProperties.getDatasource().getNamed().entrySet()) {
+            String name = StringUtils.hasText(entry.getValue().getName()) ? entry.getValue().getName() : entry.getKey();
+            resolved.put(name, toDefinition(name, entry.getValue()));
+        }
+        return new RegistryBootstrap(resolved, resolvedDefaultName);
+    }
+
+    private static DataSourceDefinition toDefinition(String name, ManagerConfigClient.ManagerDatasourceConfig source) {
+        return new DataSourceDefinition(
+                name,
+                source.getType(),
+                source.getDriverClass(),
+                source.getJdbcUrl(),
+                source.getUsername(),
+                source.getPassword(),
+                source.getMaxPoolSize() == null ? 4 : source.getMaxPoolSize().intValue(),
+                source.getMinIdle() == null ? 1 : source.getMinIdle().intValue(),
+                source.getConnectionTimeoutMs() == null ? 10000L : source.getConnectionTimeoutMs().longValue()
+        );
+    }
+
+    private static class RegistryBootstrap {
+        private final Map<String, DataSourceDefinition> definitions;
+        private final String defaultName;
+
+        private RegistryBootstrap(Map<String, DataSourceDefinition> definitions, String defaultName) {
+            this.definitions = definitions;
+            this.defaultName = defaultName;
+        }
     }
 
     @Override

@@ -20,6 +20,7 @@ server:
 
 engine:
   query:
+    manager-url: ${ENGINE_QUERY_MANAGER_URL:http://localhost:8090}
     auth:
       username: ${ENGINE_QUERY_USER:ADMIN}
       password: ${ENGINE_QUERY_PASSWORD:KYLIN}
@@ -33,6 +34,7 @@ engine:
     trace:
       enabled: ${ENGINE_QUERY_TRACE_ENABLED:true}
     datasource:
+      # Static datasource blocks remain as the local fallback when manager is unreachable.
       default:
         name: default
         type: kylin

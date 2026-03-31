@@ -15,40 +15,6 @@ This is the canonical task ledger for Easy Engine. The foreman model reads this 
 
 ## Todo
 
-### ARCH-005
-
-- **Status:** todo
-- **Module:** query | **Type:** backend | **Priority:** 50
-- **Title:** QUERY POLLS MANAGER FOR DATASOURCE CONFIGS
-- **Attempts:** 0
-- **Depends on:** ARCH-004
-
-**Context files**
-
-- `query/src/main/java/com/smartbi/query/datasource/ManagedDataSourceRegistry.java`
-- `query/src/main/java/com/smartbi/query/config/QueryProperties.java`
-- `query/src/main/resources/application.yml`
-
-**Acceptance criteria**
-
-1. `ManagerConfigClient` added under `com.smartbi.query.config`; calls `GET http://<manager-host>/api/v1/query-datasources`.
-2. `engine.query.manager-url` config property added (default `http://localhost:8090`).
-3. `ManagedDataSourceRegistry` loads definitions from `ManagerConfigClient` on startup; falls back to static config if manager is unreachable.
-4. Static `engine.query.datasource.default` and `engine.query.datasource.named` blocks removed from (or demoted to fallback in) `application.yml`.
-5. Query tests pass.
-
-**Validation commands**
-
-```bash
-mvn -q -f query/pom.xml test
-```
-
-**Progress log**
-
-<!-- Foreman appends stage outcomes here during execution -->
-
----
-
 ### ARCH-006
 
 - **Status:** todo
@@ -300,6 +266,7 @@ npm --prefix manager/frontend run build
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| ARCH-005 | QUERY POLLS MANAGER FOR DATASOURCE CONFIGS | query | Manager-backed datasource loading added with static fallback; `mvn -q -f query/pom.xml test` passes |
 | ARCH-004 | EXPOSE DATASOURCE CONFIG CRUD API IN MANAGER | manager | V7 seeds query datasource configs; `/api/v1/query-datasources` CRUD added; `mvn -q -f manager/pom.xml test` passes |
 | ARCH-003 | WRITE TRACES DIRECTLY TO POSTGRESQL FROM QUERY | query | Query writes trace rows and pattern stats directly to PostgreSQL; `mvn -q -f query/pom.xml test` passes |
 | ARCH-002 | REMOVE REDIS TRACE CONSUMER FROM MANAGER | manager | Redis consumer path removed; manager tests pass without Redis |
