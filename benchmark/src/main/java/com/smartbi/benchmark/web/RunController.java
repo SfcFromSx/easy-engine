@@ -1,6 +1,7 @@
 package com.smartbi.benchmark.web;
 
 import com.smartbi.benchmark.domain.BenchmarkRun;
+import com.smartbi.benchmark.domain.RunStatus;
 import com.smartbi.benchmark.repo.BenchmarkRunRepository;
 import com.smartbi.benchmark.report.BenchmarkRunReportService;
 import com.smartbi.benchmark.run.BenchmarkExecutionService;
@@ -64,16 +65,27 @@ public class RunController {
     }
 
     @GetMapping
-    public Page<BenchmarkRun> byJob(@RequestParam long jobId,
-                                    @RequestParam(defaultValue = "0") int page,
-                                    @RequestParam(defaultValue = "20") int size) {
-        return runRepository.findByJobIdOrderByStartedAtDesc(jobId,
-                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "startedAt")));
+    public Page<BenchmarkRun> list(@RequestParam(required = false) Long jobId,
+                                   @RequestParam(required = false) RunStatus status,
+                                   @RequestParam(defaultValue = "0") int page,
+                                   @RequestParam(defaultValue = "20") int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "startedAt"));
+        if (jobId != null && status != null) {
+            return runRepository.findByJobIdAndStatusOrderByStartedAtDesc(jobId, status, pageRequest);
+        }
+        if (jobId != null) {
+            return runRepository.findByJobIdOrderByStartedAtDesc(jobId, pageRequest);
+        }
+        if (status != null) {
+            return runRepository.findByStatusOrderByStartedAtDesc(status, pageRequest);
+        }
+        return runRepository.findAll(pageRequest);
     }
 
     @GetMapping("/active")
     public BenchmarkRun getActive() {
-        return runRepository.findByStatus(com.smartbi.benchmark.domain.RunStatus.RUNNING)
-                .stream().findFirst().orElse(null);
+        executionService.reconcileStaleRuns();
+        return runRepository.findFirstByStatusOrderByStartedAtDesc(com.smartbi.benchmark.domain.RunStatus.RUNNING)
+                .orElse(null);
     }
 }

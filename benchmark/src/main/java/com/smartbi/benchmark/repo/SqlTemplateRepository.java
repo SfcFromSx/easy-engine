@@ -13,8 +13,23 @@ public interface SqlTemplateRepository extends JpaRepository<SqlTemplate, Long> 
 
     @Query("SELECT t FROM SqlTemplate t WHERE " +
            "LOWER(t.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(t.sqlText) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+           "LOWER(t.sqlText) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(COALESCE(t.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(COALESCE(t.executionMode, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(COALESCE(t.paramJson, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     Page<SqlTemplate> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
+    Page<SqlTemplate> findByExecutionModeOrderByIdAsc(String executionMode, Pageable pageable);
+
+    @Query("SELECT t FROM SqlTemplate t WHERE t.executionMode = :executionMode AND (" +
+           "LOWER(t.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(t.sqlText) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(COALESCE(t.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(COALESCE(t.executionMode, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(COALESCE(t.paramJson, '')) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<SqlTemplate> searchByKeywordAndExecutionMode(@Param("keyword") String keyword,
+                                                      @Param("executionMode") String executionMode,
+                                                      Pageable pageable);
 
     Page<SqlTemplate> findAllByOrderByIdAsc(Pageable pageable);
 

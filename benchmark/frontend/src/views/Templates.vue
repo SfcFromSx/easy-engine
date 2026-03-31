@@ -18,6 +18,17 @@
             <el-icon><Search /></el-icon>
           </template>
         </el-input>
+        <el-select
+          v-model="executionModeFilter"
+          clearable
+          class="toolbar-select"
+          :placeholder="$t('templates.filterModePlaceholder')"
+          @change="handleSearch"
+        >
+          <el-option :label="$t('templates.filterModeAll')" value="" />
+          <el-option label="STATEMENT" value="STATEMENT" />
+          <el-option label="PREPARED_STATEMENT" value="PREPARED_STATEMENT" />
+        </el-select>
         <el-button type="primary" @click="openCreate">
           <el-icon style="margin-right: 4px"><Plus :size="16" /></el-icon>
           {{ $t('templates.addBtn') }}
@@ -41,12 +52,23 @@
       <el-table :data="templates" v-loading="loading" stripe size="small">
         <el-table-column prop="name" :label="$t('templates.colName')" width="180">
           <template #default="{ row }">
-            <span style="font-weight: 700; color: #1e293b">{{ row.name }}</span>
+            <span class="template-name">{{ row.name }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="sqlText" :label="$t('templates.colSql')" min-width="420">
           <template #default="{ row }">
-            <div class="sql-preview-text">{{ row.sqlText }}</div>
+            <div class="sql-preview-cell">
+              <div class="sql-preview-text">{{ previewSql(row.sqlText).previewText }}</div>
+              <el-button
+                v-if="previewSql(row.sqlText).isTruncated"
+                link
+                type="primary"
+                class="sql-preview-link"
+                @click="openSqlPreview(row)"
+              >
+                {{ $t('templates.previewOpen') }}
+              </el-button>
+            </div>
           </template>
         </el-table-column>
         <el-table-column prop="weight" :label="$t('templates.colWeight')" width="80" align="center" />
@@ -162,17 +184,30 @@
         </div>
       </template>
     </el-dialog>
+
+    <el-dialog
+      v-model="sqlPreviewVisible"
+      :title="$t('templates.previewDialogTitle', { name: sqlPreviewName })"
+      width="920px"
+      top="6vh"
+    >
+      <div class="sql-dialog-summary">{{ describeSql(sqlPreviewContent) }}</div>
+      <pre class="sql-preview-full">{{ sqlPreviewContent }}</pre>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, Play } from 'lucide-vue-next'
 import client from '../api/client'
 import { API_ENDPOINTS } from '../api/endpoints'
 import DebuggerDialog from '../components/DebuggerDialog.vue'
+import { getSqlPreview } from '../utils/sqlPreview'
 
+const { t } = useI18n()
 const templates = ref([])
 const loading = ref(false)
 const dlg = ref(false)
@@ -187,13 +222,37 @@ const form = reactive({
 
 const debugVisible = ref(false)
 const debugSql = ref('')
+const sqlPreviewVisible = ref(false)
+const sqlPreviewName = ref('')
+const sqlPreviewContent = ref('')
 
 function runDebug(row) {
   debugSql.value = row.sqlText
   debugVisible.value = true
 }
 
+function previewSql(sqlText) {
+  return getSqlPreview(sqlText)
+}
+
+function describeSql(sqlText) {
+  const summary = getSqlPreview(sqlText)
+  return summary.lineCount === 0
+    ? ''
+    : t('templates.previewSummary', {
+        lines: summary.lineCount,
+        chars: summary.charCount
+      })
+}
+
+function openSqlPreview(row) {
+  sqlPreviewName.value = row.name
+  sqlPreviewContent.value = row.sqlText || ''
+  sqlPreviewVisible.value = true
+}
+
 const searchKeyword = ref('')
+const executionModeFilter = ref('')
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
@@ -206,7 +265,8 @@ async function load() {
       params: {
         page: currentPage.value - 1,
         size: pageSize.value,
-        keyword: searchKeyword.value
+        keyword: searchKeyword.value || undefined,
+        executionMode: executionModeFilter.value || undefined
       }
     })
 
@@ -359,10 +419,59 @@ onMounted(load)
   padding: 8px 16px;
 }
 
+.template-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  color: #1e293b;
+}
+
 .sql-preview-text {
+  flex: 1;
+  min-width: 0;
   font-family: var(--font-family-mono);
   font-size: var(--font-size-mono);
-  padding: 4px 0;
+  padding: 0;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sql-preview-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sql-preview-link {
+  padding: 0;
+  min-height: auto;
+  flex: none;
+}
+
+.sql-dialog-summary {
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.sql-preview-full {
+  margin: 0;
+  max-height: 60vh;
+  overflow: auto;
+  padding: 12px;
+  border-radius: 10px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: var(--font-family-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .mini-code {

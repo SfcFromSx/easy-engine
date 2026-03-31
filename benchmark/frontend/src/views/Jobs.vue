@@ -34,6 +34,34 @@
               :value="String(ds.id)"
             />
           </el-select>
+          <el-select
+            v-model="selectedStrategy"
+            clearable
+            class="toolbar-select"
+            :placeholder="$t('jobs.filterStrategyPlaceholder')"
+          >
+            <el-option
+              v-for="strategy in strategyOptions"
+              :key="strategy"
+              :label="strategy"
+              :value="strategy"
+            />
+          </el-select>
+          <el-select
+            v-model="selectedTestSetFilter"
+            clearable
+            filterable
+            class="toolbar-select"
+            :placeholder="$t('jobs.filterTestSetPlaceholder')"
+          >
+            <el-option :label="$t('jobs.filterTemplatesOnly')" value="__templates__" />
+            <el-option
+              v-for="testSet in testSets"
+              :key="testSet.id"
+              :label="testSet.name"
+              :value="String(testSet.id)"
+            />
+          </el-select>
         </div>
         <div class="toolbar-summary">
           <span>{{ $t('jobs.filterSummary', { count: filteredJobs.length, total: jobs.length }) }}</span>
@@ -98,8 +126,8 @@
       <el-dialog 
         v-model="dlg" 
         :title="form.id ? $t('jobs.dlgEdit') : $t('jobs.dlgAdd')" 
-        width="650px" 
-        custom-class="premium-dialog"
+        width="720px" 
+        class="premium-dialog"
       >
         <el-form label-position="top" class="job-form premium-form">
           <el-form-item :label="$t('jobs.dlgName')" required>
@@ -128,8 +156,9 @@
             <p class="hint">Tasks are now decoupled from connection details. Choose a Data Source profile to execute this job.</p>
           </el-form-item>
 
-          <div class="config-grid">
-            <el-row :gutter="20">
+          <div class="form-section">
+            <div class="section-title">Performance & Strategy</div>
+            <el-row :gutter="24">
               <el-col :span="8">
                 <el-form-item :label="$t('jobs.dlgConcurrency')">
                   <el-input-number v-model="form.concurrentThreads" :min="1" :max="1000" style="width: 100%" />
@@ -187,6 +216,12 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { Plus, Connection } from '@element-plus/icons-vue'
 import client from '../api/client'
+import {
+  filterJobs,
+  getDataSourceName as resolveDataSourceName,
+  getTestSetName as resolveTestSetName,
+  strategyTagType
+} from '../utils/benchmarkViewHelpers'
 
 const router = useRouter()
 const jobs = ref([])
@@ -197,6 +232,8 @@ const startingId = ref(null)
 const dlg = ref(false)
 const keyword = ref('')
 const selectedDataSourceId = ref('')
+const selectedStrategy = ref('')
+const selectedTestSetFilter = ref('')
 const form = reactive({
   id: null,
   name: '',
@@ -207,19 +244,17 @@ const form = reactive({
   testSetId: null
 })
 
-const filteredJobs = computed(() => {
-  const normalizedKeyword = keyword.value.trim().toLowerCase()
-  return jobs.value.filter((job) => {
-    const matchesKeyword = !normalizedKeyword || [
-      job.name,
-      job.strategy,
-      getDataSourceName(job.dataSourceId),
-      getTestSetName(job.testSetId)
-    ].some((value) => String(value || '').toLowerCase().includes(normalizedKeyword))
-    const matchesDataSource = !selectedDataSourceId.value || String(job.dataSourceId || '') === selectedDataSourceId.value
-    return matchesKeyword && matchesDataSource
-  })
-})
+const strategyOptions = ['RANDOM_WEIGHT', 'ROUND_ROBIN', 'CACHE_PENETRATION']
+
+const filteredJobs = computed(() => filterJobs(
+  jobs.value,
+  keyword.value,
+  selectedDataSourceId.value,
+  selectedStrategy.value,
+  selectedTestSetFilter.value,
+  dataSources.value,
+  testSets.value
+))
 
 async function load() {
   loading.value = true
@@ -263,23 +298,12 @@ function edit(row) {
   dlg.value = true
 }
 
-function strategyTagType(s) {
-  if (s === 'RANDOM_WEIGHT') return 'primary'
-  if (s === 'ROUND_ROBIN') return 'success'
-  if (s === 'CACHE_PENETRATION') return 'warning'
-  return 'info'
-}
-
 function getTestSetName(id) {
-  if (!id) return 'Default (Templates)'
-  const ts = testSets.value.find(t => t.id === id)
-  return ts ? ts.name : `ID: ${id}`
+  return resolveTestSetName(testSets.value, id)
 }
 
 function getDataSourceName(id) {
-  if (!id) return 'Not Linked'
-  const ds = dataSources.value.find(d => d.id === id)
-  return ds ? ds.name : `DataSource #${id}`
+  return resolveDataSourceName(dataSources.value, id)
 }
 
 async function removeJob(row) {
@@ -376,9 +400,20 @@ onMounted(load)
   margin: 4px 0;
 }
 
-.config-grid {
-  padding: 12px;
-  margin-bottom: 12px;
+.form-section {
+  padding: 16px;
+  background: rgba(241, 245, 249, 0.5);
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 16px;
 }
 
 :deep(.el-card__body) {

@@ -22,9 +22,17 @@ public interface BenchmarkRunRepository extends JpaRepository<BenchmarkRun, Long
 
     Page<BenchmarkRun> findByJobIdOrderByStartedAtDesc(Long jobId, Pageable pageable);
 
+    Page<BenchmarkRun> findByStatusOrderByStartedAtDesc(com.smartbi.benchmark.domain.RunStatus status, Pageable pageable);
+
+    Page<BenchmarkRun> findByJobIdAndStatusOrderByStartedAtDesc(Long jobId,
+                                                                com.smartbi.benchmark.domain.RunStatus status,
+                                                                Pageable pageable);
+
     Optional<BenchmarkRun> findFirstByJobIdAndStartedAtLessThanOrderByStartedAtDesc(Long jobId, Instant startedAt);
 
     Optional<BenchmarkRun> findFirstByJobIdAndStatusAndIdNotOrderByStartedAtDesc(Long jobId, com.smartbi.benchmark.domain.RunStatus status, Long id);
+
+    Optional<BenchmarkRun> findFirstByStatusOrderByStartedAtDesc(com.smartbi.benchmark.domain.RunStatus status);
 
     List<BenchmarkRun> findByStatus(com.smartbi.benchmark.domain.RunStatus status);
 

@@ -11,14 +11,30 @@
           v-model="jobId"
           :placeholder="$t('runs.selectJob')"
           class="job-filter-select"
+          clearable
           filterable
-          @change="onJobChange"
+          @change="onFiltersChange"
         >
           <el-option
             v-for="j in jobOptions"
             :key="j.id"
             :label="`${j.name}（#${j.id}）`"
             :value="String(j.id)"
+          />
+        </el-select>
+        <el-select
+          v-model="statusFilter"
+          clearable
+          class="job-filter-select"
+          :placeholder="$t('runs.filterStatusPlaceholder')"
+          @change="onFiltersChange"
+        >
+          <el-option :label="$t('runs.filterStatusAll')" value="" />
+          <el-option
+            v-for="status in statusOptions"
+            :key="status"
+            :label="status"
+            :value="status"
           />
         </el-select>
         <el-button type="primary" plain @click="load">
@@ -188,17 +204,26 @@ import { RefreshRight, CaretTop, CaretBottom } from '@element-plus/icons-vue'
 import client from '../api/client'
 import { API_ENDPOINTS } from '../api/endpoints'
 import PerformanceCharts from '../components/PerformanceCharts.vue'
+import {
+  buildRunsChartData,
+  formatDeltas,
+  formatJson,
+  parseEvaluationJson,
+  verdictTag
+} from '../utils/benchmarkViewHelpers'
 
 const route = useRoute()
 const router = useRouter()
 const jobOptions = ref([])
 const jobId = ref(route.query.jobId ? String(route.query.jobId) : '')
+const statusFilter = ref(route.query.status ? String(route.query.status) : '')
 const runs = ref([])
 const total = ref(0)
 const page = ref(1)
 const size = ref(20)
 const loading = ref(false)
 const polling = ref(true)
+const statusOptions = ['RUNNING', 'COMPLETED', 'FAILED']
 let timer
 
 const drawerVisible = ref(false)
@@ -206,18 +231,7 @@ const drawerLoading = ref(false)
 const ctx = ref(null)
 const evalObj = ref(null)
 
-const chartData = computed(() => {
-  if (!evalObj.value?.metrics) return []
-  const m = evalObj.value.metrics
-  const res = []
-  if (m.qpsSuccessful) res.push({ name: 'QPS', value: m.qpsSuccessful.toFixed(2) })
-  if (m.latencyMs) {
-    if (m.latencyMs.p50) res.push({ name: 'P50', value: m.latencyMs.p50.toFixed(2) })
-    if (m.latencyMs.p95) res.push({ name: 'P95', value: m.latencyMs.p95.toFixed(2) })
-    if (m.latencyMs.p99) res.push({ name: 'P99', value: m.latencyMs.p99.toFixed(2) })
-  }
-  return res
-})
+const chartData = computed(() => buildRunsChartData(evalObj.value))
 
 const failureBreakdown = computed(() => {
   return ctx.value?.failureBreakdown || evalObj.value?.diagnostics?.failureBreakdown || null
@@ -229,85 +243,41 @@ const failureGroups = computed(() => {
 })
 
 function parseEval(row) {
-  if (!row?.evaluationJson) return null
-  try {
-    return JSON.parse(row.evaluationJson)
-  } catch {
-    return null
-  }
-}
-
-function verdictTag(v) {
-  if (v === 'PASS') return 'success'
-  if (v === 'PARTIAL') return 'warning'
-  if (v === 'FAIL') return 'danger'
-  return 'info'
+  return parseEvaluationJson(row)
 }
 
 function fmtJson(raw) {
-  if (!raw) return '—'
-  try {
-    return JSON.stringify(JSON.parse(raw), null, 2)
-  } catch {
-    return raw
-  }
-}
-
-function formatDeltas(deltas) {
-  if (!deltas) return []
-  const metricsMap = {
-    qps: 'QPS (吞吐量)',
-    qpsSuccessful: 'QPS (吞吐量)',
-    p50: 'P50 (中位数延迟)',
-    p50Ms: 'P50 (中位数延迟)',
-    p95: 'P95 (尾延迟)',
-    p95Ms: 'P95 (尾延迟)',
-    p99: 'P99 (极值延迟)',
-    p99Ms: 'P99 (极值延迟)',
-    successRate: 'Success Rate'
-  }
-  return Object.entries(deltas).map(([k, d]) => {
-    const current = d.current
-    const previous = d.previous ?? d.baseline
-    const val = d.delta ?? d.percentChange ?? d.absoluteDelta
-    const isHigherBetter = k === 'qps' || k === 'qpsSuccessful' || k === 'successRate'
-    let direction = 'none'
-    if (typeof val === 'number' && val !== 0) {
-      const improved = isHigherBetter ? val > 0 : val < 0
-      direction = improved ? 'up' : 'down'
-    }
-    const suffix = d.percentChange != null ? '%' : ''
-
-    return {
-      metric: metricsMap[k] || k,
-      current: typeof current === 'number' ? current.toFixed(2) : '—',
-      previous: typeof previous === 'number' ? previous.toFixed(2) : '—',
-      deltaText: typeof val === 'number' ? `${val > 0 ? '+' : ''}${val.toFixed(2)}${suffix}` : '—',
-      direction
-    }
-  })
+  return formatJson(raw)
 }
 
 async function loadJobs() {
   const { data } = await client.get('/jobs')
   jobOptions.value = data || []
-  if (!jobId.value && jobOptions.value.length > 0) {
-    jobId.value = String(jobOptions.value[0].id)
+}
+
+function buildRouteQuery() {
+  return {
+    ...(jobId.value ? { jobId: jobId.value } : {}),
+    ...(statusFilter.value ? { status: statusFilter.value } : {})
   }
 }
 
-function onJobChange() {
+function onFiltersChange() {
   page.value = 1
-  router.replace({ path: '/runs', query: { jobId: jobId.value } })
+  router.replace({ path: '/runs', query: buildRouteQuery() })
   load()
 }
 
 async function load() {
-  if (!jobId.value) return
   loading.value = true
   try {
     const { data } = await client.get(API_ENDPOINTS.RUNS, {
-      params: { jobId: jobId.value, page: page.value - 1, size: size.value }
+      params: {
+        ...(jobId.value ? { jobId: jobId.value } : {}),
+        ...(statusFilter.value ? { status: statusFilter.value } : {}),
+        page: page.value - 1,
+        size: size.value
+      }
     })
     runs.value = data.content || []
     total.value = data.totalElements || 0
@@ -372,13 +342,17 @@ function downloadBlob(name, text) {
 }
 
 watch(
-  () => route.query.jobId,
-  (v) => {
-    if (v != null && String(v) !== jobId.value) {
-      page.value = 1
-      jobId.value = String(v)
-      load()
+  () => [route.query.jobId, route.query.status],
+  ([nextJobId, nextStatus]) => {
+    const normalizedJobId = nextJobId ? String(nextJobId) : ''
+    const normalizedStatus = nextStatus ? String(nextStatus) : ''
+    if (normalizedJobId === jobId.value && normalizedStatus === statusFilter.value) {
+      return
     }
+    page.value = 1
+    jobId.value = normalizedJobId
+    statusFilter.value = normalizedStatus
+    load()
   }
 )
 
@@ -386,9 +360,9 @@ onMounted(async () => {
   await loadJobs()
   if (route.query.jobId) {
     jobId.value = String(route.query.jobId)
-  } else if (jobOptions.value.length > 0) {
-    jobId.value = String(jobOptions.value[0].id)
-    router.replace({ path: '/runs', query: { jobId: jobId.value } })
+  }
+  if (route.query.status) {
+    statusFilter.value = String(route.query.status)
   }
   await load()
   timer = setInterval(load, 3000)

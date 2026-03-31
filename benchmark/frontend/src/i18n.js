@@ -63,7 +63,7 @@ const messages = {
       },
       activeRun: {
         title: 'Running Benchmark',
-        completed: 'Completed Queries',
+        completed: 'Dispatched Queries',
         successRate: 'Success Rate',
         hint: 'Simulating multi-threaded traffic. Do not close this page to maintain real-time telemetry.'
       },
@@ -80,6 +80,8 @@ const messages = {
       subtitle: 'Queries used for "Random Mode" traffic simulation, weighted for distribution.',
       addBtn: 'New Template',
       searchPlaceholder: 'Search name or SQL content...',
+      filterModePlaceholder: 'Filter by execution mode',
+      filterModeAll: 'All modes',
       colName: 'Template ID',
       colSql: 'SQL Content',
       colWeight: 'Weight',
@@ -103,7 +105,10 @@ const messages = {
       modeHintPrepared: 'Use prepared mode when the SQL contains placeholders that should be bound in order.',
       paramPlaceholder: '[{"type":"INTEGER","value":1}]',
       paramHint: 'Leave empty for statement mode. Prepared mode expects a JSON array whose values match placeholder order.',
-      paramExampleLabel: 'Example:'
+      paramExampleLabel: 'Example:',
+      previewOpen: 'View full SQL',
+      previewSummary: '{lines} lines · {chars} chars',
+      previewDialogTitle: 'Full SQL · {name}'
     },
     datasources: {
       title: 'Data Source Management',
@@ -118,6 +123,7 @@ const messages = {
       uploadSuccess: 'Uploaded driver: {name}',
       uploadTypeError: 'Please select a .jar driver file.',
       filterPlaceholder: 'Search by name, JDBC URL, user, or driver',
+      filterDriverPlaceholder: 'Filter by driver class',
       filterSummary: '{count} of {total} data sources',
       colName: 'Source Name',
       colUrl: 'JDBC URL',
@@ -139,6 +145,9 @@ const messages = {
       addBtn: 'New Task',
       filterKeywordPlaceholder: 'Search by task, strategy, datasource, or test set',
       filterDataSourcePlaceholder: 'Filter by data source',
+      filterStrategyPlaceholder: 'Filter by strategy',
+      filterTestSetPlaceholder: 'Filter by test set',
+      filterTemplatesOnly: 'Templates only',
       filterSummary: '{count} of {total} tasks',
       colName: 'Task Name',
       colMode: 'Run Mode',
@@ -216,6 +225,8 @@ const messages = {
       viewReport: 'View Report',
       currentJob: 'Current Task:',
       selectJob: 'Select a task to analyze',
+      filterStatusPlaceholder: 'Filter by status',
+      filterStatusAll: 'All statuses',
       autoRefreshing: 'Auto-refreshing',
       colVerdict: 'Verdict',
       colTotal: 'Total',
@@ -318,7 +329,7 @@ const messages = {
       },
       activeRun: {
         title: '正在执行压测任务',
-        completed: '已完成查询',
+        completed: '已派发请求',
         successRate: '成功率',
         hint: '系统正在通过多线程并发模拟真实负载，请勿关闭页面以保持实时观察。'
       },
@@ -335,6 +346,8 @@ const messages = {
       subtitle: '这些模板构成「随机模式」下的查询池，支持按权重进行流量模拟。',
       addBtn: '新增模板',
       searchPlaceholder: '搜索模板名称或 SQL 内容...',
+      filterModePlaceholder: '按执行模式筛选',
+      filterModeAll: '全部模式',
       colName: '模板标识',
       colSql: 'SQL 内容',
       colWeight: '权重',
@@ -358,7 +371,10 @@ const messages = {
       modeHintPrepared: 'SQL 中包含占位符并需要按顺序绑定参数时使用该模式。',
       paramPlaceholder: '[{"type":"INTEGER","value":1}]',
       paramHint: 'STATEMENT 模式可留空。PREPARED_STATEMENT 模式需要提供与占位符顺序一致的 JSON 数组。',
-      paramExampleLabel: '示例：'
+      paramExampleLabel: '示例：',
+      previewOpen: '查看完整 SQL',
+      previewSummary: '{lines} 行 · {chars} 个字符',
+      previewDialogTitle: '完整 SQL · {name}'
     },
     datasources: {
       title: '数据源管理',
@@ -373,6 +389,7 @@ const messages = {
       uploadSuccess: '驱动已上传：{name}',
       uploadTypeError: '请选择 .jar 驱动文件。',
       filterPlaceholder: '按名称、JDBC URL、用户或驱动搜索',
+      filterDriverPlaceholder: '按驱动类筛选',
       filterSummary: '{count} / {total} 个数据源',
       colName: '数据源名称',
       colUrl: 'JDBC URL',
@@ -394,6 +411,9 @@ const messages = {
       addBtn: '新建任务',
       filterKeywordPlaceholder: '按任务、策略、数据源或测试集搜索',
       filterDataSourcePlaceholder: '按数据源筛选',
+      filterStrategyPlaceholder: '按策略筛选',
+      filterTestSetPlaceholder: '按测试集筛选',
+      filterTemplatesOnly: '仅全局模板',
       filterSummary: '{count} / {total} 个任务',
       colName: '任务名称',
       colMode: '运行模式',
@@ -471,6 +491,8 @@ const messages = {
       viewReport: '查看报告',
       currentJob: '当前任务：',
       selectJob: '选择任务分析 Run',
+      filterStatusPlaceholder: '按状态筛选',
+      filterStatusAll: '全部状态',
       autoRefreshing: '自动刷新中',
       colVerdict: '评价',
       colTotal: '总数',

@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.util.StringUtils;
 
 @RestController
 @RequestMapping("/api/v1/templates")
@@ -22,10 +23,19 @@ public class TemplateController {
     public Page<SqlTemplate> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String keyword) {
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String executionMode) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by("id").ascending());
-        if (keyword != null && !keyword.isEmpty()) {
-            return repository.searchByKeyword(keyword, pageRequest);
+        boolean hasKeyword = StringUtils.hasText(keyword);
+        boolean hasExecutionMode = StringUtils.hasText(executionMode);
+        if (hasKeyword && hasExecutionMode) {
+            return repository.searchByKeywordAndExecutionMode(keyword.trim(), executionMode.trim(), pageRequest);
+        }
+        if (hasKeyword) {
+            return repository.searchByKeyword(keyword.trim(), pageRequest);
+        }
+        if (hasExecutionMode) {
+            return repository.findByExecutionModeOrderByIdAsc(executionMode.trim(), pageRequest);
         }
         return repository.findAll(pageRequest);
     }

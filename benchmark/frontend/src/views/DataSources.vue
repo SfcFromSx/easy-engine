@@ -68,6 +68,20 @@
               <el-icon><search /></el-icon>
             </template>
           </el-input>
+          <el-select
+            v-model="selectedDriverClass"
+            clearable
+            filterable
+            class="toolbar-select"
+            :placeholder="$t('datasources.filterDriverPlaceholder')"
+          >
+            <el-option
+              v-for="driverClass in driverClassOptions"
+              :key="driverClass"
+              :label="driverClass"
+              :value="driverClass"
+            />
+          </el-select>
         </div>
         <div class="toolbar-summary">
           <span>{{ $t('datasources.filterSummary', { count: filteredDataSources.length, total: dataSources.length }) }}</span>
@@ -160,6 +174,7 @@ import {
   DATA_SOURCE_TEST,
   DRIVER_UPLOAD
 } from '../api/endpoints'
+import { filterDataSources, validateDriverUploadFile } from '../utils/benchmarkViewHelpers'
 
 const { t } = useI18n()
 const loading = ref(false)
@@ -169,6 +184,7 @@ const uploadingDriver = ref(false)
 const dataSources = ref([])
 const uploadedDrivers = ref([])
 const searchTerm = ref('')
+const selectedDriverClass = ref('')
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const driverFileInput = ref(null)
@@ -181,16 +197,19 @@ const form = ref({
   driverClass: 'org.apache.kylin.jdbc.Driver'
 })
 
-const filteredDataSources = computed(() => {
-  const keyword = searchTerm.value.trim().toLowerCase()
-  if (!keyword) {
-    return dataSources.value
-  }
-  return dataSources.value.filter((item) => {
-    return [item.name, item.jdbcUrl, item.jdbcUser, item.driverClass]
-      .some((value) => String(value || '').toLowerCase().includes(keyword))
-  })
+const driverClassOptions = computed(() => {
+  return [...new Set(
+    dataSources.value
+      .map((item) => String(item.driverClass || '').trim())
+      .filter(Boolean)
+  )].sort((left, right) => left.localeCompare(right))
 })
+
+const filteredDataSources = computed(() => filterDataSources(
+  dataSources.value,
+  searchTerm.value,
+  selectedDriverClass.value
+))
 
 async function fetchDataSources() {
   loading.value = true
@@ -294,11 +313,11 @@ async function testConnection(row) {
 async function handleDriverFileChange(event) {
   const [file] = event.target.files || []
   event.target.value = ''
-  if (!file) {
-    return
-  }
-  if (!file.name.toLowerCase().endsWith('.jar')) {
-    ElMessage.warning(t('datasources.uploadTypeError'))
+  const validation = validateDriverUploadFile(file)
+  if (!validation.valid) {
+    if (validation.reason === 'invalid_extension') {
+      ElMessage.warning(t('datasources.uploadTypeError'))
+    }
     return
   }
 
