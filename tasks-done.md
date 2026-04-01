@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| DOC-CN-003 | ADD MYSQL TABLE OVERVIEW TO QUICKSTART | docs | `doc-CN/quickstart.md` updated with MySQL table inventory for Manager and Benchmark modules. |
 | DOC-CN-002 | WRITE CHINESE QUICKSTART DOCUMENTATION | docs | `doc-CN/quickstart.md` created and linked; service config and environmental versions verified against project source files. |
 | BENCH-COMPAT-001 | FIX JAVA 8 COMPATIBILITY (PATH.OF, LIST.OF) | benchmark, manager | `mvn -q -f benchmark/pom.xml test` and `mvn -q -f manager/pom.xml test` both pass; redundant Path.of/List.of/Files.writeString usages replaced for Java 8 compatibility. |
 | BENCH-UX-009 | IMPROVE BENCHMARK TEST-SET AUTHORING WORKFLOW | benchmark | Test Sets now support dialog-based empty/upload creation, in-place SQL row authoring, template copy-in, and item reordering via new `/api/v1/test-sets/.../items*` APIs; `mvn -q -f benchmark/pom.xml test`, `npm --prefix benchmark/frontend run test`, and `npm --prefix benchmark/frontend run build` all pass |
@@ -111,3 +112,17 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
   - **2026-04-01 — verification**
     - Validation status: approved
     - Evidence: File paths and content verified against `docker-compose.yml` and `pom.xml`.
+
+---
+
+### DOC-CN-003: ADD MYSQL TABLE OVERVIEW TO QUICKSTART
+
+- **Status**: done
+- **Updated**: 2026-04-01
+- **Progress log**:
+  - **2026-04-01 — implementation**
+    - Identified tables for Manager and Benchmark modules via migration files.
+    - Added structured table overview by module to doc-CN/quickstart.md.
+  - **2026-04-01 — verification**
+    - Validation status: approved
+    - Evidence: Table names and descriptions verified against Flyway migration files in both modules.

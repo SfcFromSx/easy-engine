@@ -34,6 +34,23 @@ Easy Engine 使用 **Flyway** 进行自动化的数据库迁移。
 - **无需手动执行 SQL 脚本**: 当后端服务（如 `manager` 或 `benchmark`）启动时，它们会自动检测并应用 `src/main/resources/db/migration` 下的 `.sql` 脚本。
 - **查看脚本**: 您可以在各个模块的 `src/main/resources/db/migration` 目录下找到 DDL 和种子数据脚本。
 
+### 3.1 MySQL 表结构概览
+系统启动后，Flyway 会在 `engine_db` 中创建以下主要表结构，按模块分类如下：
+
+#### Manager (管理模块)
+- `query_datasource_config`: 存储各个查询引擎（如 Kylin, Presto）的连接配置。
+- `sql_execution_record`: 存储从 Query 服务摄取的原始 SQL 执行轨迹（Traces）。
+- `sql_pattern_stats`: 存储经过脱敏和聚合后的 SQL 特征统计信息。
+- `acceleration_table`: 存储建议或已创建的加速表（物化视图）元数据。
+
+#### Benchmark (基准测试模块)
+- `benchmark_data_source`: 用于测试执行的目标数据源连接信息。
+- `benchmark_job`: 定义基准测试作业（包含执行策略、频率等）。
+- `benchmark_run`: 记录每次作业运行的详细历史、耗时及结果报告集。
+- `benchmark_sql_template`: 存储可复用的测试 SQL 模板。
+- `benchmark_test_set`: 将多个 SQL 模板组合成逻辑测试集。
+- `benchmark_test_set_item`: 测试集与 SQL 模板的多对多映射关系。
+
 ### 修改配置
 如果您需要修改数据库连接、端口或其他配置，可以通过以下两种方式：
 
