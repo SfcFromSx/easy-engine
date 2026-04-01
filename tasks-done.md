@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| DOC-CN-002 | WRITE CHINESE QUICKSTART DOCUMENTATION | docs | `doc-CN/quickstart.md` created and linked; service config and environmental versions verified against project source files. |
 | BENCH-COMPAT-001 | FIX JAVA 8 COMPATIBILITY (PATH.OF, LIST.OF) | benchmark, manager | `mvn -q -f benchmark/pom.xml test` and `mvn -q -f manager/pom.xml test` both pass; redundant Path.of/List.of/Files.writeString usages replaced for Java 8 compatibility. |
 | BENCH-UX-009 | IMPROVE BENCHMARK TEST-SET AUTHORING WORKFLOW | benchmark | Test Sets now support dialog-based empty/upload creation, in-place SQL row authoring, template copy-in, and item reordering via new `/api/v1/test-sets/.../items*` APIs; `mvn -q -f benchmark/pom.xml test`, `npm --prefix benchmark/frontend run test`, and `npm --prefix benchmark/frontend run build` all pass |
 | BENCH-UX-007 | REPOSITION CONDITION SELECTION BOXES TO TOP-LEFT OF TABLES IN TEMPLATES AND RUNS | benchmark | Filter selection boxes in SQL Templates and Run History have been moved from the header to a dedicated toolbar at the top-left of the table; `npm --prefix benchmark/frontend run build` and visual inspection via vision browser pass. |
@@ -92,3 +93,21 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
     - Escalation: none
   - **2026-03-31 — doc-garden**
     - Updated `docs/modules/benchmark.md` and `docs/modules/benchmark-test-matrix.md` to describe the new test-set authoring workflow, APIs, and automated coverage.
+---
+
+### DOC-CN-002: WRITE CHINESE QUICKSTART DOCUMENTATION
+
+- **Status**: done
+- **Updated**: 2026-04-01
+- **Progress log**:
+  - **2026-04-01 — planning**
+    - Researched environment requirements (Java 8, Node 18, Maven, Docker).
+    - Identified database configuration (MySQL 3307, engine_db).
+    - Confirmed service initialization via Flyway.
+    - Implementation plan approved by user.
+  - **2026-04-01 — implementation**
+    - Created `doc-CN/quickstart.md` in Chinese with environmental setup, DB config, and service startup instructions.
+    - Updated `doc-CN/README.md` to include the Quickstart link.
+  - **2026-04-01 — verification**
+    - Validation status: approved
+    - Evidence: File paths and content verified against `docker-compose.yml` and `pom.xml`.

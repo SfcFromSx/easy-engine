@@ -34,6 +34,10 @@ Easy Engine 是一个以 agent 为中心的工程工作区，覆盖查询执行�
 - 在推送、合并或发布前先审查 diff 并补充验证。
 - 在 [INBOX.md](/Users/sfc/Documents/projects/engine/INBOX.md) 查看 agent 发现但需要人类判断的问题与建议。
 
+## 关于入门 (Getting Started)
+
+- [doc-CN/quickstart.md](/Users/sfc/Documents/projects/engine/doc-CN/quickstart.md)：快速本地环境搭建与服务启动。
+
 ## 中文镜像
 
 英文文档是规范版本。面向人类的精选中文镜像保存在 [doc-CN/](/Users/sfc/Documents/projects/engine/doc-CN/)。
