@@ -1,0 +1,4 @@
+.token-keyword { color: #f472b6; font-weight: 700; }
+.token-string { color: #34d399; }
+.token-number { color: #fbbf24; }
+.token-comment { color: #94a3b8; font-style: italic; }

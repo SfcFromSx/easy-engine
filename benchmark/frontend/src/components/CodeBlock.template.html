@@ -1,0 +1,14 @@
+  <div class="code-block-container" :class="{ 'is-compact': compact }" @mouseenter="showCopy = true" @mouseleave="showCopy = false">
+    <div class="code-header" v-if="label || showCopy">
+      <span class="lang-label">{{ label }}</span>
+      <transition name="fade">
+        <el-button v-if="showCopy" link class="copy-btn" @click="copy">
+          <el-icon><CopyDocument /></el-icon>
+          <span style="margin-left: 4px">Copy SQL</span>
+        </el-button>
+      </transition>
+    </div>
+    <div class="code-body">
+      <pre><code v-html="highlightedCode"></code></pre>
+    </div>
+  </div>

@@ -1,0 +1,184 @@
+  <div class="dashboard-container">
+    <div class="page-header">
+      <h1>Smart Benchmark 控制台</h1>
+      <p class="subtitle header-contrast">执行压测任务并分析结果，确保 JDBC 驱动在真实负载下的稳定性与性能。</p>
+    </div>
+
+    <el-row :gutter="20" class="top-row">
+      <el-col :span="10">
+        <el-card class="preflight-card glass-card h-100" shadow="never">
+          <template #header>
+            <div class="card-header">
+              <span style="font-weight: 600">环境连通性 (Preflight)</span>
+              <el-button :loading="pfLoading" size="small" @click="runPreflight">
+                <el-icon><RefreshRight /></el-icon>
+              </el-button>
+            </div>
+          </template>
+
+          <div v-if="pfLoading" class="pf-loading">
+            <el-skeleton :rows="2" animated />
+          </div>
+          <el-descriptions v-else-if="pfResult" :column="1" border size="small">
+            <el-descriptions-item label="MySQL">
+              <div class="status-cell">
+                <span class="dot dot-online"></span>
+                <span class="status-text">Connected</span>
+              </div>
+            </el-descriptions-item>
+            <el-descriptions-item label="Kylin OLAP">
+              <div class="status-cell">
+                <span :class="['dot', pfResult.kylinRest?.status === 'OK' ? 'dot-online' : 'dot-offline']"></span>
+                <span class="status-text">{{ pfResult.kylinRest?.status === 'OK' ? 'Healthy' : 'Error' }}</span>
+              </div>
+            </el-descriptions-item>
+            <el-descriptions-item label="Presto Engine">
+              <div class="status-cell">
+                <span :class="['dot', pfResult.prestoUi?.status === 'OK' ? 'dot-online' : 'dot-offline']"></span>
+                <span class="status-text">{{ pfResult.prestoUi?.status === 'OK' ? 'Healthy' : 'Error' }}</span>
+              </div>
+            </el-descriptions-item>
+          </el-descriptions>
+        </el-card>
+      </el-col>
+
+      <el-col :span="14">
+        <el-card v-if="activeRun" class="active-run-card glass-card h-100" shadow="always">
+          <template #header>
+            <div class="card-header">
+              <span class="active-title">
+                <el-icon class="is-loading"><Loading /></el-icon>
+                {{ $t('dashboard.activeRun.title') }}
+              </span>
+              <el-tag type="success" size="small" effect="dark" round>RUNNING</el-tag>
+            </div>
+          </template>
+          <div class="progress-body">
+            <div class="progress-stats">
+              <div class="stat-item">
+                <span class="stat-label">{{ $t('dashboard.activeRun.completed') }}</span>
+                <span class="stat-value small">{{ activeRun.currentProgress || 0 }} / {{ activeRun.totalTarget || '—' }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">{{ $t('dashboard.activeRun.successRate') }}</span>
+                <span class="stat-value small success">{{ calcSuccessRate(activeRun) }}%</span>
+              </div>
+            </div>
+            <el-progress 
+              :percentage="calcPercent(activeRun)" 
+              :stroke-width="8" 
+              striped 
+              striped-flow 
+              :duration="10"
+              color="#3b82f6"
+            />
+          </div>
+        </el-card>
+
+        <el-card v-else class="start-card glass-card h-100" shadow="hover">
+          <template #header>
+            <div style="font-weight: 600">{{ $t('dashboard.start.title') }}</div>
+          </template>
+          <el-form label-width="80px" class="start-form">
+            <el-form-item :label="$t('dashboard.start.job')" style="margin-bottom: 12px">
+              <el-select
+                v-model="selectedJobId"
+                :placeholder="$t('dashboard.start.placeholder')"
+                style="width: 100%"
+                size="default"
+                filterable
+                :loading="loading"
+              >
+                <el-option
+                  v-for="j in jobs"
+                  :key="j.id"
+                  :label="`${j.name} (#${j.id})`"
+                  :value="j.id"
+                />
+              </el-select>
+            </el-form-item>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+              <el-button
+                plain
+                :disabled="!selectedJobId"
+                @click="goRuns"
+              >
+                {{ $t('dashboard.start.analyze') }}
+              </el-button>
+              <el-button
+                type="primary"
+                :loading="starting"
+                :disabled="!selectedJobId || loading"
+                @click="confirmAndStart"
+              >
+                {{ $t('dashboard.start.action') }}
+              </el-button>
+            </div>
+          </el-form>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <div class="engine-insight-row">
+      <el-row :gutter="24" class="stat-row">
+        <el-col :span="6">
+          <div class="glass-card stat-card">
+            <div class="stat-label">{{ $t('dashboard.stats.totalJobs') }}</div>
+            <div class="stat-value">{{ stats.totalJobs }}</div>
+          </div>
+        </el-col>
+        <el-col :span="6">
+          <div class="glass-card stat-card">
+            <div class="stat-label">{{ $t('dashboard.stats.totalRuns') }}</div>
+            <div class="stat-value">{{ stats.totalRuns }}</div>
+          </div>
+        </el-col>
+        <el-col :span="6">
+          <div class="glass-card stat-card">
+            <div class="stat-label">{{ $t('dashboard.stats.successRate') }}</div>
+            <div class="stat-value percentage">{{ stats.successRate }}%</div>
+          </div>
+        </el-col>
+        <el-col :span="6">
+          <div class="glass-card stat-card">
+            <div class="stat-label">{{ $t('dashboard.stats.avgLatency') }}</div>
+            <div class="stat-value latency">{{ stats.avgLatency }}ms</div>
+          </div>
+        </el-col>
+      </el-row>
+    </div>
+
+    <div class="analytics-section">
+      <div v-if="!selectedJobId" class="empty-analytics glass-card">
+        <el-empty :image-size="60" description="请选择压测任务以查看历史性能趋势" />
+      </div>
+      <div v-else class="charts-grid" v-loading="historyLoading">
+        <PerformanceCharts
+          title="QPS 趋势"
+          type="line"
+          :data="runHistory"
+          xKey="id"
+          :yKeys="[{ name: 'QPS', key: 'qps', color: '#3b82f6' }]"
+        />
+        
+        <PerformanceCharts
+          title="延迟趋势 (P95/P99)"
+          type="line"
+          :data="runHistory"
+          xKey="id"
+          :yKeys="[
+            { name: 'P95', key: 'p95Ms', color: '#f59e0b' },
+            { name: 'P99', key: 'p99Ms', color: '#ef4444' }
+          ]"
+        />
+      </div>
+    </div>
+
+    <div class="links">
+      <el-button link type="primary" @click="$router.push('/jobs')">任务配置</el-button>
+      <el-divider direction="vertical" />
+      <el-button link type="primary" @click="$router.push('/test-sets')">测试集</el-button>
+      <el-divider direction="vertical" />
+      <el-button link type="primary" @click="$router.push('/templates')">SQL 模板</el-button>
+    </div>
+  </div>

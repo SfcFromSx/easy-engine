@@ -1,0 +1,95 @@
+  <el-container class="main-layout">
+    <el-aside width="240px" class="premium-sidebar">
+      <div class="brand">
+        <div class="logo-box">
+          <shield-check :size="20" color="#3b82f6" />
+        </div>
+        <div class="brand-text">
+          <div class="title">Easy Engine</div>
+          <div class="subtitle">Performance Profiler</div>
+        </div>
+      </div>
+
+      <div class="menu-label">{{ $t('nav.navigate') }}</div>
+      <el-menu 
+        router 
+        :default-active="menuActive"
+        background-color="transparent"
+        text-color="#94a3b8"
+        active-text-color="#f8fafc"
+        class="custom-menu"
+      >
+        <el-menu-item index="/">
+          <el-icon><layout-dashboard :size="18" /></el-icon>
+          <span>{{ $t('nav.dashboard') }}</span>
+        </el-menu-item>
+        <el-menu-item index="/jobs">
+          <el-icon><play-circle :size="18" /></el-icon>
+          <span>{{ $t('nav.jobs') }}</span>
+        </el-menu-item>
+        <el-menu-item index="/test-sets">
+          <el-icon><file-json :size="18" /></el-icon>
+          <span>{{ $t('nav.testSets') }}</span>
+        </el-menu-item>
+        <el-menu-item index="/templates">
+          <el-icon><code2 :size="18" /></el-icon>
+          <span>{{ $t('nav.templates') }}</span>
+        </el-menu-item>
+        <el-menu-item index="/datasources">
+          <el-icon><database :size="18" /></el-icon>
+          <span>{{ $t('nav.datasources') }}</span>
+        </el-menu-item>
+        <el-menu-item index="/runs">
+          <el-icon><history :size="18" /></el-icon>
+          <span>{{ $t('nav.runs') }}</span>
+        </el-menu-item>
+      </el-menu>
+
+      <div class="sidebar-footer">
+        <!-- Language Switcher -->
+        <div class="lang-switcher">
+          <el-radio-group v-model="locale" size="small" class="custom-radio">
+            <el-radio-button value="en">EN</el-radio-button>
+            <el-radio-button value="zh">中文</el-radio-button>
+          </el-radio-group>
+        </div>
+
+        <el-popover placement="top-start" width="280" trigger="hover" popper-class="health-popover">
+          <template #reference>
+            <div class="status-indicator">
+              <span :class="['dot', status === 'online' ? 'dot-online' : 'dot-offline']"></span>
+              <span>{{ status === 'online' ? $t('status.online') : $t('status.offline') }}</span>
+              <el-icon style="margin-left: auto; margin-right: 0"><chevron-right :size="12" /></el-icon>
+            </div>
+          </template>
+          <div class="health-details">
+            <div class="health-header">{{ $t('status.health') }}</div>
+            <div class="component-item">
+              <span class="comp-name">MySQL (Metadata)</span>
+              <el-tag size="small" :type="health.mysql === 'OK' ? 'success' : 'danger'">{{ health.mysql }}</el-tag>
+            </div>
+            <div class="component-item">
+              <span class="comp-name">Kylin OLAP</span>
+              <el-tag size="small" :type="health.kylin === 'OK' ? 'success' : 'danger'">{{ health.kylin }}</el-tag>
+            </div>
+            <div class="component-item">
+              <span class="comp-name">Presto Engine</span>
+              <el-tag size="small" :type="health.presto === 'OK' ? 'success' : 'danger'">{{ health.presto }}</el-tag>
+            </div>
+            <div class="component-item">
+              <span class="comp-name">Redis Meta Cache</span>
+              <el-tag size="small" type="success">CONNECTED</el-tag>
+            </div>
+            <div class="health-footer">Based on last preflight check</div>
+          </div>
+        </el-popover>
+      </div>
+    </el-aside>
+    <el-main class="main-content">
+      <router-view v-slot="{ Component }">
+        <transition name="fade" mode="out-in">
+          <component :is="Component" :key="route.path" />
+        </transition>
+      </router-view>
+    </el-main>
+  </el-container>

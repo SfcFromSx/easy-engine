@@ -1,0 +1,99 @@
+  <el-dialog
+    v-model="visible"
+    :title="$t('debugger.title')"
+    width="900px"
+    top="5vh"
+    append-to-body
+    destroy-on-close
+    class="premium-dialog"
+  >
+    <div class="debugger-body">
+      <div class="debug-controls">
+        <div class="control-item">
+          <span class="label">{{ $t('debugger.targetDataSource') }}</span>
+          <el-select
+            v-model="selectedDsId"
+            :placeholder="$t('debugger.selectDataSource')"
+            style="width: 350px"
+            filterable
+          >
+            <el-option
+              v-for="ds in dataSources"
+              :key="ds.id"
+              :label="ds.name"
+              :value="ds.id"
+            >
+              <div class="ds-option-item">
+                <span class="ds-name">{{ ds.name }}</span>
+                <span class="ds-url">{{ ds.jdbcUrl }}</span>
+              </div>
+            </el-option>
+          </el-select>
+        </div>
+        <el-button
+          type="primary"
+          class="premium-btn"
+          :loading="loading"
+          :disabled="!selectedDsId"
+          @click="runQuery"
+        >
+          <el-icon style="margin-right: 4px"><play :size="16" /></el-icon>
+          {{ $t('debugger.execute') }}
+        </el-button>
+      </div>
+
+      <div class="sql-area">
+        <div class="area-header">
+          <terminal :size="16" />
+          <span>{{ $t('debugger.statement') }}</span>
+        </div>
+        <div class="sql-box">{{ sql }}</div>
+      </div>
+
+      <div v-if="result || error" class="result-area">
+        <div class="area-header">
+          <activity :size="16" />
+          <span>{{ $t('debugger.output') }}</span>
+          <div v-if="result" class="stats">
+            <el-tag size="small" type="success" effect="dark">
+              {{ result.latencyMs }}ms
+            </el-tag>
+            <el-tag size="small" type="info" effect="plain" style="margin-left: 8px">
+              {{ (result.rows || []).length }} {{ $t('common.results') }}
+            </el-tag>
+          </div>
+        </div>
+
+        <div v-if="error" class="error-box">
+          <alert-circle :size="20" color="#ef4444" />
+          <div class="error-content">
+            <div class="error-title">{{ $t('common.error') }}</div>
+            <div class="error-msg">{{ error }}</div>
+          </div>
+        </div>
+
+        <div v-else-if="result" class="data-preview">
+          <el-table 
+            v-if="result.headers && result.headers.length"
+            :data="result.rows" 
+            size="small" 
+            stripe 
+            border 
+            height="350px"
+          >
+            <el-table-column
+              v-for="col in result.headers"
+              :key="col"
+              :prop="col"
+              :label="col"
+              min-width="150"
+              show-overflow-tooltip
+            />
+          </el-table>
+          <div v-else-if="result.message" class="empty-message">
+             {{ result.message }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </el-dialog>

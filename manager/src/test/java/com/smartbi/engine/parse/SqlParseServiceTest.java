@@ -46,7 +46,7 @@ class SqlParseServiceTest {
 
         assertEquals(ParseStatus.OK, out.getStatus());
         assertEquals("SELECT", out.getSignature().getRootKind());
-        assertEquals(java.util.List.of("sales"), out.getSignature().getTables());
+        assertEquals(java.util.Arrays.asList("sales"), out.getSignature().getTables());
         assertTrue(out.getSignature().getAggregates().isEmpty());
     }
 

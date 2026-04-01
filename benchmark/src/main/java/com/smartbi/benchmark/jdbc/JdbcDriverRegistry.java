@@ -14,6 +14,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.Driver;
@@ -253,7 +254,7 @@ public class JdbcDriverRegistry {
     }
 
     private Path ensureDriverDirectory() {
-        Path path = Path.of(properties.getDriverDir()).toAbsolutePath().normalize();
+        Path path = Paths.get(properties.getDriverDir()).toAbsolutePath().normalize();
         try {
             Files.createDirectories(path);
         } catch (IOException e) {
@@ -266,7 +267,7 @@ public class JdbcDriverRegistry {
         if (originalFileName == null || originalFileName.trim().isEmpty()) {
             throw new IllegalArgumentException("Driver upload is missing a filename");
         }
-        String fileName = Path.of(originalFileName).getFileName().toString();
+        String fileName = Paths.get(originalFileName).getFileName().toString();
         if (fileName.trim().isEmpty()) {
             throw new IllegalArgumentException("Driver upload is missing a valid filename");
         }

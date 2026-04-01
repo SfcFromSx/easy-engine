@@ -13,8 +13,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -74,7 +74,7 @@ class TraceControllerTest {
         jdbcRow.setRawPayload("{\"sql\":\"select 2\"}");
 
         when(recordRepository.findAll(any(Specification.class), any(PageRequest.class)))
-                .thenReturn(new PageImpl<>(List.of(selfRow, jdbcRow), PageRequest.of(0, 5), 2));
+                .thenReturn(new PageImpl<>(Arrays.asList(selfRow, jdbcRow), PageRequest.of(0, 5), 2));
 
         Page<TraceListItemDto> page = controller.page(0, 5, "  ", null, null, null, null, null);
 

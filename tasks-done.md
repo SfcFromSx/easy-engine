@@ -8,8 +8,8 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
-| BENCH-UX-008 | FIX BOX COVER PROBLEM IN JOB CONFIG EDIT DIALOG | benchmark | Overlapping form fields in Job edit dialog fixed by adding missing premium-form/dialog CSS and refactoring Job template grid; visual inspection via browser subagent verified. |
-| BENCH-UX-009 | IMPROVE BENCHMARK TEST-SET AUTHORING WORKFLOW | benchmark | Test Sets now support dialog-based empty/upload creation, in-place SQL row authoring, template copy-in, and item reordering via new /api/v1/test-sets/.../items* APIs; mvn -q -f benchmark/pom.xml test, npm --prefix benchmark/frontend run test, and npm --prefix benchmark/frontend run build all pass |
+| BENCH-COMPAT-001 | FIX JAVA 8 COMPATIBILITY (PATH.OF, LIST.OF) | benchmark, manager | `mvn -q -f benchmark/pom.xml test` and `mvn -q -f manager/pom.xml test` both pass; redundant Path.of/List.of/Files.writeString usages replaced for Java 8 compatibility. |
+| BENCH-UX-009 | IMPROVE BENCHMARK TEST-SET AUTHORING WORKFLOW | benchmark | Test Sets now support dialog-based empty/upload creation, in-place SQL row authoring, template copy-in, and item reordering via new `/api/v1/test-sets/.../items*` APIs; `mvn -q -f benchmark/pom.xml test`, `npm --prefix benchmark/frontend run test`, and `npm --prefix benchmark/frontend run build` all pass |
 | BENCH-UX-007 | REPOSITION CONDITION SELECTION BOXES TO TOP-LEFT OF TABLES IN TEMPLATES AND RUNS | benchmark | Filter selection boxes in SQL Templates and Run History have been moved from the header to a dedicated toolbar at the top-left of the table; `npm --prefix benchmark/frontend run build` and visual inspection via vision browser pass. |
 | BENCH-UX-006 | STANDARDIZE CONDITION SELECTION BOXES WIDTH ACROSS BENCHMARK PAGES | benchmark | All filter inputs and dropdowns across bookmark pages now share a uniform 160px width and are aligned in a single horizontal row; `npm --prefix benchmark/frontend run build` and visual inspection via vision browser pass. |
 | MGR-UX-004 | STANDARDIZE CONDITION SELECTION BOXES WIDTH ACROSS MANAGER PAGES | manager | All condition selection boxes across manager pages (Traces, Patterns, Datasources, Acceleration) now share a uniform 160px width, ensuring they fit on a single line on desktop; `npm --prefix manager/frontend run build` and visual inspection via vision browser pass. |
@@ -61,21 +61,22 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
 
-### BENCH-UX-008: FIX BOX COVER PROBLEM IN JOB CONFIG EDIT DIALOG
-
-- **Status**: done
-- **Updated**: 2026-03-31
-- **Progress log**:
-  - **2026-03-31 — implementation**
-    - Investigated UI issue, identified missing premium-form/dialog styles.
-    - Generated implementation plan, approved by user.
-    - Added `premium-dialog` and `premium-form` CSS to `style.css`.
-    - Refactored `Jobs.template.html` and `Jobs.css` to fix the layout.
-  - **2026-03-31 — verification**
-    - Validation status: approved
-    - Evidence: Browser subagent verified that labels and inputs are correctly aligned and no longer overlapping.
-
-### BENCH-UX-009: IMPROVE BENCHMARK TEST-SET AUTHORING WORKFLOW
+### BENCH-COMPAT-001: FIX JAVA 8 COMPATIBILITY (PATH.OF, LIST.OF)
+ 
+ - **Status**: done
+ - **Updated**: 2026-04-01
+ - **Progress log**:
+   - **2026-04-01 — implementation**
+     - Files changed: `JdbcDriverRegistry.java`, `JdbcDriverUploadIntegrationTest.java`, `TraceIngestionTest.java`, `TraceControllerTest.java`, `SqlParseServiceTest.java`.
+     - Commands run: `grep`, `mvn test`.
+     - Result: Implemented by replacing `Path.of`, `List.of`, and `Files.writeString` with Java 8 compatible alternatives (`Paths.get`, `Arrays.asList`, `Files.write`).
+   - **2026-04-01 — verification**
+     - Validation status: approved
+     - Evidence: `mvn -q -f benchmark/pom.xml test` and `mvn -q -f manager/pom.xml test` passed successfully.
+     - Next action: none
+     - Escalation: none
+ 
+ ### BENCH-UX-009: IMPROVE BENCHMARK TEST-SET AUTHORING WORKFLOW
 
 - **Status**: done
 - **Updated**: 2026-03-31
@@ -83,11 +84,11 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
   - **2026-03-31 — implementation**
     - Investigated current benchmark test-set flow and confirmed the gap is structural: the create dialog only saves metadata, uploaded rows are read-only, and there is no API to author or seed test-set items from SQL templates.
     - Locked the target workflow for this task: new test sets must support upload-or-empty creation from one dialog, editable item management, and copying templates into test sets for later editing.
-    - Added backend item-authoring APIs plus TestSetAuthoringService, expanded upload metadata support, rewired the Benchmark Test Sets UI to author rows in-place, and added regression tests for the new create/upload/template-copy flows.
+    - Added backend item-authoring APIs plus `TestSetAuthoringService`, expanded upload metadata support, rewired the Benchmark Test Sets UI to author rows in-place, and added regression tests for the new create/upload/template-copy flows.
   - **2026-03-31 — verification**
     - Validation status: approved
-    - Evidence: mvn -q -f benchmark/pom.xml test passed; npm --prefix benchmark/frontend run test passed; npm --prefix benchmark/frontend run build passed.
+    - Evidence: `mvn -q -f benchmark/pom.xml test` passed; `npm --prefix benchmark/frontend run test` passed; `npm --prefix benchmark/frontend run build` passed.
     - Next action: none
     - Escalation: none
   - **2026-03-31 — doc-garden**
-    - Updated docs/modules/benchmark.md and docs/modules/benchmark-test-matrix.md to describe the new test-set authoring workflow, APIs, and automated coverage.
+    - Updated `docs/modules/benchmark.md` and `docs/modules/benchmark-test-matrix.md` to describe the new test-set authoring workflow, APIs, and automated coverage.

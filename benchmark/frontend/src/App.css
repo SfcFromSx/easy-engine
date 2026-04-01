@@ -1,0 +1,145 @@
+.main-layout {
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.premium-sidebar {
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.brand {
+  padding: 32px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-box {
+  width: 40px;
+  height: 40px;
+  background: rgba(59, 130, 246, 0.15);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.brand-text .title {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: #f8fafc;
+  letter-spacing: -0.01em;
+}
+
+.brand-text .subtitle {
+  font-size: 10px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.menu-label {
+  padding: 0 24px 12px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #475569;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.custom-menu {
+  border-right: none !important;
+  flex-grow: 1;
+}
+
+:deep(.el-menu-item) {
+  height: 50px;
+  line-height: 50px;
+  margin: 4px 12px;
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:deep(.el-menu-item:hover) {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #f8fafc !important;
+}
+
+:deep(.el-menu-item.is-active) {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0) 100%) !important;
+  border-left: 3px solid #3b82f6;
+  color: #fff !important;
+  font-weight: 600;
+}
+
+.sidebar-footer {
+  padding: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.lang-switcher {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+:deep(.custom-radio .el-radio-button__inner) {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  transition: all 0.3s;
+}
+
+:deep(.custom-radio .el-radio-button__original-radio:checked + .el-radio-button__inner) {
+  background: #3b82f6 !important;
+  color: #fff !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  transition: all 0.2s;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.status-indicator:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.main-content {
+  padding: 20px;
+  background: #f8fafc;
+}
+
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+/* Health Popover Customization */
+:deep(.health-popover) {
+  background: #ffffff !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid #e2e8f0 !important;
+}

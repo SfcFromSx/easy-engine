@@ -32,7 +32,15 @@
   margin: 4px 0;
 }
 
-:deep(.el-card__body) {
-  padding: 0 !important; /* Table card should have no body padding */
+.config-grid {
+  padding: 16px;
+  margin-bottom: 16px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, rgba(239, 246, 255, 0.7) 0%, rgba(248, 250, 252, 0.95) 100%);
 }
 
+:deep(.el-card__body) {
+  padding: 0 !important;
+  /* Table card should have no body padding */
+}

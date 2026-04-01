@@ -16,6 +16,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -41,10 +42,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class JdbcDriverUploadIntegrationTest {
 
-    private static final Path DRIVER_DIR = Path.of("target/test-drivers/uploaded").toAbsolutePath().normalize();
-    private static final Path BUILD_DIR = Path.of("target/test-drivers/build").toAbsolutePath().normalize();
-    private static final Path LEGACY_DRIVER_DIR = Path.of("benchmark/target/test-drivers/uploaded").toAbsolutePath().normalize();
-    private static final Path LEGACY_BUILD_DIR = Path.of("benchmark/target/test-drivers/build").toAbsolutePath().normalize();
+    private static final Path DRIVER_DIR = Paths.get("target/test-drivers/uploaded").toAbsolutePath().normalize();
+    private static final Path BUILD_DIR = Paths.get("target/test-drivers/build").toAbsolutePath().normalize();
+    private static final Path LEGACY_DRIVER_DIR = Paths.get("benchmark/target/test-drivers/uploaded").toAbsolutePath().normalize();
+    private static final Path LEGACY_BUILD_DIR = Paths.get("benchmark/target/test-drivers/build").toAbsolutePath().normalize();
 
     @Autowired
     private MockMvc mockMvc;
@@ -102,12 +103,11 @@ class JdbcDriverUploadIntegrationTest {
         Files.createDirectories(classesDir);
 
         Path sourceFile = sourceDir.resolve("UploadedH2Driver.java");
-        Files.writeString(
+        Files.write(
                 sourceFile,
-                "package com.example.uploaded;\n"
+                ("package com.example.uploaded;\n"
                         + "public class UploadedH2Driver extends org.h2.Driver {\n"
-                        + "}\n",
-                StandardCharsets.UTF_8
+                        + "}\n").getBytes(StandardCharsets.UTF_8)
         );
 
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();

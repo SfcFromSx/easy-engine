@@ -1,0 +1,9 @@
+  <div class="chart-wrapper glass-card">
+    <div class="chart-header">
+      <h3 class="chart-title">{{ title }}</h3>
+      <div class="chart-actions">
+        <slot name="actions"></slot>
+      </div>
+    </div>
+    <v-chart class="chart" :option="chartOption" autoresize />
+  </div>

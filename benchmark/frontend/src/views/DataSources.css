@@ -1,0 +1,101 @@
+.datasources-container {
+  max-width: 100%;
+}
+
+.driver-file-input {
+  display: none;
+}
+
+.page-header {
+  margin-bottom: 16px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.glass-card {
+  padding: 0;
+}
+
+.driver-card {
+  margin-bottom: 14px;
+  padding: 16px;
+}
+
+.table-card {
+  padding: 0;
+}
+
+:deep(.el-table__row) {
+  height: 40px;
+}
+
+.premium-btn {
+  height: 32px;
+  padding: 0 12px;
+}
+
+.list-toolbar {
+  padding: 10px 16px;
+  margin-bottom: 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.driver-library {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.driver-library__copy h2 {
+  margin: 4px 0 6px;
+  font-size: 18px;
+}
+
+.driver-library__copy p {
+  margin: 0;
+  color: #64748b;
+}
+
+.driver-library__eyebrow {
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #b45309;
+}
+
+.driver-library__meta {
+  color: #475569;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.driver-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  min-height: 32px;
+}
+
+.driver-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  color: #9a3412;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.driver-empty {
+  color: #94a3b8;
+  font-size: 13px;
+}

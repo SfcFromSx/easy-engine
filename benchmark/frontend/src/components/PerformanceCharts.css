@@ -1,0 +1,22 @@
+.chart-wrapper {
+  padding: 16px 20px;
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.chart-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b; /* Darker slate for better contrast */
+}
+.chart {
+  flex: 1;
+  min-height: 0;
+}

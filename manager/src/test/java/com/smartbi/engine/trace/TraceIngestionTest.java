@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -74,7 +75,7 @@ class TraceIngestionTest {
     @Test
     // Covers TraceIngestionService#ingestBatch and TraceIngestionService#ingestJson skipped path.
     void ingestBatchIgnoresEmptyEntriesAndPersistsSkippedRecord() {
-        ingestionService.ingestBatch(List.of("", "{\"datasourceName\":\"default\"}", " "));
+        ingestionService.ingestBatch(Arrays.asList("", "{\"datasourceName\":\"default\"}", " "));
 
         List<SqlExecutionRecord> records = recordRepository.findAll();
         assertEquals(1, records.size());
