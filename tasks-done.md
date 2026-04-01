@@ -8,6 +8,8 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| task-ui-integration-001 | 整合前端静态资源及 SPA 路由支持 | manager, benchmark | `manager/src/.../EngineConfig.java`, `benchmark/src/.../WebConfig.java`, `doc-CN/quickstart.md` updated; SPA route forwarding implemented for bundled assets. |
+| task-ui-integration-001 | 整合前端静态资源及 SPA 路由支持 | manager, benchmark | `manager/src/.../EngineConfig.java`, `benchmark/src/.../WebConfig.java`, `doc-CN/quickstart.md` updated; SPA route forwarding implemented for bundled assets. |
 | DOC-CN-003 | ADD MYSQL TABLE OVERVIEW TO QUICKSTART | docs | `doc-CN/quickstart.md` updated with MySQL table inventory for Manager and Benchmark modules. |
 | DOC-CN-002 | WRITE CHINESE QUICKSTART DOCUMENTATION | docs | `doc-CN/quickstart.md` created and linked; service config and environmental versions verified against project source files. |
 | BENCH-COMPAT-001 | FIX JAVA 8 COMPATIBILITY (PATH.OF, LIST.OF) | benchmark, manager | `mvn -q -f benchmark/pom.xml test` and `mvn -q -f manager/pom.xml test` both pass; redundant Path.of/List.of/Files.writeString usages replaced for Java 8 compatibility. |
@@ -126,3 +128,16 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
   - **2026-04-01 — verification**
     - Validation status: approved
     - Evidence: Table names and descriptions verified against Flyway migration files in both modules.
+
+### task-ui-integration-001: 整合前端静态资源及 SPA 路由支持
+
+- **Status**: done
+- **Updated**: 2026-04-01
+- **Progress log**:
+  - **2026-04-01 — implementation**
+    - Configured `EngineConfig.java` and `WebConfig.java` to support SPA route forwarding.
+    - Created `src/main/resources/static/` directories in manager and benchmark modules.
+    - Updated `quickstart.md` with instructions for both online dev and offline bundled deployment.
+  - **2026-04-01 — verification**
+    - Verified Spring Boot configuration handles SPA history mode.
+    - Verified static resource paths match Maven project standards.

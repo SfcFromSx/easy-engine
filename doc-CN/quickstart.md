@@ -90,7 +90,10 @@ Easy Engine 使用 **Flyway** 进行自动化的数据库迁移。
 
 ## 5. 启动前端页面
 
-如果您需要进入 UI 面板，请分别启动 Manager 和 Benchmark 的前端项目：
+针对您的开发环境（是否有外网或私服），可以选择以下两种方式之一启动前端。
+
+### 方案 1：实时编译模式（推荐，适合有网络环境）
+这种方式支持热更新（HMR），适合前端逻辑开发。
 
 ```bash
 # 启动 Manager 控制台
@@ -101,6 +104,22 @@ npm --prefix manager/frontend run dev
 npm --prefix benchmark/frontend install
 npm --prefix benchmark/frontend run dev
 ```
+- **访问地址**: Manager (http://localhost:5173), Benchmark (http://localhost:5174)
+
+### 方案 2：预编译托管模式（适合内网/隔离环境）
+如果您在内网环境无法运行 `npm install`，可以使用此方案。由 Spring Boot 后端直接提供前端静态资源服务。
+
+1.  **在外网环境构建**：执行 `npm run build` 生成 `dist` 目录。
+2.  **拷贝至内网**：将 `dist` 目录下的所有文件拷贝到后端的静态资源目录：
+    - `manager/frontend/dist/*` -> `manager/src/main/resources/static/`
+    - `benchmark/frontend/dist/*` -> `benchmark/src/main/resources/static/`
+3.  **启动后端**：正常执行 `mvn spring-boot:run`。
+4.  **访问地址**：直接访问后端端口即可看到 UI。
+    - **Manager**: http://localhost:8090/
+    - **Benchmark**: http://localhost:8091/
+
+> [!NOTE]
+> 在方案 2 下，前后端共用同一个端口，无需处理跨域问题，系统启动更加轻量。
 
 ## 6. 后续步骤：配置数据源
 
