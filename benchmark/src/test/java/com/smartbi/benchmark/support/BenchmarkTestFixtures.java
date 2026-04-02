@@ -1,13 +1,13 @@
 package com.smartbi.benchmark.support;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
+import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
+import org.springframework.core.io.ClassPathResource;
+
 import java.util.Properties;
 
 public final class BenchmarkTestFixtures {
 
-    private static final String RESOURCE = "benchmark-test-fixtures.properties";
+    private static final String RESOURCE = "application-test.yml";
     private static final Properties PROPERTIES = load();
 
     private BenchmarkTestFixtures() {
@@ -22,15 +22,13 @@ public final class BenchmarkTestFixtures {
     }
 
     private static Properties load() {
-        Properties properties = new Properties();
-        try (InputStream inputStream = BenchmarkTestFixtures.class.getClassLoader().getResourceAsStream(RESOURCE)) {
-            if (inputStream == null) {
-                throw new IllegalStateException("Missing benchmark test fixture resource: " + RESOURCE);
-            }
-            properties.load(inputStream);
-            return properties;
-        } catch (IOException ex) {
-            throw new UncheckedIOException("Failed to load " + RESOURCE, ex);
+        YamlPropertiesFactoryBean factory = new YamlPropertiesFactoryBean();
+        factory.setResources(new ClassPathResource(RESOURCE));
+        factory.afterPropertiesSet();
+        Properties properties = factory.getObject();
+        if (properties == null) {
+            throw new IllegalStateException("Missing benchmark test fixture resource: " + RESOURCE);
         }
+        return properties;
     }
 }

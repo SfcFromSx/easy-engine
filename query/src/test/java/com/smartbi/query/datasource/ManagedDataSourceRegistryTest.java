@@ -33,7 +33,8 @@ class ManagedDataSourceRegistryTest {
         );
 
         assertEquals("remote_default", registry.getDefaultName());
-        assertEquals("jdbc:h2:mem:remote_default", registry.getDefinition("remote_default").getJdbcUrl());
+        assertEquals(QueryTestFixtures.get("query.test.manager-response.default-jdbc-url"),
+                registry.getDefinition("remote_default").getJdbcUrl());
         assertEquals("presto", registry.getDefinition("remote_presto").getType());
         assertEquals("remote_default", registry.getDefinition("missing").getName());
     }
@@ -51,7 +52,7 @@ class ManagedDataSourceRegistryTest {
         DataSourceDefinition fallback = registry.getDefinition("presto_local");
         assertNotNull(fallback);
         assertEquals("presto_local", fallback.getName());
-        assertEquals("jdbc:h2:mem:fallback_presto", fallback.getJdbcUrl());
+        assertEquals(QueryTestFixtures.get("query.test.registry.presto.jdbc-url"), fallback.getJdbcUrl());
     }
 
     // Covers ManagedDataSourceRegistry#remoteBootstrap blank/null config filtering and explicit-default precedence.

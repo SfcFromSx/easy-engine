@@ -90,7 +90,7 @@ describe('QueryDatasources view', () => {
     // Covers src/views/QueryDatasources.js:edit, src/views/QueryDatasources.js:promote, and src/views/QueryDatasources.js:save success path.
     client.get.mockResolvedValue({
       data: [
-        { id: 2, name: 'analytics', type: 'mysql', isDefault: false, driverClass: 'driver', jdbcUrl: 'jdbc:mysql://db', username: 'svc', password: '', maxPoolSize: 6, minIdle: 2, connectionTimeoutMs: 15000 }
+        { id: 2, name: 'analytics', type: 'mysql', isDefault: false, driverClass: 'driver', jdbcUrl: 'jdbc:demo://analytics', username: 'svc', password: '', maxPoolSize: 6, minIdle: 2, connectionTimeoutMs: 15000 }
       ]
     })
     client.put.mockResolvedValue({ data: {} })
@@ -114,7 +114,7 @@ describe('QueryDatasources view', () => {
     // Covers src/views/QueryDatasources.js:remove error-free branch.
     client.get.mockResolvedValue({
       data: [
-        { id: 2, name: 'analytics', type: 'mysql', isDefault: false, driverClass: 'driver', jdbcUrl: 'jdbc:mysql://db', maxPoolSize: 6, minIdle: 2, connectionTimeoutMs: 15000 }
+        { id: 2, name: 'analytics', type: 'mysql', isDefault: false, driverClass: 'driver', jdbcUrl: 'jdbc:demo://analytics', maxPoolSize: 6, minIdle: 2, connectionTimeoutMs: 15000 }
       ]
     })
     client.delete.mockResolvedValue({ data: {} })

@@ -27,12 +27,12 @@ service still only exposes `POST /kylin/api/query`.
 Initialize the metadata schema explicitly before starting `manager` or `benchmark`:
 
 ```bash
-bash scripts/init-db.sh
+bash scripts/init-db.sh dev
 ```
 
 The init script runs the `manager` and `benchmark` Flyway migrations against the
-configured MySQL metadata database. Normal service startup no longer creates
-tables or seeds rows automatically.
+selected profile's metadata database settings. Normal service startup no longer
+creates tables or seeds rows automatically.
 
 ## Service Startup Order
 
@@ -40,7 +40,7 @@ tables or seeds rows automatically.
 
 ```bash
 cd /Users/sfc/Documents/projects/engine/query
-mvn spring-boot:run
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
 2. Start `manager`:
@@ -54,7 +54,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 
 ```bash
 cd /Users/sfc/Documents/projects/engine/benchmark
-mvn spring-boot:run
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
 4. Start frontends as needed:
@@ -69,15 +69,16 @@ npm --prefix benchmark/frontend run dev
 - There is no standalone JDBC adapter service in the active architecture. JDBC clients connect directly to `query`.
 - Benchmark is the preferred control surface for benchmark runs, preflight checks, and structured run reports.
 - Benchmark connects to `query` using the standard Apache Kylin JDBC driver (`jdbc:kylin://localhost:8092/<project>`). Upload additional JDBC driver JARs via the Benchmark UI under Data Sources > Upload Driver before running datasource tests or benchmark jobs that depend on them.
-- The default metadata store is MySQL on `localhost:3307`; the shared local credentials remain `engine` / `engine123`.
+- Each backend module now owns `application-dev.yml`, `application-test.yml`, and `application-pro.yml`. Local startup uses `dev`, automated tests use `test`, test-environment containers should set `SPRING_PROFILES_ACTIVE=test`, and production should set `SPRING_PROFILES_ACTIVE=pro`.
+- The default local metadata store is MySQL on `localhost:3307`; those local defaults now live only in the `dev` profile rather than Java, scripts, or Maven defaults.
 - `manager` and `benchmark` now expect the metadata schema to be initialized already; if you skip `bash scripts/init-db.sh`, startup fails fast on missing tables instead of mutating the database during boot.
 - Preserved metadata comments (e.g. `YH_TARGET_ENGINE`) in SQL are used to route requests to specific backends within `query`.
 - If Flyway reports a checksum mismatch after editing an applied migration during local work, repair and migrate explicitly:
 
 ```bash
-mvn -f manager/pom.xml flyway:repair
-mvn -f benchmark/pom.xml flyway:repair
-bash scripts/init-db.sh
+SPRING_PROFILES_ACTIVE=dev mvn -f manager/pom.xml -Dflyway.url="$MANAGER_DB_JDBC_URL" -Dflyway.user="$MANAGER_DB_USER" -Dflyway.password="$MANAGER_DB_PASSWORD" flyway:repair
+SPRING_PROFILES_ACTIVE=dev mvn -f benchmark/pom.xml -Dflyway.url="$BENCHMARK_DB_JDBC_URL" -Dflyway.user="$BENCHMARK_DB_USER" -Dflyway.password="$BENCHMARK_DB_PASSWORD" flyway:repair
+bash scripts/init-db.sh dev
 ```
 
 ## Default Ports

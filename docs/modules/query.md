@@ -89,8 +89,13 @@ SELECT count(*) FROM nation
 
 ```bash
 cd /Users/sfc/Documents/projects/engine/query
-mvn spring-boot:run
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
+
+`query` now keeps environment-specific runtime settings in
+`application-dev.yml`, `application-test.yml`, and `application-pro.yml`. Use
+`SPRING_PROFILES_ACTIVE=test` or `SPRING_PROFILES_ACTIVE=pro` outside local
+development instead of relying on code-level defaults.
 
 ## Verify
 

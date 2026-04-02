@@ -8,6 +8,5 @@ The foreman updates this document dynamically whenever a task resolving a bug or
 
 *(Rules generated from task completions are appended below)*
 
-- Keep environment-specific endpoints, usernames, and passwords out of Java `@ConfigurationProperties` defaults. Bind them from Spring configuration instead so operators can override them without code changes and tests must set them explicitly.
-- Keep datasource, probe endpoint, and credential fixtures for tests in test-owned property files or test property sources instead of hard-coding them inside test methods.
+- Keep all environment-specific configuration in the module's three Spring profile files: `application-dev.yml`, `application-test.yml`, and `application-pro.yml`. Do not hard-code environment-specific endpoints, ports, datasource URLs, credentials, Redis settings, Flyway settings, or similar deployment/test configuration in Java code, test code, shell scripts, Maven defaults, or per-test property files.
 - Validate compatibility-shim request envelopes before routing, cache, or datasource work. Reject blank or unsupported requests through the module's established error contract instead of letting them fall through to downstream execution logic.

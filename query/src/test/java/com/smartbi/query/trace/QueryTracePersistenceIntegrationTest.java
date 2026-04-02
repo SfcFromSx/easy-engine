@@ -19,7 +19,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.charset.StandardCharsets;
@@ -34,7 +33,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = EngineQueryApplication.class)
-@TestPropertySource(locations = "classpath:query-trace-persistence-integration-test.properties")
 @AutoConfigureMockMvc
 @Import(QueryTracePersistenceIntegrationTest.CacheOnlyTestConfiguration.class)
 class QueryTracePersistenceIntegrationTest {

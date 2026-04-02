@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: manager
+  datasource:
+    url: ${MANAGER_DB_JDBC_URL}
+    username: ${MANAGER_DB_USER}
+    password: ${MANAGER_DB_PASSWORD}
+    driver-class-name: ${MANAGER_DB_DRIVER_CLASS:com.mysql.cj.jdbc.Driver}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          lob:
+            non_contextual_creation: true
+  flyway:
+    enabled: false
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+server:
+  port: ${SERVER_PORT:8090}
+
+logging:
+  level:
+    com.smartbi.engine: INFO

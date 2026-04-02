@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: query
+  datasource:
+    url: ${ENGINE_DB_JDBC_URL}
+    username: ${ENGINE_DB_USER}
+    password: ${ENGINE_DB_PASSWORD}
+    driver-class-name: ${ENGINE_DB_DRIVER_CLASS:com.mysql.cj.jdbc.Driver}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+  redis:
+    host: ${REDIS_HOST}
+    port: ${REDIS_PORT}
+    password: ${REDIS_PASSWORD:}
+
+server:
+  port: ${SERVER_PORT:8092}
+
+engine:
+  query:
+    manager-url: ${ENGINE_QUERY_MANAGER_URL}
+    auth:
+      username: ${ENGINE_QUERY_USER}
+      password: ${ENGINE_QUERY_PASSWORD}
+    cache:
+      default-ttl-seconds: 300
+      key-prefix: "kylin_cache:"
+      max-cache-size-bytes: 2097152
+      safe-mode-enabled: false
+      prepared-sql-enabled: true
+      datasource-isolation-enabled: true
+    trace:
+      enabled: true
+    datasource:
+      default:
+        name: ${ENGINE_QUERY_DEFAULT_NAME:default}
+        type: ${ENGINE_QUERY_DEFAULT_TYPE}
+        driver-class: ${ENGINE_QUERY_DEFAULT_DRIVER_CLASS}
+        jdbc-url: ${ENGINE_QUERY_DEFAULT_JDBC_URL}
+        username: ${ENGINE_QUERY_DEFAULT_USERNAME}
+        password: ${ENGINE_QUERY_DEFAULT_PASSWORD:}
+        max-pool-size: ${ENGINE_QUERY_DEFAULT_MAX_POOL_SIZE:4}
+        min-idle: ${ENGINE_QUERY_DEFAULT_MIN_IDLE:1}
+        connection-timeout-ms: ${ENGINE_QUERY_DEFAULT_CONNECTION_TIMEOUT_MS:10000}
+      named: {}
+
+logging:
+  level:
+    com.smartbi.query: INFO

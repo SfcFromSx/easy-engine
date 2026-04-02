@@ -3,6 +3,7 @@ package com.smartbi.engine.migration;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartbi.engine.EngineApplication;
+import com.smartbi.engine.support.ManagerTestFixtures;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -38,21 +39,22 @@ class ManagerDashboardBootstrapIntegrationTest {
     @DynamicPropertySource
     static void flywayProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", ManagerDashboardBootstrapIntegrationTest::jdbcUrl);
-        registry.add("spring.datasource.driver-class-name", () -> "org.h2.Driver");
-        registry.add("spring.datasource.username", () -> "sa");
-        registry.add("spring.datasource.password", () -> "");
+        registry.add("spring.datasource.driver-class-name", () -> ManagerTestFixtures.get("manager.test.shared.driver-class-name"));
+        registry.add("spring.datasource.username", () -> ManagerTestFixtures.get("manager.test.shared.username"));
+        registry.add("spring.datasource.password", () -> ManagerTestFixtures.get("manager.test.shared.password"));
         registry.add("spring.flyway.enabled", () -> true);
-        registry.add("spring.flyway.locations", () -> "filesystem:" + resolveFlywayDirectory().toAbsolutePath());
+        registry.add("spring.flyway.locations", () -> "classpath:db/migration");
         registry.add("spring.flyway.baseline-on-migrate", () -> false);
     }
 
     @Test
     // Covers the default Flyway bootstrap path used by the dashboard data APIs.
     void shouldLeaveDashboardApisEmptyUntilLiveDataArrives() throws Exception {
-        assertEquals(Long.valueOf(0L), jdbcTemplate.queryForObject("SELECT COUNT(*) FROM sql_execution_record", Long.class));
-        assertEquals(Long.valueOf(0L), jdbcTemplate.queryForObject("SELECT COUNT(*) FROM sql_pattern_stats", Long.class));
-        assertEquals(Long.valueOf(0L), jdbcTemplate.queryForObject("SELECT COUNT(*) FROM acceleration_table", Long.class));
-        assertEquals(Long.valueOf(2L), jdbcTemplate.queryForObject("SELECT COUNT(*) FROM query_datasource_config", Long.class));
+        assertEquals(Long.valueOf(0L), jdbcTemplate.queryForObject("SELECT COUNT(*) FROM manager_sql_execution_record", Long.class));
+        assertEquals(Long.valueOf(0L), jdbcTemplate.queryForObject("SELECT COUNT(*) FROM manager_sql_pattern_stats", Long.class));
+        assertEquals(Long.valueOf(0L), jdbcTemplate.queryForObject("SELECT COUNT(*) FROM manager_acceleration_table", Long.class));
+        assertEquals(Long.valueOf(2L), jdbcTemplate.queryForObject("SELECT COUNT(*) FROM manager_query_datasource_config", Long.class));
+        assertEquals(Long.valueOf(8L), jdbcTemplate.queryForObject("SELECT MAX(installed_rank) FROM manager_flyway_schema_history", Long.class));
 
         JsonNode summary = JSON.readTree(mockMvc.perform(get("/api/v1/stats/summary"))
                         .andExpect(status().isOk())
@@ -84,25 +86,7 @@ class ManagerDashboardBootstrapIntegrationTest {
         assertEquals(0, accelerations.path("content").size());
     }
 
-    private static Path resolveFlywayDirectory() {
-        Path cwd = Paths.get("").toAbsolutePath();
-        Path moduleLocal = cwd.resolve("src/main/resources/db/migration");
-        if (Files.isDirectory(moduleLocal)) {
-            return moduleLocal;
-        }
-        Path repoRoot = cwd.resolve("manager/src/main/resources/db/migration");
-        if (Files.isDirectory(repoRoot)) {
-            return repoRoot;
-        }
-        throw new IllegalStateException("Unable to locate manager Flyway migrations from " + cwd);
-    }
-
     private static String jdbcUrl() {
-        return "jdbc:h2:mem:managerdashboardbootstrap;" +
-                "MODE=MySQL;" +
-                "DATABASE_TO_LOWER=TRUE;" +
-                "DEFAULT_NULL_ORDERING=HIGH;" +
-                "DB_CLOSE_DELAY=-1;" +
-                "DB_CLOSE_ON_EXIT=FALSE";
+        return ManagerTestFixtures.h2JdbcUrl("manager.test.flyway.dashboard-db-name");
     }
 }

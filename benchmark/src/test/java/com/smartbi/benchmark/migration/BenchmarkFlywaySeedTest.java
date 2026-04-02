@@ -7,6 +7,7 @@ import com.smartbi.benchmark.repo.BenchmarkJobRepository;
 import com.smartbi.benchmark.repo.BenchmarkTestSetItemRepository;
 import com.smartbi.benchmark.repo.BenchmarkTestSetRepository;
 import com.smartbi.benchmark.repo.SqlTemplateRepository;
+import com.smartbi.benchmark.support.BenchmarkTestFixtures;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,11 +34,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Testcontainers(disabledWithoutDocker = true)
 class BenchmarkFlywaySeedTest {
 
+    private static final String MYSQL_IMAGE = BenchmarkTestFixtures.get("benchmark.test.flyway-seed.mysql-image");
+    private static final String MYSQL_DATABASE = BenchmarkTestFixtures.get("benchmark.test.flyway-seed.mysql-database");
+    private static final String MYSQL_USERNAME = BenchmarkTestFixtures.get("benchmark.test.flyway-seed.mysql-username");
+    private static final String MYSQL_PASSWORD = BenchmarkTestFixtures.get("benchmark.test.flyway-seed.mysql-password");
+
     @Container
-    static final MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.4")
-            .withDatabaseName("engine_db")
-            .withUsername("engine")
-            .withPassword("engine123");
+    static final MySQLContainer<?> MYSQL = new MySQLContainer<>(MYSQL_IMAGE)
+            .withDatabaseName(MYSQL_DATABASE)
+            .withUsername(MYSQL_USERNAME)
+            .withPassword(MYSQL_PASSWORD);
 
     @DynamicPropertySource
     static void datasourceProps(DynamicPropertyRegistry r) {

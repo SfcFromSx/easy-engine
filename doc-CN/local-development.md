@@ -28,10 +28,10 @@ Easy Engine 自身的 `query` 服务仍然只暴露 `POST /kylin/api/query`。
 在启动 `manager` 或 `benchmark` 之前，需要先显式初始化元数据库 schema：
 
 ```bash
-bash scripts/init-db.sh
+bash scripts/init-db.sh dev
 ```
 
-这个脚本会针对当前配置的 MySQL 元数据库依次执行 `manager` 和
+这个脚本会按所选 profile 的元数据库配置依次执行 `manager` 和
 `benchmark` 的 Flyway migration。正常服务启动过程不再自动建表或写入种子数据。
 
 ## 服务启动顺序
@@ -40,7 +40,7 @@ bash scripts/init-db.sh
 
 ```bash
 cd /Users/sfc/Documents/projects/engine/query
-mvn spring-boot:run
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
 2. 启动 `manager`：
@@ -54,7 +54,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 
 ```bash
 cd /Users/sfc/Documents/projects/engine/benchmark
-mvn spring-boot:run
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
 4. 按需启动前端：
@@ -68,15 +68,16 @@ npm --prefix benchmark/frontend run dev
 
 - benchmark 是执行 benchmark run、预检和结构化运行报告时首选的控制界面。
 - benchmark 通过标准 Apache Kylin JDBC 驱动连接到 `query`（`jdbc:kylin://localhost:8092/<project>`）。额外的 JDBC 驱动 JAR 可通过 Benchmark UI 中的 Data Sources > Upload Driver 上传。
-- 默认元数据库改为 MySQL，监听 `localhost:3307`，本地默认账号仍为 `engine` / `engine123`。
+- 每个后端模块现在都维护 `application-dev.yml`、`application-test.yml`、`application-pro.yml` 三套配置。本地启动统一用 `dev`，自动化测试统一用 `test`，测试环境容器应设置 `SPRING_PROFILES_ACTIVE=test`，生产环境设置 `SPRING_PROFILES_ACTIVE=pro`。
+- 默认本地元数据库仍是 MySQL `localhost:3307`，但这些默认值现在只保存在 `dev` profile 中，不再散落在 Java、脚本或 Maven 默认参数里。
 - `manager` 和 `benchmark` 现在默认要求元数据库已提前初始化；如果跳过 `bash scripts/init-db.sh`，服务会因为缺少表而快速失败，而不是在启动阶段直接修改数据库。
 - SQL 中的保留元数据注释（例如 `YH_TARGET_ENGINE`）用于在 `query` 内部将请求路由到指定后端。
 - 如果本地修改了已经应用过的 migration，导致 Flyway 报 checksum mismatch，需要显式修复并重新迁移：
 
 ```bash
-mvn -f manager/pom.xml flyway:repair
-mvn -f benchmark/pom.xml flyway:repair
-bash scripts/init-db.sh
+SPRING_PROFILES_ACTIVE=dev mvn -f manager/pom.xml -Dflyway.url="$MANAGER_DB_JDBC_URL" -Dflyway.user="$MANAGER_DB_USER" -Dflyway.password="$MANAGER_DB_PASSWORD" flyway:repair
+SPRING_PROFILES_ACTIVE=dev mvn -f benchmark/pom.xml -Dflyway.url="$BENCHMARK_DB_JDBC_URL" -Dflyway.user="$BENCHMARK_DB_USER" -Dflyway.password="$BENCHMARK_DB_PASSWORD" flyway:repair
+bash scripts/init-db.sh dev
 ```
 
 ## 默认端口

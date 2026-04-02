@@ -5,8 +5,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "benchmark.jdbc")
 public class BenchmarkJdbcProperties {
 
-    private String defaultDriverClass = "org.apache.kylin.jdbc.Driver";
-    private String driverDir = "./drivers";
+    private String defaultDriverClass;
+    private String driverDir;
 
     public String getDefaultDriverClass() {
         return defaultDriverClass;

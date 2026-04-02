@@ -38,10 +38,10 @@ Easy Engine 使用 **Flyway** 进行自动化的数据库迁移。
 系统启动后，Flyway 会在 `engine_db` 中创建以下主要表结构，按模块分类如下：
 
 #### Manager (管理模块)
-- `query_datasource_config`: 存储各个查询引擎（如 Kylin, Presto）的连接配置。
-- `sql_execution_record`: 存储从 Query 服务摄取的原始 SQL 执行轨迹（Traces）。
-- `sql_pattern_stats`: 存储经过脱敏和聚合后的 SQL 特征统计信息。
-- `acceleration_table`: 存储建议或已创建的加速表（物化视图）元数据。
+- `manager_query_datasource_config`: 存储各个查询引擎（如 Kylin, Presto）的连接配置。
+- `manager_sql_execution_record`: 存储从 Query 服务摄取的原始 SQL 执行轨迹（Traces）。
+- `manager_sql_pattern_stats`: 存储经过脱敏和聚合后的 SQL 特征统计信息。
+- `manager_acceleration_table`: 存储建议或已创建的加速表（物化视图）元数据。
 
 #### Benchmark (基准测试模块)
 - `benchmark_data_source`: 用于测试执行的目标数据源连接信息。
@@ -61,7 +61,7 @@ Easy Engine 使用 **Flyway** 进行自动化的数据库迁移。
     - `SERVER_PORT`: 服务启动端口
 
 2.  **修改配置文件**:
-    直接编辑各模块下的 `src/main/resources/application.yml`。
+    按环境编辑各模块下的 `src/main/resources/application-dev.yml`、`application-test.yml` 或 `application-pro.yml`。
 
 ## 4. 启动后端服务
 
@@ -70,7 +70,7 @@ Easy Engine 使用 **Flyway** 进行自动化的数据库迁移。
 1.  **启动 Query (执行服务)**:
     ```bash
     cd query
-    mvn spring-boot:run
+    mvn spring-boot:run -Dspring-boot.run.profiles=dev
     ```
     - 端口: `8092`
 
@@ -84,7 +84,7 @@ Easy Engine 使用 **Flyway** 进行自动化的数据库迁移。
 3.  **启动 Benchmark (测试编排服务)**:
     ```bash
     cd benchmark
-    mvn spring-boot:run
+    mvn spring-boot:run -Dspring-boot.run.profiles=dev
     ```
     - 端口: `8091`
 
@@ -113,7 +113,7 @@ npm --prefix benchmark/frontend run dev
 2.  **拷贝至内网**：将 `dist` 目录下的所有文件拷贝到后端的静态资源目录：
     - `manager/frontend/dist/*` -> `manager/src/main/resources/static/`
     - `benchmark/frontend/dist/*` -> `benchmark/src/main/resources/static/`
-3.  **启动后端**：正常执行 `mvn spring-boot:run`。
+3.  **启动后端**：本地统一执行 `mvn spring-boot:run -Dspring-boot.run.profiles=dev`。
 4.  **访问地址**：直接访问后端端口即可看到 UI。
     - **Manager**: http://localhost:8090/
     - **Benchmark**: http://localhost:8091/

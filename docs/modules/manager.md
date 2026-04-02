@@ -21,8 +21,9 @@
 - `/api/v1/patterns/top` supports fingerprint, clean-SQL keyword, and minimum execution-count filters on top of pagination.
 - `/api/v1/acceleration-tables` supports keyword, status, schema name, and source filters on top of pagination.
 - Fresh default manager schemas now start with empty traces, pattern stats, and acceleration tables; the dashboard stays empty until live traces are ingested or operators create acceleration entries themselves.
-- `/api/v1/traces` now exposes an explicit `executionMode` field from ingested trace payloads, backed by `sql_execution_record.execution_mode`, so operators do not need to inspect `rawPayload` to distinguish statement versus prepared execution.
-- `/api/v1/traces` also exposes `parameterPayload`, backed by `sql_execution_record.parameter_payload`, so failed prepared executions can be debugged from the normal API response instead of accidental stack-trace leakage.
+- `/api/v1/traces` now exposes an explicit `executionMode` field from ingested trace payloads, backed by `manager_sql_execution_record.execution_mode`, so operators do not need to inspect `rawPayload` to distinguish statement versus prepared execution.
+- `/api/v1/traces` also exposes `parameterPayload`, backed by `manager_sql_execution_record.parameter_payload`, so failed prepared executions can be debugged from the normal API response instead of accidental stack-trace leakage.
+- Manager-owned metadata tables now use the `manager_` prefix consistently: `manager_sql_execution_record`, `manager_sql_pattern_stats`, `manager_acceleration_table`, `manager_query_datasource_config`, and `manager_flyway_schema_history`.
 - Legacy traces that do not send `parameterPayload` still ingest successfully and surface `null` or a missing field for backward compatibility.
 - This task only stores the readable payload supplied by `query`; it does not change JDBC binding or reconstruct parameters from driver state.
 
@@ -36,7 +37,7 @@
 
 ```bash
 docker compose up -d mysql redis
-bash scripts/init-db.sh manager
+bash scripts/init-db.sh dev manager
 cd /Users/sfc/Documents/projects/engine/manager
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 cd /Users/sfc/Documents/projects/engine/manager/frontend
@@ -44,7 +45,9 @@ npm run dev -- --host 127.0.0.1 --port 5173
 ```
 
 `manager` no longer applies Flyway migrations during normal startup. Initialize
-the metadata schema first with `bash scripts/init-db.sh manager`.
+the metadata schema first with `bash scripts/init-db.sh <dev|test|pro> manager`.
+Runtime settings now live in `application-dev.yml`, `application-test.yml`, and
+`application-pro.yml`.
 
 ## Verify
 

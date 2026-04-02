@@ -4,12 +4,15 @@ import com.smartbi.query.EngineQueryApplication;
 import com.smartbi.query.support.QueryTestConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import javax.annotation.Resource;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
@@ -19,66 +22,67 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(
-        classes = EngineQueryApplication.class,
-        properties = {
-                "spring.datasource.url=jdbc:h2:mem:webtest_trino_trace;MODE=MySQL;DB_CLOSE_DELAY=-1",
-                "spring.datasource.username=sa",
-                "spring.datasource.password=",
-                "spring.datasource.driver-class-name=org.h2.Driver",
-                "spring.jpa.hibernate.ddl-auto=create-drop",
-                "engine.query.datasource.default.name=default",
-                "engine.query.datasource.default.type=h2",
-                "engine.query.datasource.default.driver-class=org.h2.Driver",
-                "engine.query.datasource.default.jdbc-url=jdbc:h2:mem:webtest_trino_default;MODE=MySQL;DB_CLOSE_DELAY=-1",
-                "engine.query.datasource.default.username=sa",
-                "engine.query.datasource.default.password=",
-                "engine.query.datasource.named.trino_local.name=trino_local",
-                "engine.query.datasource.named.trino_local.type=trino",
-                "engine.query.datasource.named.trino_local.driver-class=org.h2.Driver",
-                "engine.query.datasource.named.trino_local.jdbc-url=jdbc:h2:mem:webtest_trino_named;MODE=MySQL;DB_CLOSE_DELAY=-1",
-                "engine.query.datasource.named.trino_local.username=sa",
-                "engine.query.datasource.named.trino_local.password=",
-                "engine.query.manager-url=",
-                "engine.query.auth.username=ADMIN",
-                "engine.query.auth.password=KYLIN"
-        }
-)
+@SpringBootTest(classes = EngineQueryApplication.class)
 @AutoConfigureMockMvc
 @Import(QueryTestConfiguration.class)
 class QueryTrinoRoutingIntegrationTest {
 
+    private static final String H2_DRIVER_CLASS = "org.h2.Driver";
+    private static final String QUERY_ENDPOINT = "/kylin/api/query";
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String BASIC_PREFIX = "Basic ";
+    private static final String AUTH_SEPARATOR = ":";
+    private static final String ROUTED_QUERY_BODY =
+            "{\"sql\":\"/* YH_TARGET_ENGINE=trino_local */ SELECT NAME FROM REGION WHERE REGIONKEY = 1\",\"project\":\"demo\"}";
+    private static final String REGION_DROP_SQL = "DROP TABLE IF EXISTS REGION";
+    private static final String REGION_CREATE_SQL =
+            "CREATE TABLE REGION (REGIONKEY INT PRIMARY KEY, NAME VARCHAR(32))";
+    private static final String REGION_INSERT_SQL =
+            "INSERT INTO REGION (REGIONKEY, NAME) VALUES (1, 'trino-africa'), (2, 'trino-america')";
+    private static final String TRINO_AFRICA = "trino-africa";
+
     @Resource
     private MockMvc mockMvc;
 
+    @Value("${engine.query.datasource.named.trino_local.jdbc-url}")
+    private String trinoJdbcUrl;
+
+    @Value("${engine.query.datasource.named.trino_local.username}")
+    private String trinoJdbcUser;
+
+    @Value("${engine.query.datasource.named.trino_local.password:}")
+    private String trinoJdbcPassword;
+
+    @Value("${engine.query.auth.username}")
+    private String authUsername;
+
+    @Value("${engine.query.auth.password}")
+    private String authPassword;
+
     @BeforeEach
     void setUp() throws Exception {
-        Class.forName("org.h2.Driver");
-        try (Connection connection = DriverManager.getConnection(
-                "jdbc:h2:mem:webtest_trino_named;MODE=MySQL;DB_CLOSE_DELAY=-1",
-                "sa",
-                "");
+        Class.forName(H2_DRIVER_CLASS);
+        try (Connection connection = DriverManager.getConnection(trinoJdbcUrl, trinoJdbcUser, trinoJdbcPassword);
              Statement statement = connection.createStatement()) {
-            statement.execute("DROP TABLE IF EXISTS REGION");
-            statement.execute("CREATE TABLE REGION (REGIONKEY INT PRIMARY KEY, NAME VARCHAR(32))");
-            statement.execute("INSERT INTO REGION (REGIONKEY, NAME) VALUES (1, 'trino-africa'), (2, 'trino-america')");
+            statement.execute(REGION_DROP_SQL);
+            statement.execute(REGION_CREATE_SQL);
+            statement.execute(REGION_INSERT_SQL);
         }
     }
 
     // Covers routed Trino execution through the HTTP compatibility path.
     @Test
     void shouldRouteQueriesToTrinoDatasources() throws Exception {
-        String body = "{\"sql\":\"/* YH_TARGET_ENGINE=trino_local */ SELECT NAME FROM REGION WHERE REGIONKEY = 1\",\"project\":\"demo\"}";
-
-        mockMvc.perform(post("/kylin/api/query")
-                        .header("Authorization", authHeader())
-                        .contentType("application/json")
-                        .content(body))
+        mockMvc.perform(post(QUERY_ENDPOINT)
+                        .header(AUTHORIZATION_HEADER, authHeader())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(ROUTED_QUERY_BODY))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.results[0][0]").value("trino-africa"));
+                .andExpect(jsonPath("$.results[0][0]").value(TRINO_AFRICA));
     }
 
-    private static String authHeader() {
-        return "Basic " + Base64.getEncoder().encodeToString("ADMIN:KYLIN".getBytes());
+    private String authHeader() {
+        String credentials = authUsername + AUTH_SEPARATOR + authPassword;
+        return BASIC_PREFIX + Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
     }
 }

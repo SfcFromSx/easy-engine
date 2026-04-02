@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: benchmark
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+  datasource:
+    url: ${BENCHMARK_DB_JDBC_URL}
+    username: ${BENCHMARK_DB_USER}
+    password: ${BENCHMARK_DB_PASSWORD}
+    driver-class-name: ${BENCHMARK_DB_DRIVER_CLASS:com.mysql.cj.jdbc.Driver}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: false
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
+    table: benchmark_flyway_schema_history
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+server:
+  port: ${SERVER_PORT:8091}
+
+benchmark:
+  jdbc:
+    default-driver-class: ${BENCHMARK_JDBC_DEFAULT_DRIVER_CLASS}
+    driver-dir: ${BENCHMARK_JDBC_DRIVER_DIR}
+  preflight:
+    kylin-auth-url: ${BENCHMARK_PREFLIGHT_KYLIN_AUTH_URL}
+    kylin-user: ${BENCHMARK_PREFLIGHT_KYLIN_USER}
+    kylin-password: ${BENCHMARK_PREFLIGHT_KYLIN_PASSWORD}
+    presto-info-url: ${BENCHMARK_PREFLIGHT_PRESTO_INFO_URL}
+
+logging:
+  level:
+    com.smartbi.benchmark: INFO

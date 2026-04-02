@@ -20,9 +20,6 @@
     <properties>
         <java.version>1.8</java.version>
         <kylin.jdbc.version>4.0.1</kylin.jdbc.version>
-        <flyway.url>jdbc:mysql://localhost:3307/engine_db?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=UTC</flyway.url>
-        <flyway.user>engine</flyway.user>
-        <flyway.password>engine123</flyway.password>
     </properties>
 
     <dependencies>
@@ -130,9 +127,6 @@
                 <artifactId>flyway-maven-plugin</artifactId>
                 <version>8.5.13</version>
                 <configuration>
-                    <url>${flyway.url}</url>
-                    <user>${flyway.user}</user>
-                    <password>${flyway.password}</password>
                     <baselineOnMigrate>true</baselineOnMigrate>
                     <baselineVersion>0</baselineVersion>
                     <table>benchmark_flyway_schema_history</table>

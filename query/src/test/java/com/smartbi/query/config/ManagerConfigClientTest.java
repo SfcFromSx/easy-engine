@@ -60,6 +60,7 @@ class ManagerConfigClientTest {
     @Test
     void shouldReturnEmptyListWhenManagerRespondsWithoutBody() {
         QueryProperties properties = new QueryProperties();
+        properties.setManagerUrl(MANAGER_URL);
         ManagerConfigClient client = new ManagerConfigClient(new RestTemplateBuilder(), properties);
         MockRestServiceServer server = bind(client);
 
@@ -74,6 +75,7 @@ class ManagerConfigClientTest {
     @Test
     void shouldReturnEmptyListWhenManagerRespondsWithEmptyArray() {
         QueryProperties properties = new QueryProperties();
+        properties.setManagerUrl(MANAGER_URL);
         ManagerConfigClient client = new ManagerConfigClient(new RestTemplateBuilder(), properties);
         MockRestServiceServer server = bind(client);
 
@@ -88,6 +90,7 @@ class ManagerConfigClientTest {
     @Test
     void shouldWrapRestClientFailures() {
         QueryProperties properties = new QueryProperties();
+        properties.setManagerUrl(MANAGER_URL);
         ManagerConfigClient client = new ManagerConfigClient(new RestTemplateBuilder(), properties);
         MockRestServiceServer server = bind(client);
 

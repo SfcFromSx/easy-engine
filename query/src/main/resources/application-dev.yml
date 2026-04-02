@@ -3,8 +3,8 @@ spring:
     name: query
   datasource:
     url: ${ENGINE_DB_JDBC_URL:jdbc:mysql://localhost:3307/engine_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
-    username: ${ENGINE_DB_USER:${MYSQL_USER:engine}}
-    password: ${ENGINE_DB_PASSWORD:${MYSQL_PASSWORD:engine123}}
+    username: ${ENGINE_DB_USER:engine}
+    password: ${ENGINE_DB_PASSWORD:engine123}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     open-in-view: false
@@ -25,16 +25,15 @@ engine:
       username: ${ENGINE_QUERY_USER:ADMIN}
       password: ${ENGINE_QUERY_PASSWORD:KYLIN}
     cache:
-      default-ttl-seconds: ${ENGINE_QUERY_CACHE_TTL:300}
-      key-prefix: ${ENGINE_QUERY_CACHE_PREFIX:kylin_cache:}
-      max-cache-size-bytes: ${ENGINE_QUERY_CACHE_MAX_SIZE:2097152}
-      safe-mode-enabled: ${ENGINE_QUERY_CACHE_SAFE_MODE:false}
-      prepared-sql-enabled: ${ENGINE_QUERY_PREPARED_CACHE:true}
-      datasource-isolation-enabled: ${ENGINE_QUERY_CACHE_DS_ISOLATION:true}
+      default-ttl-seconds: 300
+      key-prefix: "kylin_cache:"
+      max-cache-size-bytes: 2097152
+      safe-mode-enabled: false
+      prepared-sql-enabled: true
+      datasource-isolation-enabled: true
     trace:
-      enabled: ${ENGINE_QUERY_TRACE_ENABLED:true}
+      enabled: true
     datasource:
-      # Static datasource blocks remain as the local fallback when manager is unreachable.
       default:
         name: default
         type: kylin
@@ -60,9 +59,9 @@ engine:
           name: trino_local
           type: trino
           driver-class: io.trino.jdbc.TrinoDriver
-          jdbc-url: ${ENGINE_QUERY_TRINO_JDBC_URL:jdbc:trino://localhost:8080/tpch/tiny}
-          username: ${ENGINE_QUERY_TRINO_USER:admin}
-          password: ${ENGINE_QUERY_TRINO_PASSWORD:}
+          jdbc-url: jdbc:trino://localhost:8080/tpch/tiny
+          username: admin
+          password:
           max-pool-size: 4
           min-idle: 1
           connection-timeout-ms: 10000

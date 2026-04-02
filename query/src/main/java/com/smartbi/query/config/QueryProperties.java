@@ -12,7 +12,7 @@ public class QueryProperties {
     private final Cache cache = new Cache();
     private final Trace trace = new Trace();
     private final Datasource datasource = new Datasource();
-    private String managerUrl = "http://localhost:8090";
+    private String managerUrl;
 
     public Auth getAuth() {
         return auth;
@@ -39,8 +39,8 @@ public class QueryProperties {
     }
 
     public static class Auth {
-        private String username = "ADMIN";
-        private String password = "KYLIN";
+        private String username;
+        private String password;
 
         public String getUsername() {
             return username;

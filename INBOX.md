@@ -104,22 +104,93 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Suggested next step: Keep the archived Trino entry and its task commit aligned, and let the active ledger continue tracking `ARCH-015` independently.
 - Human decision: pending
 
+### INBOX-20260402-010
+- Area: Harness audit trail
+- Related task(s): `TEST-CONFIG-001`
+- Summary: `tasks.md` was updated on 2026-04-02 to start the existing project-wide test-fixture audit task instead of creating a duplicate task for the same best-practice follow-up.
+- Evidence: `TEST-CONFIG-001` is now marked `in_progress`, and its progress log records that the remaining project-wide best-practice drift is inline test connection fixtures in benchmark/query tests.
+- Impact/Risk: Without an explicit audit note, later recovery or review could misread the ledger change as ad hoc bookkeeping instead of the required task workflow.
+- Suggested next step: Keep the task ledger, archive, and eventual commit aligned when `TEST-CONFIG-001` closes.
+- Human decision: pending
+
 ### INBOX-20260402-011
 - Area: Manager and benchmark validation drift
-- Related task(s): ARCH-015
-- Summary: Focused verification for the DB-init workflow change still ran into unrelated Spring MVC path-pattern failures in both manager and benchmark, and benchmark Flyway coverage remains Docker-dependent in this environment.
-- Evidence: mvn -q -f manager/pom.xml -Dtest=ManagerDashboardBootstrapIntegrationTest,DatasourceConfigFlywayIntegrationTest test failed on 2026-04-02 with PatternParseException: Invalid mapping pattern detected: /**/{path:[^\\.]*} while creating the MVC view-controller mapping; mvn -q -f benchmark/pom.xml -Dtest=BenchmarkFlywaySeedTest,BenchmarkSmokeTest test hit the same SPA route-pattern failure in benchmark web-context tests, and mvn -q -f benchmark/pom.xml -Dtest=BenchmarkFlywaySeedTest test only exits cleanly through the existing Docker-less Testcontainers skip path.
+- Related task(s): `ARCH-015`
+- Summary: Focused verification for the DB-init workflow change still ran into unrelated Spring MVC path-pattern failures in both `manager` and `benchmark`, and benchmark Flyway coverage remains Docker-dependent in this environment.
+- Evidence: `mvn -q -f manager/pom.xml -Dtest=ManagerDashboardBootstrapIntegrationTest,DatasourceConfigFlywayIntegrationTest test` failed on 2026-04-02 with `PatternParseException: Invalid mapping pattern detected: /**/{path:[^\\.]*}` while creating the MVC view-controller mapping; `mvn -q -f benchmark/pom.xml -Dtest=BenchmarkFlywaySeedTest,BenchmarkSmokeTest test` hit the same SPA route-pattern failure in `benchmark` web-context tests, and `mvn -q -f benchmark/pom.xml -Dtest=BenchmarkFlywaySeedTest test` only exits cleanly through the existing Docker-less Testcontainers skip path.
 - Impact/Risk: Manager and benchmark web-context validation remain noisy for work unrelated to this task, which makes it harder to use those focused Maven tests as clean signals when verifying future runtime/config changes.
 - Suggested next step: Open a dedicated task to replace the invalid SPA forward mapping (or switch matching strategy explicitly) across both modules and decide how Docker-backed Flyway coverage should run locally versus CI.
 - Human decision: pending
 
 ### INBOX-20260402-012
 - Area: Harness audit trail
-- Related task(s): ARCH-015
-- Summary: tasks.md and tasks-done.md were updated on 2026-04-02 to archive the completion of ARCH-015 in the canonical task ledger.
-- Evidence: The active ledger row for ARCH-015 was removed from tasks.md, its full progress log was archived under tasks-done.md, and the closeout is included in the task's single commit.
+- Related task(s): `ARCH-015`
+- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-02 to archive the completion of `ARCH-015` in the canonical task ledger.
+- Evidence: The active ledger row for `ARCH-015` was removed from `tasks.md`, its full progress log was archived under `tasks-done.md`, and the closeout is included in the task's single commit.
 - Impact/Risk: Without an explicit audit note, later recovery or review could misread the harness-document edits as ad hoc bookkeeping instead of the required task workflow.
-- Suggested next step: Keep the ledger archive and task commit aligned for ARCH-015 closeout.
+- Suggested next step: Keep the ledger archive and task commit aligned for `ARCH-015` closeout.
+- Human decision: pending
+
+### INBOX-20260402-013
+- Area: Harness audit trail
+- Related task(s): `MGR-DB-001`
+- Summary: `tasks-done.md` was updated on 2026-04-02 to archive the completion of `MGR-DB-001` while preserving the concurrently active `TEST-CONFIG-001` entry in `tasks.md`.
+- Evidence: The manager table-prefix task now has a full archived progress log and done signal in `tasks-done.md`; `tasks.md` was left aligned with the separately in-progress `TEST-CONFIG-001` work instead of being overwritten during closeout.
+- Impact/Risk: Without an explicit note, later recovery could misread the ledger state and assume the missing active-row history for `MGR-DB-001` was accidental rather than the result of concurrent harness edits being preserved.
+- Suggested next step: Keep the archived manager-prefix entry and its task commit aligned, and let the active ledger continue tracking `TEST-CONFIG-001` independently.
+- Human decision: pending
+
+### INBOX-20260402-014
+- Area: Harness audit trail
+- Related task(s): `TEST-CONFIG-001`
+- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-02 to archive the completion of `TEST-CONFIG-001` in the canonical task ledger.
+- Evidence: The active ledger row for `TEST-CONFIG-001` was removed from `tasks.md`, its full progress log was archived under `tasks-done.md`, and the closeout will be included in the task's single commit.
+- Impact/Risk: Without an explicit inbox note, later recovery or review could misread the harness-document edits as ad hoc bookkeeping instead of the required task workflow.
+- Suggested next step: Keep the ledger archive and task commit aligned for `TEST-CONFIG-001` closeout.
+- Human decision: pending
+
+### INBOX-20260402-015
+- Area: Harness audit trail
+- Related task(s): `CONFIG-PROFILE-001`
+- Summary: `tasks.md` was updated on 2026-04-02 to intake a human-requested repo-wide configuration-governance task so the profile unification work can follow the required task lifecycle.
+- Evidence: Active ledger row and task section for `CONFIG-PROFILE-001` were added to `tasks.md` before implementation began.
+- Impact/Risk: Without an explicit audit note, later recovery or review could miss why the active ledger changed during this session.
+- Human decision: pending
+
+### INBOX-20260402-016
+- Area: Harness audit trail (Git Rules)
+- Related task(s): None
+- Summary: The core `AGENTS.md` contract was updated to strictly prohibit `git add .` or global commit flags.
+- Evidence: Appended `ONLY stage and commit the specific files modified during the current task...` rule under the `Git Contract` section.
+- Impact/Risk: Prevents agents from accidentally absorbing concurrently active changes from other tasks into a single commit.
+- Suggested next step: Acknowledge the rule update.
+- Human decision: pending
+
+### INBOX-20260402-017
+- Area: Benchmark test-profile initialization drift
+- Related task(s): `CONFIG-PROFILE-001`
+- Summary: The new shared `benchmark` `application-test.yml` works for automated tests and for MySQL-backed test-environment deployment overrides, but its raw H2 default cannot replay the full benchmark Flyway chain because migration `V17__dedupe_seeded_benchmark_datasources.sql` uses MySQL-specific multi-table `UPDATE ... JOIN` syntax.
+- Evidence: `bash scripts/init-db.sh test manager benchmark` on 2026-04-02 succeeded for `manager` but failed for `benchmark` on H2 with `Syntax error in SQL statement ... expected "SET"` inside `V17__dedupe_seeded_benchmark_datasources.sql`; the same path passed when the benchmark test-profile datasource was overridden to local MySQL via `BENCHMARK_TEST_DB_*` environment variables.
+- Impact/Risk: Benchmark's unified `test` profile currently needs DB env overrides for deployment-like DB initialization, so the out-of-the-box H2 defaults are only suitable for automated benchmark tests that keep Flyway disabled.
+- Suggested next step: Decide whether benchmark `test` profile should keep H2-first defaults for automated tests or move to MySQL-first defaults with a separate shared test bootstrap override for local automated runs.
+- Human decision: pending
+
+### INBOX-20260402-018
+- Area: Config governance
+- Related task(s): `CONFIG-PROFILE-001`, `CONFIG-REVIEW-001`
+- Summary: `CONFIG-PROFILE-001` exported a new English best-practice rule that all environment-specific configuration must live in each module's `application-dev.yml`, `application-test.yml`, and `application-pro.yml`, and a follow-up review task was added to audit the rest of the repo against that rule.
+- Evidence: `docs/operations/best-practices.md` now replaces the two older config-related rules with the new profile-governance rule, and `tasks.md` now includes `CONFIG-REVIEW-001` for retroactive cleanup.
+- Impact/Risk: Without the follow-up audit, older files may still carry environment-specific drift outside the three profile YAMLs even though the new standard is now documented.
+- Suggested next step: Schedule `CONFIG-REVIEW-001` and remove any remaining non-compliant environment config from the repo.
+- Human decision: pending
+
+### INBOX-20260402-019
+- Area: Harness audit trail
+- Related task(s): `CONFIG-PROFILE-001`
+- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-02 to archive the completion of `CONFIG-PROFILE-001`, while preserving the follow-up audit task `CONFIG-REVIEW-001` in the active ledger.
+- Evidence: The active ledger row and section for `CONFIG-PROFILE-001` were removed from `tasks.md`, its full progress log and done signal were archived under `tasks-done.md`, and the new best-practice replacement plus review-task creation are reflected in the same closeout.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger change as ad hoc bookkeeping instead of the required task finalization workflow.
+- Suggested next step: Keep the archived `CONFIG-PROFILE-001` entry and its commit aligned, and let `CONFIG-REVIEW-001` remain the active follow-up.
 - Human decision: pending
 
 ## Template
@@ -134,21 +205,3 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Suggested next step:
 - Human decision: pending
 ```
-
-### INBOX-20260402-010
-- Area: Harness audit trail
-- Related task(s): `TEST-CONFIG-001`
-- Summary: `tasks.md` was updated on 2026-04-02 to start the existing project-wide test-fixture audit task instead of creating a duplicate task for the same best-practice follow-up.
-- Evidence: `TEST-CONFIG-001` is now marked `in_progress`, and its progress log records that the remaining project-wide best-practice drift is inline test connection fixtures in benchmark/query tests.
-- Impact/Risk: Without an explicit audit note, later recovery or review could misread the ledger change as ad hoc bookkeeping instead of the required task workflow.
-- Suggested next step: Keep the task ledger, archive, and eventual commit aligned when `TEST-CONFIG-001` closes.
-- Human decision: pending
-
-### INBOX-20260402-014
-- Area: Harness audit trail
-- Related task(s): `TEST-CONFIG-001`
-- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-02 to archive the completion of `TEST-CONFIG-001` in the canonical task ledger.
-- Evidence: The active ledger row for `TEST-CONFIG-001` was removed from `tasks.md`, its full progress log was archived under `tasks-done.md`, and the closeout will be included in the task's single commit.
-- Impact/Risk: Without an explicit inbox note, later recovery or review could misread the harness-document edits as ad hoc bookkeeping instead of the required task workflow.
-- Suggested next step: Keep the ledger archive and task commit aligned for `TEST-CONFIG-001` closeout.
-- Human decision: pending

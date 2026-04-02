@@ -1,5 +1,6 @@
 package com.smartbi.engine.datasource;
 
+import com.smartbi.engine.support.ManagerTestFixtures;
 import com.smartbi.engine.web.dto.QueryDatasourceConfigUpsertRequest;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -19,6 +20,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class QueryDatasourceConfigServiceTest {
+
+    private static final String REQUEST_DRIVER_CLASS =
+            ManagerTestFixtures.get("manager.test.datasource-config-service.driver-class");
+    private static final String REQUEST_JDBC_URL =
+            ManagerTestFixtures.get("manager.test.datasource-config-service.jdbc-url");
+    private static final String REQUEST_USERNAME =
+            ManagerTestFixtures.get("manager.test.datasource-config-service.username");
+    private static final String REQUEST_PASSWORD =
+            ManagerTestFixtures.get("manager.test.datasource-config-service.password");
 
     private final QueryDatasourceConfigRepository repository = Mockito.mock(QueryDatasourceConfigRepository.class);
     private final QueryDatasourceConfigService service = new QueryDatasourceConfigService(repository);
@@ -67,9 +77,9 @@ class QueryDatasourceConfigServiceTest {
 
         assertEquals("analytics", created.getName());
         assertEquals("mysql", created.getType());
-        assertEquals("com.mysql.jdbc.Driver", created.getDriverClass());
-        assertEquals("jdbc:mysql://localhost/test", created.getJdbcUrl());
-        assertEquals("svc_user", created.getUsername());
+        assertEquals(REQUEST_DRIVER_CLASS, created.getDriverClass());
+        assertEquals(REQUEST_JDBC_URL, created.getJdbcUrl());
+        assertEquals(REQUEST_USERNAME, created.getUsername());
         assertNull(created.getPassword());
         assertEquals(Integer.valueOf(4), created.getMaxPoolSize());
         assertEquals(Integer.valueOf(1), created.getMinIdle());
@@ -151,10 +161,10 @@ class QueryDatasourceConfigServiceTest {
         QueryDatasourceConfigUpsertRequest request = new QueryDatasourceConfigUpsertRequest();
         request.setName(name);
         request.setType(" mysql ");
-        request.setDriverClass(" com.mysql.jdbc.Driver ");
-        request.setJdbcUrl(" jdbc:mysql://localhost/test ");
-        request.setUsername(" svc_user ");
-        request.setPassword(null);
+        request.setDriverClass(" " + REQUEST_DRIVER_CLASS + " ");
+        request.setJdbcUrl(" " + REQUEST_JDBC_URL + " ");
+        request.setUsername(" " + REQUEST_USERNAME + " ");
+        request.setPassword(REQUEST_PASSWORD.isEmpty() ? null : REQUEST_PASSWORD);
         request.setIsDefault(isDefault);
         return request;
     }

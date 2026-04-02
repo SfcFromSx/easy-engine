@@ -1,13 +1,13 @@
 package com.smartbi.query.support;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
+import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
+import org.springframework.core.io.ClassPathResource;
+
 import java.util.Properties;
 
 public final class QueryTestFixtures {
 
-    private static final String RESOURCE = "query-test-fixtures.properties";
+    private static final String RESOURCE = "application-test.yml";
     private static final Properties PROPERTIES = load();
 
     private QueryTestFixtures() {
@@ -22,15 +22,13 @@ public final class QueryTestFixtures {
     }
 
     private static Properties load() {
-        Properties properties = new Properties();
-        try (InputStream inputStream = QueryTestFixtures.class.getClassLoader().getResourceAsStream(RESOURCE)) {
-            if (inputStream == null) {
-                throw new IllegalStateException("Missing query test fixture resource: " + RESOURCE);
-            }
-            properties.load(inputStream);
-            return properties;
-        } catch (IOException ex) {
-            throw new UncheckedIOException("Failed to load " + RESOURCE, ex);
+        YamlPropertiesFactoryBean factory = new YamlPropertiesFactoryBean();
+        factory.setResources(new ClassPathResource(RESOURCE));
+        factory.afterPropertiesSet();
+        Properties properties = factory.getObject();
+        if (properties == null) {
+            throw new IllegalStateException("Missing query test fixture resource: " + RESOURCE);
         }
+        return properties;
     }
 }

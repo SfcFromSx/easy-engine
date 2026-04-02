@@ -8,7 +8,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import javax.tools.JavaCompiler;
@@ -33,7 +32,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-@TestPropertySource(locations = "classpath:jdbc-driver-upload-integration-test.properties")
 @AutoConfigureMockMvc
 class JdbcDriverUploadIntegrationTest {
 
@@ -41,23 +39,49 @@ class JdbcDriverUploadIntegrationTest {
     private static final Path BUILD_DIR = Paths.get("target/test-drivers/build").toAbsolutePath().normalize();
     private static final Path LEGACY_DRIVER_DIR = Paths.get("benchmark/target/test-drivers/uploaded").toAbsolutePath().normalize();
     private static final Path LEGACY_BUILD_DIR = Paths.get("benchmark/target/test-drivers/build").toAbsolutePath().normalize();
+    private static final String FILE_FIELD = "file";
+    private static final String UPLOADED_DRIVER_JAR = "uploaded-h2-driver.jar";
+    private static final String JAVA_ARCHIVE_MEDIA_TYPE = "application/java-archive";
+    private static final String DRIVERS_UPLOAD_ENDPOINT = "/api/v1/drivers/upload";
+    private static final String DRIVERS_ENDPOINT = "/api/v1/drivers";
+    private static final String DATASOURCE_TEST_ENDPOINT = "/api/v1/datasources/test";
+    private static final String UPLOADED_STATUS = "UPLOADED";
+    private static final String SUCCESS = "SUCCESS";
+    private static final String SOURCE_DIR = "src/com/example/uploaded";
+    private static final String CLASSES_DIR = "classes";
+    private static final String SOURCE_FILE = "UploadedH2Driver.java";
+    private static final String DRIVER_CLASS_SOURCE =
+            "package com.example.uploaded;\n"
+                    + "public class UploadedH2Driver extends org.h2.Driver {\n"
+                    + "}\n";
+    private static final String JAVA_RELEASE_FLAG = "--release";
+    private static final String JAVA_VERSION = "8";
+    private static final String CLASSPATH_FLAG = "-cp";
+    private static final String OUTPUT_DIR_FLAG = "-d";
+    private static final String JAVA_CLASS_PATH = "java.class.path";
+    private static final String COMPILE_ERROR = "Failed to compile uploaded JDBC driver test fixture";
+    private static final String CLASS_ENTRY = "com/example/uploaded/UploadedH2Driver.class";
+    private static final String DRIVER_SERVICE_ENTRY = "META-INF/services/java.sql.Driver";
+    private static final String DRIVER_SERVICE_CONTENT = "com.example.uploaded.UploadedH2Driver\n";
+    private static final String JDK_COMPILER_REQUIRED = "JDK compiler is required for JDBC upload integration test";
+    private static final String DELETE_ERROR_PREFIX = "Failed to delete ";
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Value("${benchmark.jdbc-upload.test-datasource.name}")
+    @Value("${benchmark.test.jdbc-upload.test-datasource.name}")
     private String datasourceName;
 
-    @Value("${benchmark.jdbc-upload.test-datasource.driver-class}")
+    @Value("${benchmark.test.jdbc-upload.test-datasource.driver-class}")
     private String datasourceDriverClass;
 
-    @Value("${benchmark.jdbc-upload.test-datasource.jdbc-url}")
+    @Value("${benchmark.test.jdbc-upload.test-datasource.jdbc-url}")
     private String datasourceJdbcUrl;
 
-    @Value("${benchmark.jdbc-upload.test-datasource.jdbc-user}")
+    @Value("${benchmark.test.jdbc-upload.test-datasource.jdbc-user}")
     private String datasourceJdbcUser;
 
-    @Value("${benchmark.jdbc-upload.test-datasource.jdbc-password:}")
+    @Value("${benchmark.test.jdbc-upload.test-datasource.jdbc-password:}")
     private String datasourceJdbcPassword;
 
     @BeforeEach
@@ -76,26 +100,26 @@ class JdbcDriverUploadIntegrationTest {
         Path driverJar = buildUploadedDriverJar();
 
         MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "uploaded-h2-driver.jar",
-                "application/java-archive",
+                FILE_FIELD,
+                UPLOADED_DRIVER_JAR,
+                JAVA_ARCHIVE_MEDIA_TYPE,
                 Files.readAllBytes(driverJar)
         );
 
-        mockMvc.perform(multipart("/api/v1/drivers/upload").file(file))
+        mockMvc.perform(multipart(DRIVERS_UPLOAD_ENDPOINT).file(file))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("UPLOADED"))
-                .andExpect(jsonPath("$.fileName").value("uploaded-h2-driver.jar"));
+                .andExpect(jsonPath("$.status").value(UPLOADED_STATUS))
+                .andExpect(jsonPath("$.fileName").value(UPLOADED_DRIVER_JAR));
 
-        mockMvc.perform(get("/api/v1/drivers"))
+        mockMvc.perform(get(DRIVERS_ENDPOINT))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0]").value("uploaded-h2-driver.jar"));
+                .andExpect(jsonPath("$[0]").value(UPLOADED_DRIVER_JAR));
 
-        mockMvc.perform(post("/api/v1/datasources/test")
+        mockMvc.perform(post(DATASOURCE_TEST_ENDPOINT)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(datasourceJson()))
                 .andExpect(status().isOk())
-                .andExpect(content().string("SUCCESS"));
+                .andExpect(content().string(SUCCESS));
     }
 
     private String datasourceJson() {
@@ -109,44 +133,42 @@ class JdbcDriverUploadIntegrationTest {
     }
 
     private Path buildUploadedDriverJar() throws Exception {
-        Path sourceDir = BUILD_DIR.resolve("src/com/example/uploaded");
-        Path classesDir = BUILD_DIR.resolve("classes");
+        Path sourceDir = BUILD_DIR.resolve(SOURCE_DIR);
+        Path classesDir = BUILD_DIR.resolve(CLASSES_DIR);
         Files.createDirectories(sourceDir);
         Files.createDirectories(classesDir);
 
-        Path sourceFile = sourceDir.resolve("UploadedH2Driver.java");
+        Path sourceFile = sourceDir.resolve(SOURCE_FILE);
         Files.write(
                 sourceFile,
-                ("package com.example.uploaded;\n"
-                        + "public class UploadedH2Driver extends org.h2.Driver {\n"
-                        + "}\n").getBytes(StandardCharsets.UTF_8)
+                DRIVER_CLASS_SOURCE.getBytes(StandardCharsets.UTF_8)
         );
 
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        assertNotNull(compiler, "JDK compiler is required for JDBC upload integration test");
+        assertNotNull(compiler, JDK_COMPILER_REQUIRED);
 
         int compileResult = compiler.run(
                 null,
                 null,
                 null,
-                "--release",
-                "8",
-                "-cp",
-                System.getProperty("java.class.path"),
-                "-d",
+                JAVA_RELEASE_FLAG,
+                JAVA_VERSION,
+                CLASSPATH_FLAG,
+                System.getProperty(JAVA_CLASS_PATH),
+                OUTPUT_DIR_FLAG,
                 classesDir.toString(),
                 sourceFile.toString()
         );
         if (compileResult != 0) {
-            throw new IllegalStateException("Failed to compile uploaded JDBC driver test fixture");
+            throw new IllegalStateException(COMPILE_ERROR);
         }
 
-        Path jarPath = BUILD_DIR.resolve("uploaded-h2-driver.jar");
+        Path jarPath = BUILD_DIR.resolve(UPLOADED_DRIVER_JAR);
         try (OutputStream outputStream = Files.newOutputStream(jarPath);
              JarOutputStream jarOutputStream = new JarOutputStream(outputStream)) {
-            addClassEntry(classesDir, jarOutputStream, "com/example/uploaded/UploadedH2Driver.class");
-            jarOutputStream.putNextEntry(new JarEntry("META-INF/services/java.sql.Driver"));
-            jarOutputStream.write("com.example.uploaded.UploadedH2Driver\n".getBytes(StandardCharsets.UTF_8));
+            addClassEntry(classesDir, jarOutputStream, CLASS_ENTRY);
+            jarOutputStream.putNextEntry(new JarEntry(DRIVER_SERVICE_ENTRY));
+            jarOutputStream.write(DRIVER_SERVICE_CONTENT.getBytes(StandardCharsets.UTF_8));
             jarOutputStream.closeEntry();
         }
         return jarPath;
@@ -168,7 +190,7 @@ class JdbcDriverUploadIntegrationTest {
                         try {
                             Files.deleteIfExists(current);
                         } catch (IOException e) {
-                            throw new IllegalStateException("Failed to delete " + current, e);
+                            throw new IllegalStateException(DELETE_ERROR_PREFIX + current, e);
                         }
                     });
         }

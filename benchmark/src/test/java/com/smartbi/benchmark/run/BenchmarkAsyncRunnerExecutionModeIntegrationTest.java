@@ -25,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.charset.StandardCharsets;
@@ -42,7 +41,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = BenchmarkApplication.class)
-@TestPropertySource(locations = "classpath:benchmark-async-runner-execution-mode-integration-test.properties")
 @AutoConfigureMockMvc
 class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
 
@@ -75,16 +73,16 @@ class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Value("${benchmark.async-runner.target.driver-class}")
+    @Value("${benchmark.test.async-runner.target.driver-class}")
     private String targetDriverClass;
 
-    @Value("${benchmark.async-runner.target.jdbc-url}")
+    @Value("${benchmark.test.async-runner.target.jdbc-url}")
     private String targetJdbcUrl;
 
-    @Value("${benchmark.async-runner.target.jdbc-user}")
+    @Value("${benchmark.test.async-runner.target.jdbc-user}")
     private String targetJdbcUser;
 
-    @Value("${benchmark.async-runner.target.jdbc-password:}")
+    @Value("${benchmark.test.async-runner.target.jdbc-password:}")
     private String targetJdbcPassword;
 
     private BenchmarkAsyncRunner runner;

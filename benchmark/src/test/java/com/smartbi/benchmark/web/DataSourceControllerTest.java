@@ -24,6 +24,12 @@ class DataSourceControllerTest {
     private static final String UPDATE_JDBC_USER = BenchmarkTestFixtures.get("benchmark.test.datasource.update.jdbc-user");
     private static final String UPDATE_JDBC_PASSWORD = BenchmarkTestFixtures.get("benchmark.test.datasource.update.jdbc-password");
     private static final String UPDATE_DRIVER_CLASS = BenchmarkTestFixtures.get("benchmark.test.datasource.update.driver-class");
+    private static final String OLD_NAME = "old";
+    private static final String NEW_NAME = "new";
+    private static final String DATASOURCE_IN_USE_MESSAGE = "该数据源仍被压测任务引用，无法删除。请先修改或删除相关任务。";
+    private static final String SUCCESS = "SUCCESS";
+    private static final String DRIVER_MISSING = "driver missing";
+    private static final String FAILED_DRIVER_MISSING = "FAILED: driver missing";
 
     // Covers DataSourceController#update editable field propagation.
     @Test
@@ -36,9 +42,9 @@ class DataSourceControllerTest {
 
         BenchmarkDataSource existing = new BenchmarkDataSource();
         existing.setId(8L);
-        existing.setName("old");
+        existing.setName(OLD_NAME);
         BenchmarkDataSource payload = new BenchmarkDataSource();
-        payload.setName("new");
+        payload.setName(NEW_NAME);
         payload.setJdbcUrl(UPDATE_JDBC_URL);
         payload.setJdbcUser(UPDATE_JDBC_USER);
         payload.setJdbcPassword(UPDATE_JDBC_PASSWORD);
@@ -49,7 +55,7 @@ class DataSourceControllerTest {
         BenchmarkDataSource saved = controller.update(8L, payload);
 
         assertSame(existing, saved);
-        assertEquals("new", existing.getName());
+        assertEquals(NEW_NAME, existing.getName());
         assertEquals(UPDATE_JDBC_URL, existing.getJdbcUrl());
         assertEquals(UPDATE_JDBC_USER, existing.getJdbcUser());
         assertEquals(UPDATE_JDBC_PASSWORD, existing.getJdbcPassword());
@@ -68,7 +74,7 @@ class DataSourceControllerTest {
 
         IllegalStateException error = assertThrows(IllegalStateException.class, () -> controller.remove(9L));
 
-        assertEquals("该数据源仍被压测任务引用，无法删除。请先修改或删除相关任务。", error.getMessage());
+        assertEquals(DATASOURCE_IN_USE_MESSAGE, error.getMessage());
     }
 
     // Covers DataSourceController#testConnection success and failure responses.
@@ -83,10 +89,10 @@ class DataSourceControllerTest {
         Connection connection = mock(Connection.class);
         when(driverRegistry.openConnection(any(BenchmarkDataSource.class))).thenReturn(connection);
 
-        assertEquals("SUCCESS", controller.testConnection(dataSource));
+        assertEquals(SUCCESS, controller.testConnection(dataSource));
         verify(connection).close();
 
-        when(driverRegistry.openConnection(any(BenchmarkDataSource.class))).thenThrow(new IllegalStateException("driver missing"));
-        assertEquals("FAILED: driver missing", controller.testConnection(dataSource));
+        when(driverRegistry.openConnection(any(BenchmarkDataSource.class))).thenThrow(new IllegalStateException(DRIVER_MISSING));
+        assertEquals(FAILED_DRIVER_MISSING, controller.testConnection(dataSource));
     }
 }

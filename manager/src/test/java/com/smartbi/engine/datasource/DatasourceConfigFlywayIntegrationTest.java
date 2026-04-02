@@ -3,6 +3,7 @@ package com.smartbi.engine.datasource;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartbi.engine.EngineApplication;
+import com.smartbi.engine.support.ManagerTestFixtures;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -11,10 +12,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -38,11 +35,11 @@ class DatasourceConfigFlywayIntegrationTest {
     @DynamicPropertySource
     static void flywayProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", DatasourceConfigFlywayIntegrationTest::baselineJdbcUrl);
-        registry.add("spring.datasource.driver-class-name", () -> "org.h2.Driver");
-        registry.add("spring.datasource.username", () -> "sa");
-        registry.add("spring.datasource.password", () -> "");
+        registry.add("spring.datasource.driver-class-name", () -> ManagerTestFixtures.get("manager.test.shared.driver-class-name"));
+        registry.add("spring.datasource.username", () -> ManagerTestFixtures.get("manager.test.shared.username"));
+        registry.add("spring.datasource.password", () -> ManagerTestFixtures.get("manager.test.shared.password"));
         registry.add("spring.flyway.enabled", () -> true);
-        registry.add("spring.flyway.locations", () -> "filesystem:" + resolveFlywayDirectory().toAbsolutePath());
+        registry.add("spring.flyway.locations", () -> "classpath:db/migration");
         registry.add("spring.flyway.baseline-on-migrate", () -> true);
         registry.add("spring.flyway.baseline-version", () -> "4");
     }
@@ -52,17 +49,17 @@ class DatasourceConfigFlywayIntegrationTest {
     void shouldCreateDatasourceConfigTableAndSeedQueryDefaults() throws Exception {
         Integer defaultColumnCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
-                        "WHERE LOWER(table_name) = 'query_datasource_config' AND LOWER(column_name) = 'is_default'",
+                        "WHERE LOWER(table_name) = 'manager_query_datasource_config' AND LOWER(column_name) = 'is_default'",
                 Integer.class);
         Integer updatedAtColumnCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
-                        "WHERE LOWER(table_name) = 'query_datasource_config' AND LOWER(column_name) = 'updated_at'",
+                        "WHERE LOWER(table_name) = 'manager_query_datasource_config' AND LOWER(column_name) = 'updated_at'",
                 Integer.class);
 
         assertEquals(Integer.valueOf(1), defaultColumnCount);
         assertEquals(Integer.valueOf(1), updatedAtColumnCount);
         assertEquals(Long.valueOf(2L), jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM query_datasource_config",
+                "SELECT COUNT(*) FROM manager_query_datasource_config",
                 Long.class));
 
         JsonNode rows = JSON.readTree(mockMvc.perform(get("/api/v1/query-datasources"))
@@ -80,40 +77,9 @@ class DatasourceConfigFlywayIntegrationTest {
         assertEquals("com.facebook.presto.jdbc.PrestoDriver", rows.get(1).path("driverClass").asText());
     }
 
-    private static Path resolveFlywayDirectory() {
-        Path cwd = Paths.get("").toAbsolutePath();
-        Path moduleLocal = cwd.resolve("src/main/resources/db/migration");
-        if (Files.isDirectory(moduleLocal)) {
-            return moduleLocal;
-        }
-        Path repoRoot = cwd.resolve("manager/src/main/resources/db/migration");
-        if (Files.isDirectory(repoRoot)) {
-            return repoRoot;
-        }
-        throw new IllegalStateException("Unable to locate manager Flyway migrations from " + cwd);
-    }
-
     private static String baselineJdbcUrl() {
-        Path baselineScript = resolveBaselineSchema();
-        return "jdbc:h2:mem:managerdatasourceflyway;" +
-                "MODE=MySQL;" +
-                "DATABASE_TO_LOWER=TRUE;" +
-                "DEFAULT_NULL_ORDERING=HIGH;" +
-                "DB_CLOSE_DELAY=-1;" +
-                "DB_CLOSE_ON_EXIT=FALSE;" +
-                "INIT=RUNSCRIPT FROM '" + baselineScript.toAbsolutePath().toString().replace("'", "''") + "'";
-    }
-
-    private static Path resolveBaselineSchema() {
-        Path cwd = Paths.get("").toAbsolutePath();
-        Path moduleLocal = cwd.resolve("src/test/resources/db/manager-v4-baseline.sql");
-        if (Files.isRegularFile(moduleLocal)) {
-            return moduleLocal;
-        }
-        Path repoRoot = cwd.resolve("manager/src/test/resources/db/manager-v4-baseline.sql");
-        if (Files.isRegularFile(repoRoot)) {
-            return repoRoot;
-        }
-        throw new IllegalStateException("Unable to locate manager test baseline schema from " + cwd);
+        return ManagerTestFixtures.h2JdbcUrlWithInit(
+                "manager.test.flyway.datasource-db-name",
+                "manager.test.flyway.baseline-v4-resource");
     }
 }

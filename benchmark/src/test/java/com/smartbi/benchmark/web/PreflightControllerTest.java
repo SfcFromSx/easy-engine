@@ -1,6 +1,7 @@
 package com.smartbi.benchmark.web;
 
 import com.smartbi.benchmark.config.BenchmarkPreflightProperties;
+import com.smartbi.benchmark.support.BenchmarkTestFixtures;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -8,22 +9,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.util.Map;
-import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class PreflightControllerTest {
-
-    private static final String TEST_CONFIG = "preflight-controller-test.properties";
 
     // Covers PreflightController#check success probes for Kylin and Presto.
     @Test
@@ -62,19 +56,11 @@ class PreflightControllerTest {
     }
 
     private BenchmarkPreflightProperties loadTestProperties() {
-        Properties properties = new Properties();
-        try (InputStream inputStream = PreflightControllerTest.class.getClassLoader().getResourceAsStream(TEST_CONFIG)) {
-            assertNotNull(inputStream, "missing test config: " + TEST_CONFIG);
-            properties.load(inputStream);
-        } catch (IOException ex) {
-            throw new UncheckedIOException("failed to load " + TEST_CONFIG, ex);
-        }
-
         BenchmarkPreflightProperties props = new BenchmarkPreflightProperties();
-        props.setKylinAuthUrl(properties.getProperty("benchmark.preflight.kylin-auth-url"));
-        props.setKylinUser(properties.getProperty("benchmark.preflight.kylin-user"));
-        props.setKylinPassword(properties.getProperty("benchmark.preflight.kylin-password"));
-        props.setPrestoInfoUrl(properties.getProperty("benchmark.preflight.presto-info-url"));
+        props.setKylinAuthUrl(BenchmarkTestFixtures.get("benchmark.preflight.kylin-auth-url"));
+        props.setKylinUser(BenchmarkTestFixtures.get("benchmark.preflight.kylin-user"));
+        props.setKylinPassword(BenchmarkTestFixtures.get("benchmark.preflight.kylin-password"));
+        props.setPrestoInfoUrl(BenchmarkTestFixtures.get("benchmark.preflight.presto-info-url"));
         return props;
     }
 }
