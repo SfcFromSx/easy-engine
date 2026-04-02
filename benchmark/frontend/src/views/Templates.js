@@ -36,16 +36,15 @@ export default {
     const { t } = useI18n()
     const sqlLibRows = ref([])
     const loading = ref(false)
-    const detailLoading = ref(false)
     const saving = ref(false)
     const uploadLoading = ref(false)
+    const dlg = ref(false)
+    const uploadDlg = ref(false)
     const searchKeyword = ref('')
     const executionModeFilter = ref('')
-    const sourceFilenameFilter = ref('')
     const currentPage = ref(1)
     const pageSize = ref(10)
     const total = ref(0)
-    const selectedId = ref(null)
     const uploadFile = ref(null)
     const uploadFileName = ref('')
     const form = reactive(defaultForm())
@@ -57,7 +56,6 @@ export default {
     const sqlPreviewContent = ref('')
 
     const isPreparedMode = computed(() => form.executionMode === 'PREPARED_STATEMENT')
-    const hasSelectedRow = computed(() => Boolean(form.id))
 
     function runDebug(row) {
       debugSql.value = row.sqlText
@@ -107,68 +105,17 @@ export default {
             page: currentPage.value - 1,
             size: pageSize.value,
             keyword: searchKeyword.value || undefined,
-            executionMode: executionModeFilter.value || undefined,
-            sourceFilename: sourceFilenameFilter.value || undefined
+            executionMode: executionModeFilter.value || undefined
           }
         })
 
         sqlLibRows.value = data.content || data || []
         total.value = data.totalElements || sqlLibRows.value.length
-
-        if (!sqlLibRows.value.length) {
-          selectedId.value = null
-          if (!hasSelectedRow.value) {
-            resetForm()
-          }
-          return
-        }
-
-        const preferred = selectedId.value && sqlLibRows.value.find((row) => row.id === selectedId.value)
-        if (preferred) {
-          return
-        }
-
-        await loadDetail(sqlLibRows.value[0].id)
       } catch (e) {
         ElMessage.error(e.response?.data?.message || t('templates.loadFailed'))
       } finally {
         loading.value = false
       }
-    }
-
-    async function loadDetail(id) {
-      if (!id) {
-        resetForm()
-        selectedId.value = null
-        return
-      }
-      detailLoading.value = true
-      try {
-        const { data } = await client.get(SQL_LIB_BY_ID(id))
-        selectedId.value = data.id
-        Object.assign(form, {
-          id: data.id,
-          name: data.name || '',
-          sqlText: data.sqlText || '',
-          description: data.description || '',
-          weight: data.weight || 1,
-          executionMode: data.executionMode || 'STATEMENT',
-          paramJson: data.paramJson || '',
-          sourceFilename: data.sourceFilename || '',
-          uploadedAt: data.uploadedAt || null
-        })
-      } catch (e) {
-        ElMessage.error(e.response?.data?.message || t('templates.loadDetailFailed'))
-      } finally {
-        detailLoading.value = false
-      }
-    }
-
-    function selectRow(row) {
-      if (!row?.id) {
-        return
-      }
-      loadDetail(row.id)
     }
 
     function handleSearch() {
@@ -186,8 +133,28 @@ export default {
     }
 
     function openCreate() {
-      selectedId.value = null
       resetForm()
+      dlg.value = true
+    }
+
+    function openUploadDialog() {
+      clearUploadFile()
+      uploadDlg.value = true
+    }
+
+    function edit(row) {
+      Object.assign(form, {
+        id: row.id,
+        name: row.name || '',
+        sqlText: row.sqlText || '',
+        description: row.description || '',
+        weight: row.weight || 1,
+        executionMode: row.executionMode || 'STATEMENT',
+        paramJson: row.paramJson || '',
+        sourceFilename: row.sourceFilename || '',
+        uploadedAt: row.uploadedAt || null
+      })
+      dlg.value = true
     }
 
     async function save() {
@@ -205,13 +172,15 @@ export default {
           executionMode: form.executionMode,
           paramJson: form.executionMode === 'PREPARED_STATEMENT' ? (form.paramJson || '') : null
         }
-        const { data } = form.id
-          ? await client.put(SQL_LIB_BY_ID(form.id), payload)
-          : await client.post(API_ENDPOINTS.SQL_LIB, payload)
+        if (form.id) {
+          await client.put(SQL_LIB_BY_ID(form.id), payload)
+        } else {
+          await client.post(API_ENDPOINTS.SQL_LIB, payload)
+        }
 
         ElMessage.success(t('templates.saveSuccess'))
+        dlg.value = false
         await load()
-        await loadDetail(data.id)
       } catch (e) {
         ElMessage.error(e.response?.data?.message || t('templates.saveFailed'))
       } finally {
@@ -219,7 +188,7 @@ export default {
       }
     }
 
-    async function remove(row = form) {
+    async function remove(row) {
       if (!row?.id) {
         return
       }
@@ -235,8 +204,6 @@ export default {
         )
         await client.delete(SQL_LIB_BY_ID(row.id))
         ElMessage.success(t('templates.removeSuccess'))
-        resetForm()
-        selectedId.value = null
         await load()
       } catch (e) {
         if (e !== 'cancel' && e !== 'close') {
@@ -266,6 +233,7 @@ export default {
         formData.append('file', uploadFile.value)
         const { data } = await client.post(SQL_LIB_UPLOAD, formData)
         ElMessage.success(t('templates.uploadSuccess', { count: data.count }))
+        uploadDlg.value = false
         clearUploadFile()
         currentPage.value = 1
         await load()
@@ -282,16 +250,15 @@ export default {
       t,
       sqlLibRows,
       loading,
-      detailLoading,
       saving,
       uploadLoading,
+      dlg,
+      uploadDlg,
       searchKeyword,
       executionModeFilter,
-      sourceFilenameFilter,
       currentPage,
       pageSize,
       total,
-      selectedId,
       uploadFile,
       uploadFileName,
       form,
@@ -301,19 +268,18 @@ export default {
       sqlPreviewName,
       sqlPreviewContent,
       isPreparedMode,
-      hasSelectedRow,
       runDebug,
       previewSql,
       describeSql,
       openSqlPreview,
       formatUploadedAt,
       load,
-      loadDetail,
-      selectRow,
       handleSearch,
       handleSizeChange,
       handleCurrentChange,
       openCreate,
+      openUploadDialog,
+      edit,
       save,
       remove,
       handleUploadFileChange,

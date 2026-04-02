@@ -74,14 +74,12 @@ describe('Templates view', () => {
         page: 0,
         size: 10,
         keyword: undefined,
-        executionMode: undefined,
-        sourceFilename: undefined
+        executionMode: undefined
       }
     })
 
     wrapper.vm.searchKeyword = 'prepared'
     wrapper.vm.executionModeFilter = 'PREPARED_STATEMENT'
-    wrapper.vm.sourceFilenameFilter = 'batch.sql'
     wrapper.vm.handleSearch()
     await flushPromises()
 
@@ -90,10 +88,28 @@ describe('Templates view', () => {
         page: 0,
         size: 10,
         keyword: 'prepared',
-        executionMode: 'PREPARED_STATEMENT',
-        sourceFilename: 'batch.sql'
+        executionMode: 'PREPARED_STATEMENT'
       }
     })
+  })
+
+  // Covers Templates.vue dialog-driven create/upload entrypoints.
+  it('opens upload and create dialogs from toolbar actions', async () => {
+    const wrapper = shallowMount(Templates, {
+      global: {
+        stubs,
+        directives: {
+          loading: () => {}
+        }
+      }
+    })
+    await flushPromises()
+
+    wrapper.vm.openUploadDialog()
+    expect(wrapper.vm.uploadDlg).toBe(true)
+
+    wrapper.vm.openCreate()
+    expect(wrapper.vm.dlg).toBe(true)
   })
 
   // Covers Templates.vue upload flow hitting the SQL Lib upload endpoint.

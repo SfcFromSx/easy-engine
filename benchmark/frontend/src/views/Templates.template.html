@@ -4,7 +4,11 @@
       <h1>{{ $t('templates.title') }}</h1>
       <p class="subtitle">{{ $t('templates.subtitle') }}</p>
     </div>
-    <div class="actions">
+    <div class="page-actions">
+      <el-button @click="openUploadDialog">
+        <el-icon style="margin-right: 4px"><UploadCloud :size="16" /></el-icon>
+        {{ $t('templates.uploadBtn') }}
+      </el-button>
       <el-button type="primary" @click="openCreate">
         <el-icon style="margin-right: 4px"><Plus :size="16" /></el-icon>
         {{ $t('templates.addBtn') }}
@@ -14,19 +18,96 @@
 
   <DebuggerDialog v-model="debugVisible" :sql="debugSql" />
 
-  <div class="flow-callout compact-alert">
-    <div class="flow-callout__title">⚡ {{ $t('templates.executionGuideTitle') }}</div>
-    <p class="flow-callout__text">{{ $t('templates.executionGuideGlobal') }} {{ $t('templates.executionGuideOverride') }}</p>
+  <div class="glass-card table-card">
+    <div class="list-toolbar">
+      <div class="toolbar-filters">
+        <el-input
+          v-model="searchKeyword"
+          :placeholder="$t('templates.searchPlaceholder')"
+          class="toolbar-input"
+          clearable
+          @clear="handleSearch"
+          @keyup.enter="handleSearch"
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
+        <el-select
+          v-model="executionModeFilter"
+          clearable
+          class="toolbar-select"
+          :placeholder="$t('templates.filterModePlaceholder')"
+          @change="handleSearch"
+        >
+          <el-option :label="$t('templates.filterModeAll')" value="" />
+          <el-option label="STATEMENT" value="STATEMENT" />
+          <el-option label="PREPARED_STATEMENT" value="PREPARED_STATEMENT" />
+        </el-select>
+      </div>
+    </div>
+
+    <el-table :data="sqlLibRows" v-loading="loading" stripe size="small">
+      <el-table-column prop="name" :label="$t('templates.colName')" min-width="180" />
+      <el-table-column :label="$t('templates.colSql')" min-width="420">
+        <template #default="{ row }">
+          <div class="sql-preview-cell">
+            <div class="sql-preview-text">{{ previewSql(row.sqlText).previewText }}</div>
+            <el-button
+              v-if="previewSql(row.sqlText).isTruncated"
+              link
+              type="primary"
+              class="sql-preview-link"
+              @click="openSqlPreview(row)"
+            >
+              {{ $t('templates.previewOpen') }}
+            </el-button>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column prop="sourceFilename" :label="$t('templates.colFile')" min-width="160" show-overflow-tooltip>
+        <template #default="{ row }">
+          <span>{{ row.sourceFilename || '—' }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column :label="$t('templates.colUploadedAt')" width="180">
+        <template #default="{ row }">
+          <span>{{ formatUploadedAt(row.uploadedAt) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="weight" :label="$t('templates.colWeight')" width="90" align="center" />
+      <el-table-column :label="$t('templates.colMode')" width="170">
+        <template #default="{ row }">
+          <el-tag size="small" :type="row.executionMode === 'PREPARED_STATEMENT' ? 'warning' : 'info'">
+            {{ row.executionMode || 'STATEMENT' }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column :label="$t('common.actions')" width="180" fixed="right">
+        <template #default="{ row }">
+          <el-button size="small" type="primary" link @click="runDebug(row)">
+            <el-icon><Play :size="14" /></el-icon>
+          </el-button>
+          <el-button size="small" link @click="edit(row)">{{ $t('common.edit') }}</el-button>
+          <el-button size="small" type="danger" link @click="remove(row)">{{ $t('common.delete') }}</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <div class="pagination-container">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        layout="total, sizes, prev, pager, next"
+        :total="total"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
+    </div>
   </div>
 
-  <div class="glass-card upload-card">
-    <div class="upload-card__header">
-      <div>
-        <div class="upload-card__title">{{ $t('templates.uploadTitle') }}</div>
-        <div class="upload-card__hint">{{ $t('templates.uploadHint') }}</div>
-      </div>
-      <el-button type="primary" :loading="uploadLoading" @click="uploadSelectedFile">{{ $t('templates.uploadBtn') }}</el-button>
-    </div>
+  <el-dialog v-model="uploadDlg" :title="$t('templates.uploadTitle')" width="640px" append-to-body>
     <el-upload
       class="sql-lib-uploader"
       drag
@@ -46,158 +127,69 @@
       <span>{{ $t('templates.selectedFileLabel', { name: uploadFileName }) }}</span>
       <el-button link type="primary" @click="clearUploadFile">{{ $t('templates.clearSelectedFileBtn') }}</el-button>
     </div>
-  </div>
+    <template #footer>
+      <el-button @click="uploadDlg = false">{{ $t('common.cancel') }}</el-button>
+      <el-button type="primary" :loading="uploadLoading" @click="uploadSelectedFile">{{ $t('templates.uploadBtn') }}</el-button>
+    </template>
+  </el-dialog>
 
-  <div class="sql-lib-layout">
-    <div class="glass-card table-card">
-      <div class="list-toolbar">
-        <div class="toolbar-filters">
-          <el-input
-            v-model="searchKeyword"
-            :placeholder="$t('templates.searchPlaceholder')"
-            class="toolbar-input"
-            clearable
-            @clear="handleSearch"
-            @keyup.enter="handleSearch"
-          >
-            <template #prefix>
-              <el-icon><Search /></el-icon>
-            </template>
-          </el-input>
-          <el-select
-            v-model="executionModeFilter"
-            clearable
-            class="toolbar-select"
-            :placeholder="$t('templates.filterModePlaceholder')"
-            @change="handleSearch"
-          >
-            <el-option :label="$t('templates.filterModeAll')" value="" />
-            <el-option label="STATEMENT" value="STATEMENT" />
-            <el-option label="PREPARED_STATEMENT" value="PREPARED_STATEMENT" />
-          </el-select>
-          <el-input
-            v-model="sourceFilenameFilter"
-            :placeholder="$t('templates.sourceFilterPlaceholder')"
-            class="toolbar-input"
-            clearable
-            @clear="handleSearch"
-            @keyup.enter="handleSearch"
-          />
-        </div>
-      </div>
-
-      <el-table :data="sqlLibRows" v-loading="loading" stripe size="small" @row-click="selectRow">
-        <el-table-column prop="name" :label="$t('templates.colName')" min-width="180" />
-        <el-table-column prop="sourceFilename" :label="$t('templates.colFile')" min-width="160" show-overflow-tooltip>
-          <template #default="{ row }">
-            <span>{{ row.sourceFilename || '—' }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('templates.colUploadedAt')" width="180">
-          <template #default="{ row }">
-            <span>{{ formatUploadedAt(row.uploadedAt) }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('templates.colMode')" width="170">
-          <template #default="{ row }">
-            <el-tag size="small" :type="row.executionMode === 'PREPARED_STATEMENT' ? 'warning' : 'info'">
-              {{ row.executionMode || 'STATEMENT' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('common.actions')" width="120" fixed="right">
-          <template #default="{ row }">
-            <el-button size="small" type="primary" link @click.stop="runDebug(row)">
-              <el-icon><Play :size="14" /></el-icon>
-            </el-button>
-            <el-button size="small" link type="danger" @click.stop="remove(row)">{{ $t('common.delete') }}</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <div class="pagination-container">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next"
-          :total="total"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </div>
-
-    <div class="glass-card detail-card" v-loading="detailLoading">
-      <div class="detail-card__header">
-        <div>
-          <div class="detail-card__title">{{ hasSelectedRow ? $t('templates.detailTitle') : $t('templates.newTitle') }}</div>
-          <div class="detail-card__hint">{{ $t('templates.detailHint') }}</div>
-        </div>
-        <div class="detail-card__actions">
-          <el-button v-if="hasSelectedRow" type="danger" plain @click="remove()">{{ $t('common.delete') }}</el-button>
-          <el-button type="primary" :loading="saving" @click="save">{{ $t('common.save') }}</el-button>
-        </div>
-      </div>
-
-      <div class="detail-meta-grid">
-        <div class="detail-meta">
-          <span class="detail-meta__label">{{ $t('templates.colFile') }}</span>
-          <span>{{ form.sourceFilename || '—' }}</span>
-        </div>
-        <div class="detail-meta">
-          <span class="detail-meta__label">{{ $t('templates.colUploadedAt') }}</span>
-          <span>{{ formatUploadedAt(form.uploadedAt) }}</span>
-        </div>
-      </div>
-
-      <el-form :model="form" label-position="top" class="form-container">
-        <el-form-item :label="$t('templates.colName')" required>
-          <el-input v-model="form.name" />
-        </el-form-item>
-
-        <el-form-item :label="$t('templates.descriptionLabel')">
-          <el-input v-model="form.description" type="textarea" :rows="3" />
-        </el-form-item>
-
-        <el-form-item :label="$t('templates.dlgSqlLabel')" required>
-          <el-input
-            type="textarea"
-            :rows="12"
-            v-model="form.sqlText"
-            :placeholder="$t('templates.dlgSqlPlaceholder')"
-            style="font-family: 'Fira Code', 'Courier New', monospace; font-size: 13px"
-          />
-          <div class="detail-preview-actions">
-            <el-button link type="primary" @click="openSqlPreview(form)">{{ $t('templates.previewOpen') }}</el-button>
-          </div>
-        </el-form-item>
-
-        <div class="item-form-grid">
+  <el-dialog v-model="dlg" :title="form.id ? $t('templates.dlgEdit') : $t('templates.dlgAdd')" width="820px" top="8vh" append-to-body>
+    <el-form :model="form" label-position="top" class="form-container">
+      <el-row :gutter="20">
+        <el-col :span="16">
+          <el-form-item :label="$t('templates.colName')" required>
+            <el-input v-model="form.name" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="8">
           <el-form-item :label="$t('templates.colWeight')">
             <el-input-number v-model="form.weight" :min="1" :max="1000" style="width: 100%" />
+            <div class="hint">{{ $t('templates.hintWeight') }}</div>
           </el-form-item>
-          <el-form-item :label="$t('templates.modeLabel')">
-            <el-select v-model="form.executionMode" style="width: 100%">
-              <el-option :label="$t('templates.modeStatementOption')" value="STATEMENT" />
-              <el-option :label="$t('templates.modePreparedOption')" value="PREPARED_STATEMENT" />
-            </el-select>
-          </el-form-item>
-        </div>
+        </el-col>
+      </el-row>
 
+      <el-form-item :label="$t('templates.descriptionLabel')">
+        <el-input v-model="form.description" type="textarea" :rows="3" />
+      </el-form-item>
+
+      <el-form-item :label="$t('templates.dlgSqlLabel')" required>
+        <el-input
+          type="textarea"
+          :rows="12"
+          v-model="form.sqlText"
+          :placeholder="$t('templates.dlgSqlPlaceholder')"
+          style="font-family: 'Fira Code', 'Courier New', monospace; font-size: 13px"
+        />
+      </el-form-item>
+
+      <div class="item-form-grid">
+        <el-form-item :label="$t('templates.modeLabel')">
+          <el-select v-model="form.executionMode" style="width: 100%">
+            <el-option :label="$t('templates.modeStatementOption')" value="STATEMENT" />
+            <el-option :label="$t('templates.modePreparedOption')" value="PREPARED_STATEMENT" />
+          </el-select>
+          <div class="hint">
+            {{ isPreparedMode ? $t('templates.modeHintPrepared') : $t('templates.modeHintStatement') }}
+          </div>
+        </el-form-item>
         <el-form-item :label="$t('templates.paramsLabel')">
           <el-input
             v-model="form.paramJson"
             :disabled="!isPreparedMode"
             :placeholder="$t('templates.paramPlaceholder')"
           />
-          <div class="hint">
-            {{ isPreparedMode ? $t('templates.modeHintPrepared') : $t('templates.modeHintStatement') }}
-          </div>
+          <div class="hint">{{ $t('templates.paramHint') }}</div>
         </el-form-item>
-      </el-form>
-    </div>
-  </div>
+      </div>
+    </el-form>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="dlg = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="saving" @click="save">{{ $t('common.save') }}</el-button>
+      </div>
+    </template>
+  </el-dialog>
 
   <el-dialog
     v-model="sqlPreviewVisible"
