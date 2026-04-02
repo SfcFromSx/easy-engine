@@ -9,3 +9,4 @@ The foreman updates this document dynamically whenever a task resolving a bug or
 *(Rules generated from task completions are appended below)*
 
 - Keep environment-specific endpoints, usernames, and passwords out of Java `@ConfigurationProperties` defaults. Bind them from Spring configuration instead so operators can override them without code changes and tests must set them explicitly.
+- Keep datasource, probe endpoint, and credential fixtures for tests in test-owned property files or test property sources instead of hard-coding them inside test methods.

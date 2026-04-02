@@ -8,9 +8,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.Map;
+import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -18,19 +23,17 @@ import static org.mockito.Mockito.when;
 
 class PreflightControllerTest {
 
+    private static final String TEST_CONFIG = "preflight-controller-test.properties";
+
     // Covers PreflightController#check success probes for Kylin and Presto.
     @Test
     void shouldReportHealthyDependenciesWhenBothProbesSucceed() {
         RestTemplate restTemplate = mock(RestTemplate.class);
-        BenchmarkPreflightProperties props = new BenchmarkPreflightProperties();
-        props.setKylinAuthUrl("http://kylin/auth");
-        props.setKylinUser("ADMIN");
-        props.setKylinPassword("KYLIN");
-        props.setPrestoInfoUrl("http://presto/info");
+        BenchmarkPreflightProperties props = loadTestProperties();
         PreflightController controller = new PreflightController(restTemplate, props);
-        when(restTemplate.exchange(eq("http://kylin/auth"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+        when(restTemplate.exchange(eq(props.getKylinAuthUrl()), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(ResponseEntity.ok("ok"));
-        when(restTemplate.getForEntity("http://presto/info", String.class)).thenReturn(ResponseEntity.ok("ok"));
+        when(restTemplate.getForEntity(props.getPrestoInfoUrl(), String.class)).thenReturn(ResponseEntity.ok("ok"));
 
         Map<String, Object> result = controller.check();
 
@@ -43,15 +46,11 @@ class PreflightControllerTest {
     @Test
     void shouldReportProbeFailuresWithStatusOrErrorDetails() {
         RestTemplate restTemplate = mock(RestTemplate.class);
-        BenchmarkPreflightProperties props = new BenchmarkPreflightProperties();
-        props.setKylinAuthUrl("http://kylin/auth");
-        props.setKylinUser("ADMIN");
-        props.setKylinPassword("KYLIN");
-        props.setPrestoInfoUrl("http://presto/info");
+        BenchmarkPreflightProperties props = loadTestProperties();
         PreflightController controller = new PreflightController(restTemplate, props);
-        when(restTemplate.exchange(eq("http://kylin/auth"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+        when(restTemplate.exchange(eq(props.getKylinAuthUrl()), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(ResponseEntity.status(503).body("down"));
-        when(restTemplate.getForEntity("http://presto/info", String.class))
+        when(restTemplate.getForEntity(props.getPrestoInfoUrl(), String.class))
                 .thenThrow(new RestClientException("presto offline"));
 
         Map<String, Object> result = controller.check();
@@ -60,5 +59,22 @@ class PreflightControllerTest {
         assertEquals(503, ((Map<?, ?>) result.get("kylinRest")).get("httpStatus"));
         assertEquals("FAIL", ((Map<?, ?>) result.get("prestoUi")).get("status"));
         assertEquals("presto offline", ((Map<?, ?>) result.get("prestoUi")).get("error"));
+    }
+
+    private BenchmarkPreflightProperties loadTestProperties() {
+        Properties properties = new Properties();
+        try (InputStream inputStream = PreflightControllerTest.class.getClassLoader().getResourceAsStream(TEST_CONFIG)) {
+            assertNotNull(inputStream, "missing test config: " + TEST_CONFIG);
+            properties.load(inputStream);
+        } catch (IOException ex) {
+            throw new UncheckedIOException("failed to load " + TEST_CONFIG, ex);
+        }
+
+        BenchmarkPreflightProperties props = new BenchmarkPreflightProperties();
+        props.setKylinAuthUrl(properties.getProperty("benchmark.preflight.kylin-auth-url"));
+        props.setKylinUser(properties.getProperty("benchmark.preflight.kylin-user"));
+        props.setKylinPassword(properties.getProperty("benchmark.preflight.kylin-password"));
+        props.setPrestoInfoUrl(properties.getProperty("benchmark.preflight.presto-info-url"));
+        return props;
     }
 }

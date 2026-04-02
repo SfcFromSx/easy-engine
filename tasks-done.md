@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| BENCH-TEST-002 | EXTERNALIZE PREFLIGHT CONTROLLER TEST FIXTURES | benchmark | `PreflightControllerTest` now loads its probe fixture values from `benchmark/src/test/resources/preflight-controller-test.properties` instead of inline literals, the focused benchmark validation passes, and the broader audit follow-up is tracked in `TEST-CONFIG-001`. |
 | BENCH-CONFIG-001 | EXTERNALIZE BENCHMARK PREFLIGHT DATASOURCE PROBE SETTINGS | benchmark | `BenchmarkPreflightProperties` no longer embeds Kylin/Presto probe defaults in Java, `benchmark.preflight.*` can be overridden from environment-backed config, task-local preflight tests pass, and unrelated benchmark-suite drift is logged in `INBOX-20260402-001`. |
 | task-ui-integration-001 | 整合前端静态资源及 SPA 路由支持 | manager, benchmark | `manager/src/.../EngineConfig.java`, `benchmark/src/.../WebConfig.java`, `doc-CN/quickstart.md` updated; SPA route forwarding implemented for bundled assets. |
 | task-ui-integration-001 | 整合前端静态资源及 SPA 路由支持 | manager, benchmark | `manager/src/.../EngineConfig.java`, `benchmark/src/.../WebConfig.java`, `doc-CN/quickstart.md` updated; SPA route forwarding implemented for bundled assets. |
@@ -65,6 +66,30 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+
+### BENCH-TEST-002: EXTERNALIZE PREFLIGHT CONTROLLER TEST FIXTURES
+
+- **Status**: done
+- **Updated**: 2026-04-02
+- **Progress log**:
+  - **2026-04-02 — intake**
+    - Task created from the human-reported issue: `benchmark/src/test/java/com/smartbi/benchmark/web/PreflightControllerTest.java` still hard-codes preflight datasource/probe fixture values in test code, but benchmark tests should keep those fixtures in test-owned config instead of inline Java literals.
+  - **2026-04-02 — implementation**
+    - Files changed: `benchmark/src/test/java/com/smartbi/benchmark/web/PreflightControllerTest.java`, `benchmark/src/test/resources/preflight-controller-test.properties`, `docs/operations/best-practices.md`, `INBOX.md`.
+    - Commands run: `rg`, `sed`, `git diff`.
+    - Result: Moved the preflight probe fixture values out of inline test code into a dedicated classpath test properties file and updated the controller test to load those values through a single helper.
+  - **2026-04-02 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: `PreflightControllerTest` embedded probe URLs and credentials directly in each test method, so test fixture maintenance required Java code edits instead of isolated test config updates.
+    - Cure: Added a dedicated test properties file under `src/test/resources` and centralized fixture loading inside the test helper.
+    - Generalization: "Keep datasource, probe endpoint, and credential fixtures for tests in test-owned property files or test property sources instead of hard-coding them inside test methods." (added to `docs/operations/best-practices.md`)
+  - **2026-04-02 — verification**
+    - Validation status: approved
+    - Evidence: `mvn -q -f benchmark/pom.xml -Dtest=PreflightControllerTest test` passed; `npm --prefix benchmark/frontend run build` passed; `mvn -q -f benchmark/pom.xml test` still fails for the already-tracked benchmark validation drift (`WebConfig` route pattern startup error plus unavailable Docker/Testcontainers support) recorded in `INBOX-20260402-001`.
+    - Next action: none
+    - Escalation: INBOX-20260402-001
+  - **2026-04-02 — doc-garden**
+    - Exported the new testing rule to `docs/operations/best-practices.md` and created follow-up review task `TEST-CONFIG-001` for retroactive cleanup.
 
 ### BENCH-CONFIG-001: EXTERNALIZE BENCHMARK PREFLIGHT DATASOURCE PROBE SETTINGS
 

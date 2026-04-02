@@ -32,6 +32,24 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Suggested next step: Open a dedicated benchmark validation task to fix or isolate the SPA route mapping for test startup and decide how Docker-dependent coverage should run locally versus CI.
 - Human decision: pending
 
+### INBOX-20260402-002
+- Area: Harness audit trail
+- Related task(s): `BENCH-TEST-002`
+- Summary: `tasks.md` was updated on 2026-04-02 to intake a human-requested benchmark test-fix task for `PreflightControllerTest`, and this inbox note records that core harness-document modification per the repo contract.
+- Evidence: Active ledger row and task section for `BENCH-TEST-002` were added to `tasks.md` before implementation began.
+- Impact/Risk: Without an explicit audit note, core harness-document changes are harder to track during recovery or review.
+- Suggested next step: No implementation decision needed beyond keeping the task ledger and archive aligned with the eventual task commit.
+- Human decision: pending
+
+### INBOX-20260402-003
+- Area: Test config governance
+- Related task(s): `BENCH-TEST-002`, `TEST-CONFIG-001`
+- Summary: `BENCH-TEST-002` exported a new testing rule to keep datasource/probe fixtures in test-owned config, and a follow-up review task was added so the rest of the codebase can be checked for the same pattern.
+- Evidence: `docs/operations/best-practices.md` now includes the test-fixture rule, and `tasks.md` now includes `TEST-CONFIG-001` to audit remaining inline connection fixtures.
+- Impact/Risk: Similar hard-coded test connection details may still exist elsewhere, which makes fixture updates harder to review and maintain.
+- Suggested next step: Schedule `TEST-CONFIG-001` and convert remaining inline test connection fixtures to test-owned config where appropriate.
+- Human decision: pending
+
 ## Template
 
 ```md
