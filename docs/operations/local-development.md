@@ -22,6 +22,18 @@ Kylin-specific E2E runs instead of blocking on the standalone container's
 embedded YARN `sparder_on_docker` bootstrap path. Easy Engine's `query`
 service still only exposes `POST /kylin/api/query`.
 
+## Database Initialization
+
+Initialize the metadata schema explicitly before starting `manager` or `benchmark`:
+
+```bash
+bash scripts/init-db.sh
+```
+
+The init script runs the `manager` and `benchmark` Flyway migrations against the
+configured MySQL metadata database. Normal service startup no longer creates
+tables or seeds rows automatically.
+
 ## Service Startup Order
 
 1. Start `query`:
@@ -58,11 +70,14 @@ npm --prefix benchmark/frontend run dev
 - Benchmark is the preferred control surface for benchmark runs, preflight checks, and structured run reports.
 - Benchmark connects to `query` using the standard Apache Kylin JDBC driver (`jdbc:kylin://localhost:8092/<project>`). Upload additional JDBC driver JARs via the Benchmark UI under Data Sources > Upload Driver before running datasource tests or benchmark jobs that depend on them.
 - The default metadata store is MySQL on `localhost:3307`; the shared local credentials remain `engine` / `engine123`.
+- `manager` and `benchmark` now expect the metadata schema to be initialized already; if you skip `bash scripts/init-db.sh`, startup fails fast on missing tables instead of mutating the database during boot.
 - Preserved metadata comments (e.g. `YH_TARGET_ENGINE`) in SQL are used to route requests to specific backends within `query`.
 - If Flyway reports a checksum mismatch after editing an applied migration during local work, repair and migrate explicitly:
 
 ```bash
-mvn -f benchmark/pom.xml compile flyway:repair flyway:migrate
+mvn -f manager/pom.xml flyway:repair
+mvn -f benchmark/pom.xml flyway:repair
+bash scripts/init-db.sh
 ```
 
 ## Default Ports

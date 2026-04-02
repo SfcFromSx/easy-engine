@@ -1,4 +1,4 @@
-<!-- MIRROR: docs/operations/local-development.md | SOURCE_SHA256: 7e2392753491 | SYNCED_AT: 2026-03-31T13:15:00Z -->
+<!-- MIRROR: docs/operations/local-development.md | SOURCE_SHA256: 9fd23f17a9192bcb260fb6b86d73d9faef0c48870f6e4d3231a98c9287af3f6f | SYNCED_AT: 2026-04-02T04:42:17Z -->
 
 # 本地开发
 
@@ -22,6 +22,17 @@ docker compose --profile olap up -d presto kylin
 这样可以让真实的 Kylin 容器在 benchmark smoke 和 Kylin 专用 E2E 场景里保持可用，
 避免被独立容器内嵌 YARN 的 `sparder_on_docker` 启动路径卡住。
 Easy Engine 自身的 `query` 服务仍然只暴露 `POST /kylin/api/query`。
+
+## 数据库初始化
+
+在启动 `manager` 或 `benchmark` 之前，需要先显式初始化元数据库 schema：
+
+```bash
+bash scripts/init-db.sh
+```
+
+这个脚本会针对当前配置的 MySQL 元数据库依次执行 `manager` 和
+`benchmark` 的 Flyway migration。正常服务启动过程不再自动建表或写入种子数据。
 
 ## 服务启动顺序
 
@@ -58,11 +69,14 @@ npm --prefix benchmark/frontend run dev
 - benchmark 是执行 benchmark run、预检和结构化运行报告时首选的控制界面。
 - benchmark 通过标准 Apache Kylin JDBC 驱动连接到 `query`（`jdbc:kylin://localhost:8092/<project>`）。额外的 JDBC 驱动 JAR 可通过 Benchmark UI 中的 Data Sources > Upload Driver 上传。
 - 默认元数据库改为 MySQL，监听 `localhost:3307`，本地默认账号仍为 `engine` / `engine123`。
+- `manager` 和 `benchmark` 现在默认要求元数据库已提前初始化；如果跳过 `bash scripts/init-db.sh`，服务会因为缺少表而快速失败，而不是在启动阶段直接修改数据库。
 - SQL 中的保留元数据注释（例如 `YH_TARGET_ENGINE`）用于在 `query` 内部将请求路由到指定后端。
 - 如果本地修改了已经应用过的 migration，导致 Flyway 报 checksum mismatch，需要显式修复并重新迁移：
 
 ```bash
-mvn -f benchmark/pom.xml compile flyway:repair flyway:migrate
+mvn -f manager/pom.xml flyway:repair
+mvn -f benchmark/pom.xml flyway:repair
+bash scripts/init-db.sh
 ```
 
 ## 默认端口

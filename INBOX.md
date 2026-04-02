@@ -86,6 +86,15 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Suggested next step: Keep the ledger archive and task commit aligned for `QUERY-REVIEW-002` closeout.
 - Human decision: pending
 
+### INBOX-20260402-008
+- Area: Harness audit trail
+- Related task(s): `ARCH-015`
+- Summary: `tasks.md` was updated on 2026-04-02 to intake a human-requested database-initialization workflow change so the work can follow the repo's required task lifecycle.
+- Evidence: Active ledger row and task section for `ARCH-015` were added to `tasks.md` before implementation began.
+- Impact/Risk: Without an explicit audit note, later recovery or review could miss why the active ledger changed during the session.
+- Suggested next step: Keep the task ledger, archive, and eventual commit aligned when `ARCH-015` closes.
+- Human decision: pending
+
 ### INBOX-20260402-009
 - Area: Harness audit trail
 - Related task(s): `QUERY-TRINO-001`
@@ -93,6 +102,24 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Evidence: The Trino task now has a full archived progress log and done signal in `tasks-done.md`; `tasks.md` was left aligned with the separately in-progress `ARCH-015` entry instead of being overwritten during closeout.
 - Impact/Risk: Without an explicit note, later recovery could misread the ledger state and assume the missing active-row history for `QUERY-TRINO-001` was accidental rather than the result of concurrent harness edits being preserved.
 - Suggested next step: Keep the archived Trino entry and its task commit aligned, and let the active ledger continue tracking `ARCH-015` independently.
+- Human decision: pending
+
+### INBOX-20260402-011
+- Area: Manager and benchmark validation drift
+- Related task(s): ARCH-015
+- Summary: Focused verification for the DB-init workflow change still ran into unrelated Spring MVC path-pattern failures in both manager and benchmark, and benchmark Flyway coverage remains Docker-dependent in this environment.
+- Evidence: mvn -q -f manager/pom.xml -Dtest=ManagerDashboardBootstrapIntegrationTest,DatasourceConfigFlywayIntegrationTest test failed on 2026-04-02 with PatternParseException: Invalid mapping pattern detected: /**/{path:[^\\.]*} while creating the MVC view-controller mapping; mvn -q -f benchmark/pom.xml -Dtest=BenchmarkFlywaySeedTest,BenchmarkSmokeTest test hit the same SPA route-pattern failure in benchmark web-context tests, and mvn -q -f benchmark/pom.xml -Dtest=BenchmarkFlywaySeedTest test only exits cleanly through the existing Docker-less Testcontainers skip path.
+- Impact/Risk: Manager and benchmark web-context validation remain noisy for work unrelated to this task, which makes it harder to use those focused Maven tests as clean signals when verifying future runtime/config changes.
+- Suggested next step: Open a dedicated task to replace the invalid SPA forward mapping (or switch matching strategy explicitly) across both modules and decide how Docker-backed Flyway coverage should run locally versus CI.
+- Human decision: pending
+
+### INBOX-20260402-012
+- Area: Harness audit trail
+- Related task(s): ARCH-015
+- Summary: tasks.md and tasks-done.md were updated on 2026-04-02 to archive the completion of ARCH-015 in the canonical task ledger.
+- Evidence: The active ledger row for ARCH-015 was removed from tasks.md, its full progress log was archived under tasks-done.md, and the closeout is included in the task's single commit.
+- Impact/Risk: Without an explicit audit note, later recovery or review could misread the harness-document edits as ad hoc bookkeeping instead of the required task workflow.
+- Suggested next step: Keep the ledger archive and task commit aligned for ARCH-015 closeout.
 - Human decision: pending
 
 ## Template

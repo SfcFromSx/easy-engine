@@ -45,6 +45,7 @@ class BenchmarkFlywaySeedTest {
         r.add("spring.datasource.username", MYSQL::getUsername);
         r.add("spring.datasource.password", MYSQL::getPassword);
         r.add("spring.datasource.driver-class-name", MYSQL::getDriverClassName);
+        r.add("spring.flyway.enabled", () -> true);
     }
 
     @Autowired

@@ -36,11 +36,15 @@
 
 ```bash
 docker compose up -d mysql redis
+bash scripts/init-db.sh manager
 cd /Users/sfc/Documents/projects/engine/manager
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 cd /Users/sfc/Documents/projects/engine/manager/frontend
 npm run dev -- --host 127.0.0.1 --port 5173
 ```
+
+`manager` no longer applies Flyway migrations during normal startup. Initialize
+the metadata schema first with `bash scripts/init-db.sh manager`.
 
 ## Verify
 

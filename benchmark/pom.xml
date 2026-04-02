@@ -133,6 +133,8 @@
                     <url>${flyway.url}</url>
                     <user>${flyway.user}</user>
                     <password>${flyway.password}</password>
+                    <baselineOnMigrate>true</baselineOnMigrate>
+                    <baselineVersion>0</baselineVersion>
                     <table>benchmark_flyway_schema_history</table>
                     <locations>
                         <location>classpath:db/migration</location>

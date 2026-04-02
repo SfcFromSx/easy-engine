@@ -52,11 +52,16 @@ Benchmark connects to `query` using the standard Apache Kylin JDBC driver (`jdbc
 
 ```bash
 docker compose up -d mysql redis
+bash scripts/init-db.sh
 cd /Users/sfc/Documents/projects/engine/query && mvn spring-boot:run
 cd /Users/sfc/Documents/projects/engine/manager && mvn spring-boot:run
 cd /Users/sfc/Documents/projects/engine/benchmark && mvn spring-boot:run
 cd /Users/sfc/Documents/projects/engine/benchmark/frontend && npm run dev
 ```
+
+`benchmark` no longer applies Flyway migrations during normal startup. Run
+`bash scripts/init-db.sh` before booting `manager` or `benchmark` so the shared
+metadata schema and local seed data are created explicitly.
 
 ## Verify
 

@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| ARCH-015 | SEPARATE DATABASE INITIALIZATION FROM SERVICE STARTUP | platform | `manager` and `benchmark` no longer run Flyway automatically on startup, `scripts/init-db.sh` now initializes the shared MySQL schema explicitly, the local-development docs were updated to require that step, and both modules still compile. |
 | QUERY-TRINO-001 | ADD TRINO DATASOURCE SUPPORT | query | `query` now bundles the Trino JDBC driver, routes `type=trino` datasource configs without SQL rewrites, exposes a `trino_local` fallback example, documents the Trino config contract, and `mvn -q -f query/pom.xml test` passes. |
 | QUERY-REVIEW-002 | AUDIT QUERY COMPATIBILITY INPUT VALIDATION | query | `query` now accepts empty `/kylin/api/query` bodies through the same compatibility exception payload as blank SQL, rejects unsupported top-level request shapes on the query endpoint, keeps the request docs/test matrix aligned, and `mvn -q -f query/pom.xml test` passes. |
 | QUERY-BUG-001 | REJECT NON-QUERY REQUESTS AT QUERY BOUNDARY | query | `query` now rejects blank and non-query SQL before cache/datasource work while preserving the compatibility exception payload contract, the request docs are updated, `mvn -q -f query/pom.xml test` passes, and broader compatibility-input review is tracked in `QUERY-REVIEW-002`. |
@@ -69,6 +70,30 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+
+### ARCH-015: SEPARATE DATABASE INITIALIZATION FROM SERVICE STARTUP
+
+- **Status**: done
+- **Updated**: 2026-04-02
+- **Progress log**:
+  - **2026-04-02 — intake**
+    - Human requested that database table creation and seed insertion stop happening during service startup and move to a separate initialization script, with the docs updated and the full task workflow completed in one pass.
+  - **2026-04-02 — implementation**
+    - Files changed: `manager/src/main/resources/application.yml`, `benchmark/src/main/resources/application.yml`, `manager/pom.xml`, `benchmark/pom.xml`, `benchmark/src/test/java/com/smartbi/benchmark/migration/BenchmarkFlywaySeedTest.java`, `scripts/init-db.sh`, `docs/operations/local-development.md`, `docs/modules/manager.md`, `docs/modules/benchmark.md`, `doc-CN/local-development.md`.
+    - Commands run: `rg`, `sed`, `git diff`, `chmod +x scripts/init-db.sh`.
+    - Result: Disabled automatic Flyway execution during normal `manager` and `benchmark` startup, added an explicit `scripts/init-db.sh` entrypoint for schema/seed initialization, wired Maven Flyway plugin support for `manager`, and updated the English and Chinese local-development docs plus module runbooks to require the separate init step.
+  - **2026-04-02 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: Metadata schema creation and seed insertion were still coupled to normal Spring Boot startup through default-enabled Flyway config, so booting `manager` or `benchmark` mutated the database as a side effect instead of relying on an explicit operator action.
+    - Cure: Switched runtime defaults so Flyway is no longer invoked automatically during normal startup, added a dedicated init script for the schema/seed path, and documented the new startup order so operators initialize the database intentionally before booting services.
+    - Generalization: Keep schema bootstrap and seed loading behind explicit operational entrypoints rather than hiding them inside default service startup.
+  - **2026-04-02 — verification**
+    - Validation status: approved
+    - Evidence: `bash -n scripts/init-db.sh` passed; `mvn -q -f manager/pom.xml -DskipTests compile` passed; `mvn -q -f benchmark/pom.xml -DskipTests compile` passed; `mvn -q -f benchmark/pom.xml -Dtest=BenchmarkFlywaySeedTest test` exited cleanly with the existing Docker-less Testcontainers skip behavior. Additional focused web-context tests for `manager` and `benchmark` still fail for the unrelated SPA route-pattern issue (`PatternParseException` on `/**/{path:[^\\.]*}`), and benchmark still inherits the known Docker/Testcontainers limitation.
+    - Next action: none
+    - Escalation: INBOX-20260402-011
+  - **2026-04-02 — doc-garden**
+    - Updated `docs/operations/local-development.md`, `docs/modules/manager.md`, and `docs/modules/benchmark.md` to make explicit DB initialization the canonical workflow, and refreshed the configured Chinese mirror in `doc-CN/local-development.md`.
 
 ### QUERY-TRINO-001: ADD TRINO DATASOURCE SUPPORT
 
