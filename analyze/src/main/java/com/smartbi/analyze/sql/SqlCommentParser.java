@@ -83,7 +83,7 @@ public final class SqlCommentParser {
             }
         }
 
-        String cleanSql = buildVersion(sql, matches, true);
+        String cleanSql = buildCleanVersion(sql);
         String executionSql = buildVersion(sql, matches, false);
         return new ParsedSql(cleanSql, executionSql, builder.build());
     }
@@ -130,6 +130,22 @@ public final class SqlCommentParser {
             return "-- " + updatedBody;
         }
         return "/* " + updatedBody + " */";
+    }
+
+    private static String buildCleanVersion(String original) {
+        StringBuilder builder = new StringBuilder();
+        Matcher matcher = COMMENT_PATTERN.matcher(original);
+        int lastPos = 0;
+        while (matcher.find()) {
+            String match = matcher.group();
+            builder.append(original, lastPos, matcher.start());
+            if (match.startsWith("'")) {
+                builder.append(match);
+            }
+            lastPos = matcher.end();
+        }
+        builder.append(original.substring(lastPos));
+        return finalizeSql(builder.toString());
     }
 
     private static String buildVersion(String original, List<MatchInfo> matches, boolean stripAll) {

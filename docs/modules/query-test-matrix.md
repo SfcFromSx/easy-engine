@@ -47,7 +47,7 @@ Coverage evidence for this matrix is emitted by `mvn -q -f query/pom.xml test` u
 
 | Production function | Meaningful branches | Automated tests |
 |---|---|---|
-| `SqlCommentParser#parse` | null/empty SQL; driver hints stripped from execution SQL; metadata preserved; flag parsing; quoted-string immunity; unknown `YH_*` metadata retained | `SqlCommentParserTest#shouldReturnEmptyMetadataForNullAndEmptySql`, `SqlCommentParserTest#shouldStripDriverHintsButKeepMetadataInExecutionSql`, `SqlCommentParserTest#shouldParseNoCacheAndRefreshFlags`, `SqlCommentParserTest#shouldIgnoreCommentSyntaxInsideQuotedStrings`, `SqlCommentParserTest#shouldPreserveMetadataOnlyCommentsAndUnknownYhMetadata` |
+| `SqlCommentParser#parse` | null/empty SQL; driver hints stripped from execution SQL; all comments stripped from `cleanSql`; metadata preserved; flag parsing; quoted-string immunity; unknown `YH_*` metadata retained | `SqlCommentParserTest#shouldReturnEmptyMetadataForNullAndEmptySql`, `SqlCommentParserTest#shouldStripDriverHintsButKeepMetadataInExecutionSql`, `SqlCommentParserTest#shouldParseNoCacheAndRefreshFlags`, `SqlCommentParserTest#shouldIgnoreCommentSyntaxInsideQuotedStrings`, `SqlCommentParserTest#shouldPreserveMetadataOnlyCommentsAndUnknownYhMetadata`, `SqlCommentParserTest#shouldStripAllCommentsFromCleanSqlWhileKeepingPassThroughExecutionComments` |
 | `SqlCommentParser#safeParse` | successful parse passthrough; invalid hint fallback to original SQL | `SqlCommentParserTest#shouldStripDriverHintsButKeepMetadataInExecutionSql`, `SqlCommentParserTest#shouldFallbackToOriginalSqlWhenSafeParseEncountersInvalidHintValues` |
 
 ### `SqlRouteService`

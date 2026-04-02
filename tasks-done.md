@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| QUERY-BUG-003 | MAKE CLEAN SQL INDEPENDENT OF COMMENT VALUES | query | `cleanSql` now strips all SQL comments regardless of their contents, `executionSql` still preserves pass-through downstream comments, query docs/test matrix now describe the split contract explicitly, and the focused plus full `analyze`/`query` reactor validations pass. |
 | QUERY-BUG-002 | ACCEPT QUERY SQL AFTER LEADING OPTIMIZER COMMENTS | query | `query` now treats leading SQL comments, including `/*+ ... */` optimizer hints, as ignorable when detecting read-only query verbs, preserves non-query rejection for commented write statements, updates the query contract docs, and passes focused plus full reactor query validation. |
 | BENCH-UX-010 | REPLACE SQL TEMPLATES WITH SQL LIB REFERENCE WORKFLOW | benchmark | Benchmark now uses SQL Lib as the reusable SQL source of truth, SQL file import moved into `/api/v1/sql-lib/upload` with filename/upload-time metadata and `.xlsx/.xls/.et/.csv/.txt/.sql` support, test sets now store ordered SQL Lib references instead of inline SQL payloads, and benchmark backend/frontend validation passed. |
 | QUERY-CACHE-001 | MAKE REDIS RESULT CACHE WRITES ASYNCHRONOUS | query | `query` now schedules Redis result-cache writes on a dedicated background executor instead of blocking the request thread, preserves best-effort cache failure handling, documents the async cache contract, and passes focused plus full reactor query validation. |
@@ -77,6 +78,31 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+
+### QUERY-BUG-003: MAKE CLEAN SQL INDEPENDENT OF COMMENT VALUES
+
+- **Status**: done
+- **Updated**: 2026-04-02
+- **Progress log**:
+  - **2026-04-02 — intake**
+    - Human clarified the parser contract: `query` may only parse and rewrite routing metadata, downstream-facing comment information such as `YH_*` metadata must still flow to the datasource path, and `cleanSql` must not vary just because comment contents differ.
+    - Investigation confirmed the bug in `analyze/src/main/java/com/smartbi/analyze/sql/SqlCommentParser.java`: `cleanSql` was built by stripping only recognized hint-bearing comments, so ordinary `/* ... */` or trailing `-- ...` comments survived into `cleanSql`, making the so-called pure SQL depend on comment values even when the executable statement body was identical.
+  - **2026-04-02 — implementation**
+    - Files changed: `analyze/src/main/java/com/smartbi/analyze/sql/SqlCommentParser.java`, `analyze/src/test/java/com/smartbi/analyze/sql/SqlCommentParserTest.java`, `query/src/test/java/com/smartbi/query/parsing/SqlCommentParserTest.java`, `docs/modules/query.md`, `docs/modules/query-test-matrix.md`.
+    - Commands run: `rg`, `sed`, `git diff`.
+    - Result: Split clean-SQL generation away from hint recognition so `cleanSql` now removes every actual SQL comment while keeping quoted string literals intact, leaving `executionSql` on the existing pass-through path for downstream comment propagation.
+  - **2026-04-02 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: The parser reused the recognized-hint match list to build `cleanSql`, which silently coupled “pure SQL” normalization to whether a comment looked like a known hint instead of whether it was a comment at all.
+    - Cure: Added a dedicated clean-SQL builder that removes every matched line/block comment while preserving quoted string literals, and locked the contract with analyze-layer and query-layer regressions.
+    - Generalization: Keep normalization paths for semantic SQL matching separate from hint-metadata extraction paths so metadata-recognition changes cannot accidentally alter the canonical SQL body.
+  - **2026-04-02 — verification**
+    - Validation status: approved
+    - Evidence: `mvn -q -pl analyze,query -am -DfailIfNoTests=false -Dtest=SqlCommentParserTest test` passed; `mvn -q -pl analyze,query -am test` passed.
+    - Next action: none
+    - Escalation: none
+  - **2026-04-02 — doc-garden**
+    - Updated `docs/modules/query.md` and `docs/modules/query-test-matrix.md` so the contract now explicitly distinguishes fully comment-stripped `cleanSql` from downstream-facing `executionSql`.
 
 ### QUERY-BUG-002: ACCEPT QUERY SQL AFTER LEADING OPTIMIZER COMMENTS
 

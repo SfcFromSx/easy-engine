@@ -27,6 +27,18 @@ class SqlCommentParserTest {
     }
 
     @Test
+    void stripsAllCommentsFromCleanSqlButPreservesUnrecognizedCommentsInExecutionSql() {
+        ParsedSql parsed = SqlCommentParser.parse(
+                "/* ordinary comment */\n/* YH_QUERYID=abc123 */\nSELECT * FROM sales -- trailing note");
+
+        assertEquals("SELECT * FROM sales", parsed.cleanSql);
+        assertTrue(parsed.executionSql.contains("ordinary comment"));
+        assertTrue(parsed.executionSql.contains("YH_QUERYID=abc123"));
+        assertTrue(parsed.executionSql.contains("trailing note"));
+        assertEquals("abc123", parsed.metadata.queryId);
+    }
+
+    @Test
     void removesRoutingMetadataKeyFromComments() {
         String sql = "/* YH_TARGET_ENGINE=presto_local YH_QUERYID=abc123 */\nSELECT * FROM sales";
 

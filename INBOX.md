@@ -274,6 +274,24 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Suggested next step: Keep the archived `QUERY-BUG-002` entry and its task commit aligned, and let `CONFIG-REVIEW-001` remain the active follow-up task in `tasks.md`.
 - Human decision: pending
 
+### INBOX-20260402-029
+- Area: Harness audit trail
+- Related task(s): `QUERY-BUG-003`
+- Summary: `tasks.md` was updated on 2026-04-02 to intake a human-requested parser bugfix task so the clean-SQL comment-normalization fix can follow the repo's required task lifecycle.
+- Evidence: Active ledger row and task section for `QUERY-BUG-003` were added to `tasks.md` before implementation began.
+- Impact/Risk: Without an explicit audit note, later recovery or review could miss why the active ledger changed during this session.
+- Suggested next step: Keep the task ledger, archive, and eventual commit aligned when `QUERY-BUG-003` closes.
+- Human decision: pending
+
+### INBOX-20260402-030
+- Area: Harness audit trail
+- Related task(s): `QUERY-BUG-003`
+- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-02 to archive the completion of `QUERY-BUG-003`, while preserving the separately active `CONFIG-REVIEW-001` task in the current ledger.
+- Evidence: The active ledger row and section for `QUERY-BUG-003` were removed from `tasks.md`, its full progress log and done signal were archived under `tasks-done.md`, and the closeout will be included in the task's single commit.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger change as ad hoc bookkeeping instead of the required task finalization workflow.
+- Suggested next step: Keep the archived `QUERY-BUG-003` entry and its task commit aligned, and let `CONFIG-REVIEW-001` remain the active follow-up task in `tasks.md`.
+- Human decision: pending
+
 ## Template
 
 ```md

@@ -77,6 +77,20 @@ class SqlCommentParserTest {
         assertEquals("blue", parsed.metadata.extraMetadata.get("YH_CUSTOM_FLAG"));
     }
 
+    // Covers SqlCommentParser#parse clean-sql stripping for generic comments while execution SQL keeps pass-through comments.
+    @Test
+    void shouldStripAllCommentsFromCleanSqlWhileKeepingPassThroughExecutionComments() {
+        String sql = "/* ordinary comment */\n/* YH_QUERYID=abc123 */\nSELECT * FROM sales -- trailing note";
+
+        SqlCommentParser.ParsedSql parsed = SqlCommentParser.parse(sql);
+
+        assertEquals("SELECT * FROM sales", parsed.cleanSql);
+        assertTrue(parsed.executionSql.contains("ordinary comment"));
+        assertTrue(parsed.executionSql.contains("YH_QUERYID=abc123"));
+        assertTrue(parsed.executionSql.contains("trailing note"));
+        assertEquals("abc123", parsed.metadata.queryId);
+    }
+
     // Covers SqlCommentParser#safeParse error-path fallback when parse throws.
     @Test
     void shouldFallbackToOriginalSqlWhenSafeParseEncountersInvalidHintValues() {
