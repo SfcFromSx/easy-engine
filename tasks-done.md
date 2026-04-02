@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| QUERY-REVIEW-002 | AUDIT QUERY COMPATIBILITY INPUT VALIDATION | query | `query` now accepts empty `/kylin/api/query` bodies through the same compatibility exception payload as blank SQL, rejects unsupported top-level request shapes on the query endpoint, keeps the request docs/test matrix aligned, and `mvn -q -f query/pom.xml test` passes. |
 | QUERY-BUG-001 | REJECT NON-QUERY REQUESTS AT QUERY BOUNDARY | query | `query` now rejects blank and non-query SQL before cache/datasource work while preserving the compatibility exception payload contract, the request docs are updated, `mvn -q -f query/pom.xml test` passes, and broader compatibility-input review is tracked in `QUERY-REVIEW-002`. |
 | BENCH-TEST-002 | EXTERNALIZE PREFLIGHT CONTROLLER TEST FIXTURES | benchmark | `PreflightControllerTest` now loads its probe fixture values from `benchmark/src/test/resources/preflight-controller-test.properties` instead of inline literals, the focused benchmark validation passes, and the broader audit follow-up is tracked in `TEST-CONFIG-001`. |
 | BENCH-CONFIG-001 | EXTERNALIZE BENCHMARK PREFLIGHT DATASOURCE PROBE SETTINGS | benchmark | `BenchmarkPreflightProperties` no longer embeds Kylin/Presto probe defaults in Java, `benchmark.preflight.*` can be overridden from environment-backed config, task-local preflight tests pass, and unrelated benchmark-suite drift is logged in `INBOX-20260402-001`. |
@@ -67,6 +68,32 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+
+### QUERY-REVIEW-002: AUDIT QUERY COMPATIBILITY INPUT VALIDATION
+
+- **Status**: done
+- **Updated**: 2026-04-02
+- **Progress log**:
+  - **2026-04-02 — intake**
+    - Follow-up review task created automatically from `QUERY-BUG-001` after exporting a new best-practice rule: audit the remaining query compatibility/shim entrypoints for missing blank or unsupported request validation and apply the same early-rejection pattern where needed.
+  - **2026-04-02 — investigation**
+    - Audited the remaining `query` compatibility surface (`POST /kylin/api/query` plus the lightweight authentication shim) and confirmed two unresolved gaps on the query boundary: an empty request body could still be rejected by Spring before the compatibility exception payload was built, and unknown top-level JSON fields were silently ignored even though the endpoint should only accept the query-request envelope.
+  - **2026-04-02 — implementation**
+    - Files changed: `query/src/main/java/com/smartbi/query/api/dto/PreparedQueryRequestDto.java`, `query/src/main/java/com/smartbi/query/service/QueryExecutionService.java`, `query/src/main/java/com/smartbi/query/web/QueryController.java`, `query/src/test/java/com/smartbi/query/service/QueryExecutionServiceTest.java`, `query/src/test/java/com/smartbi/query/web/QueryWebIntegrationTest.java`, `docs/modules/query.md`, `docs/architecture/http-interfaces.md`, `docs/modules/query-test-matrix.md`.
+    - Commands run: `rg`, `sed`, `git diff`.
+    - Result: Allowed `POST /kylin/api/query` to accept an absent JSON body so the existing service-level blank-request guard returns the normal Kylin-style exception payload, captured unsupported top-level request fields on the query DTO, rejected those non-query request shapes before routing/cache/datasource work, and added regression coverage for both service and HTTP paths.
+  - **2026-04-02 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: The earlier blank/non-query fix hardened `QueryExecutionService`, but `QueryController` still required a request body, so Spring MVC could reject empty compatibility requests before the module's own exception envelope ran, and the compatibility DTO still ignored unknown JSON fields instead of treating them as unsupported request shapes.
+    - Cure: Made the request body optional at the controller boundary, captured unknown top-level fields on `PreparedQueryRequestDto`, and reused the established invalid-request response path so both empty bodies and unsupported request envelopes fail before routing, cache, or datasource work.
+    - Generalization: Existing rule from `QUERY-BUG-001` already covers this case; no new best-practice entry was needed.
+  - **2026-04-02 — verification**
+    - Validation status: approved
+    - Evidence: `mvn -q -f query/pom.xml -Dtest=QueryExecutionServiceTest,QueryWebIntegrationTest test` passed, including the empty-body, null-request, and unsupported-request-shape regressions; `mvn -q -f query/pom.xml test` also passed.
+    - Next action: none
+    - Escalation: none
+  - **2026-04-02 — doc-garden**
+    - Updated `docs/modules/query.md`, `docs/architecture/http-interfaces.md`, and `docs/modules/query-test-matrix.md` so the canonical docs now state that `/kylin/api/query` rejects unsupported top-level request fields in addition to blank or non-query SQL.
 
 ### QUERY-BUG-001: REJECT NON-QUERY REQUESTS AT QUERY BOUNDARY
 

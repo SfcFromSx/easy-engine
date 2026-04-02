@@ -1,5 +1,10 @@
 package com.smartbi.query.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -10,6 +15,7 @@ public class PreparedQueryRequestDto {
     private boolean acceptPartial;
     private List<StatementParameterDto> params;
     private Map<String, String> backdoorToggles;
+    private final Map<String, Object> unsupportedProperties = new LinkedHashMap<String, Object>();
 
     public String getSql() {
         return sql;
@@ -49,5 +55,18 @@ public class PreparedQueryRequestDto {
 
     public void setBackdoorToggles(Map<String, String> backdoorToggles) {
         this.backdoorToggles = backdoorToggles;
+    }
+
+    @JsonAnySetter
+    public void captureUnsupportedProperty(String name, Object value) {
+        unsupportedProperties.put(name, value);
+    }
+
+    public boolean hasUnsupportedProperties() {
+        return !unsupportedProperties.isEmpty();
+    }
+
+    public List<String> getUnsupportedPropertyNames() {
+        return Collections.unmodifiableList(new ArrayList<String>(unsupportedProperties.keySet()));
     }
 }

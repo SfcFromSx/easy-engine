@@ -19,7 +19,7 @@ public class QueryController {
     }
 
     @PostMapping("/query")
-    public SqlResponseStubDto query(@RequestBody PreparedQueryRequestDto request) {
+    public SqlResponseStubDto query(@RequestBody(required = false) PreparedQueryRequestDto request) {
         return queryExecutionService.execute(request);
     }
 

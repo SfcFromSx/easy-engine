@@ -22,6 +22,7 @@ import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.StringJoiner;
 
 @Service
 public class QueryExecutionService {
@@ -52,6 +53,12 @@ public class QueryExecutionService {
         String originalSql = request == null ? null : request.getSql();
         List<StatementParameterDto> params = request == null ? null : request.getParams();
         String executionMode = resolveExecutionMode(params);
+
+        if (request != null && request.hasUnsupportedProperties()) {
+            return invalidRequestResponse(startedAt, null, SqlCommentParser.safeParse(originalSql), params, executionMode,
+                    unsupportedRequestMessage(request));
+        }
+
         CachePolicy cachePolicy = queryCacheService.getCachePolicy();
         SqlCommentParser.ParsedSql parsed = SqlCommentParser.safeParse(originalSql);
 
@@ -134,6 +141,14 @@ public class QueryExecutionService {
                     durationMs, response.getExceptionMessage());
         }
         return response;
+    }
+
+    private String unsupportedRequestMessage(PreparedQueryRequestDto request) {
+        StringJoiner fields = new StringJoiner(", ");
+        for (String field : request.getUnsupportedPropertyNames()) {
+            fields.add(field);
+        }
+        return "Only query requests are supported by engine-query; unsupported fields: " + fields.toString();
     }
 
     private SqlResponseStubDto executeAgainstDatasource(Connection connection,

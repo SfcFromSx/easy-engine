@@ -256,6 +256,62 @@ class QueryExecutionServiceTest {
         verify(traceReportingService, never()).report(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyLong(), any());
     }
 
+    // Covers QueryExecutionService#execute null-request rejection before routing or cache work.
+    @Test
+    void shouldRejectNullQueryRequestsBeforeRouting() throws Exception {
+        QueryCacheService cacheService = spy(new QueryCacheService(new MapCacheStore(), new QueryProperties(), new ObjectMapper()));
+        SqlRouteService routeService = mock(SqlRouteService.class);
+        ManagedDataSourceRegistry registry = mock(ManagedDataSourceRegistry.class);
+        QueryResultMapper mapper = mock(QueryResultMapper.class);
+        TraceReportingService traceReportingService = mock(TraceReportingService.class);
+        QueryExecutionService service = new QueryExecutionService(cacheService, routeService, registry, mapper, traceReportingService, new QueryProperties());
+        SqlResponseStubDto response = new SqlResponseStubDto();
+        String message = "Query request must include SQL";
+        response.setIsException(true);
+        response.setExceptionMessage(message);
+
+        when(registry.getDefaultName()).thenReturn("default");
+        when(mapper.exceptionResponse(eq("default"), anyLong(), eq(message))).thenReturn(response);
+
+        SqlResponseStubDto actual = service.execute(null);
+
+        assertTrue(actual.getIsException());
+        assertEquals(message, actual.getExceptionMessage());
+        verify(routeService, never()).routeAndRewrite(any(), any());
+        verify(cacheService, never()).tryGet(any(), any(), any());
+        verify(cacheService, never()).put(any(), any(), any(), any());
+        verify(traceReportingService, never()).report(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyLong(), any());
+    }
+
+    // Covers QueryExecutionService#execute unsupported-request-shape rejection before routing or cache work.
+    @Test
+    void shouldRejectUnsupportedRequestShapesBeforeRouting() throws Exception {
+        QueryCacheService cacheService = spy(new QueryCacheService(new MapCacheStore(), new QueryProperties(), new ObjectMapper()));
+        SqlRouteService routeService = mock(SqlRouteService.class);
+        ManagedDataSourceRegistry registry = mock(ManagedDataSourceRegistry.class);
+        QueryResultMapper mapper = mock(QueryResultMapper.class);
+        TraceReportingService traceReportingService = mock(TraceReportingService.class);
+        QueryExecutionService service = new QueryExecutionService(cacheService, routeService, registry, mapper, traceReportingService, new QueryProperties());
+        PreparedQueryRequestDto request = request("SELECT NAME FROM SALES");
+        SqlResponseStubDto response = new SqlResponseStubDto();
+        String message = "Only query requests are supported by engine-query; unsupported fields: prepareSql";
+        response.setIsException(true);
+        response.setExceptionMessage(message);
+        request.captureUnsupportedProperty("prepareSql", Boolean.TRUE);
+
+        when(registry.getDefaultName()).thenReturn("default");
+        when(mapper.exceptionResponse(eq("default"), anyLong(), eq(message))).thenReturn(response);
+
+        SqlResponseStubDto actual = service.execute(request);
+
+        assertTrue(actual.getIsException());
+        assertEquals(message, actual.getExceptionMessage());
+        verify(routeService, never()).routeAndRewrite(any(), any());
+        verify(cacheService, never()).tryGet(any(), any(), any());
+        verify(cacheService, never()).put(any(), any(), any(), any());
+        verify(traceReportingService, never()).report(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyLong(), any());
+    }
+
     // Covers QueryExecutionService#execute cache-hit branch.
     @Test
     void shouldReturnCachedResponsesWithoutOpeningDatasourceConnections() throws Exception {

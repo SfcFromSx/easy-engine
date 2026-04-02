@@ -77,6 +77,15 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Suggested next step: Decide whether `BENCH-UX-007` should be grandfathered into the audit script like the other legacy gaps in `INBOX-20260331-001` or whether a recoverable task-id commit link still exists and should be restored.
 - Human decision: pending
 
+### INBOX-20260402-007
+- Area: Harness audit trail
+- Related task(s): `QUERY-REVIEW-002`
+- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-02 to track and archive the completion of `QUERY-REVIEW-002` in the canonical task ledger.
+- Evidence: The active ledger row for `QUERY-REVIEW-002` was removed from `tasks.md`, its full progress log was archived under `tasks-done.md`, and the closeout will be included in the task's single commit.
+- Impact/Risk: Without an explicit inbox note, later recovery or review could misread the harness-document edits as ad hoc bookkeeping instead of the required task workflow.
+- Suggested next step: Keep the ledger archive and task commit aligned for `QUERY-REVIEW-002` closeout.
+- Human decision: pending
+
 ## Template
 
 ```md

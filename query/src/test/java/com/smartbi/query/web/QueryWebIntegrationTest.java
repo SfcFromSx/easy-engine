@@ -143,6 +143,33 @@ class QueryWebIntegrationTest {
                 .andExpect(jsonPath("$.exceptionMessage").value("Query request must include SQL"));
     }
 
+    // Covers QueryController#query empty-body handling through the HTTP path.
+    @Test
+    void shouldReturnKylinStyleExceptionPayloadForEmptyRequestBody() throws Exception {
+        mockMvc.perform(post("/kylin/api/query")
+                        .header("Authorization", authHeader())
+                        .contentType("application/json")
+                        .content(""))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isException").value(true))
+                .andExpect(jsonPath("$.exceptionMessage").value("Query request must include SQL"));
+    }
+
+    // Covers QueryExecutionService#execute unsupported-request-shape rejection through the HTTP path.
+    @Test
+    void shouldReturnKylinStyleExceptionPayloadForUnsupportedRequestShape() throws Exception {
+        String body = "{\"sql\":\"SELECT NAME FROM SALES\",\"project\":\"demo\",\"prepareSql\":true}";
+
+        mockMvc.perform(post("/kylin/api/query")
+                        .header("Authorization", authHeader())
+                        .contentType("application/json")
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isException").value(true))
+                .andExpect(jsonPath("$.exceptionMessage")
+                        .value("Only query requests are supported by engine-query; unsupported fields: prepareSql"));
+    }
+
     // Covers QueryExecutionService#resolveExecutionMode and TraceReportingService#report statement traces through the HTTP path.
     @Test
     void shouldPublishStatementExecutionModeInTracePayload() throws Exception {
