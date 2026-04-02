@@ -11,7 +11,7 @@ import javax.persistence.Table;
 import java.time.Instant;
 
 @Entity
-@Table(name = "query_datasource_config")
+@Table(name = "manager_query_datasource_config")
 public class QueryDatasourceConfig {
 
     @Id

@@ -4,7 +4,7 @@ import javax.persistence.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "acceleration_table")
+@Table(name = "manager_acceleration_table")
 public class AccelerationTable {
 
     @Id

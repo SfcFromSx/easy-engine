@@ -4,7 +4,7 @@ import javax.persistence.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "sql_pattern_stats")
+@Table(name = "manager_sql_pattern_stats")
 public class SqlPatternStats {
 
     @Id

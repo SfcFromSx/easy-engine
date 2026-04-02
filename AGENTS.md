@@ -121,6 +121,7 @@ If a task is awaiting human approval to proceed, update its status to `in_review
 - Root repository is the intended canonical Git boundary.
 - Nested `.git` directories are hazards unless explicitly resolved.
 - One verified task maps to one commit.
+- ONLY stage and commit the specific files modified during the current task. NEVER use global tracking commands like `git add .`, `git add -A`, or `git commit -a` to prevent committing unrelated changes.
 - Commit subjects use `<task-id>: <short title>`.
 - Do not force-push or rewrite published history.
 

@@ -4,7 +4,7 @@ import javax.persistence.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "sql_execution_record")
+@Table(name = "manager_sql_execution_record")
 public class SqlExecutionRecord {
 
     @Id
