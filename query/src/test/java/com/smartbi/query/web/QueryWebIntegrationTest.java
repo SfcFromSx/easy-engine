@@ -58,6 +58,8 @@ class QueryWebIntegrationTest {
             "{\"sql\":\"SELECT NAME FROM SALES WHERE ID = ?\",\"project\":\"demo\",\"params\":[{\"className\":\"java.lang.Integer\",\"value\":\"not-a-number\"}]}";
     private static final String PRESTO_ROUTE_BODY =
             "{\"sql\":\"/* YH_TARGET_ENGINE=presto_local */ SELECT NAME FROM NATION WHERE NATIONKEY = 1\",\"project\":\"demo\"}";
+    private static final String OPTIMIZER_HINT_BODY =
+            "{\"sql\":\"/*+ INDEX(SALES IDX_SALES_NAME) */ SELECT NAME FROM SALES ORDER BY ID\",\"project\":\"demo\"}";
     private static final String QUERY_SQL_REQUIRED_MESSAGE = "Query request must include SQL";
     private static final String UNSUPPORTED_FIELDS_MESSAGE =
             "Only query requests are supported by engine-query; unsupported fields: prepareSql";
@@ -170,6 +172,19 @@ class QueryWebIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isException").value(true))
                 .andExpect(jsonPath("$.exceptionMessage").exists());
+    }
+
+    // Covers CachePolicy#isQuerySql leading-comment stripping through the HTTP path.
+    @Test
+    void shouldAcceptQuerySqlWithLeadingOptimizerHintComment() throws Exception {
+        mockMvc.perform(post(QUERY_ENDPOINT)
+                        .header(AUTHORIZATION_HEADER, authHeader())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(OPTIMIZER_HINT_BODY))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isException").value(false))
+                .andExpect(jsonPath("$.results[0][0]").value("alpha"))
+                .andExpect(jsonPath("$.results[1][0]").value("beta"));
     }
 
     // Covers QueryExecutionService#execute blank-request rejection through the HTTP path.

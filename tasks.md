@@ -22,17 +22,7 @@ Completed task history lives in [tasks-done.md](/Users/sfc/Documents/projects/en
 
 | ID | Title | Module | Status | Updated | Dependencies |
 |----|-------|--------|--------|---------|--------------|
-| QUERY-BUG-002 | ACCEPT QUERY SQL AFTER LEADING OPTIMIZER COMMENTS | query | in_progress | 2026-04-02 | none |
 | CONFIG-REVIEW-001 | AUDIT REPO FOR PROFILE-YAML-ONLY ENV CONFIG COMPLIANCE | platform | todo | 2026-04-02 | none |
-
-### QUERY-BUG-002: ACCEPT QUERY SQL AFTER LEADING OPTIMIZER COMMENTS
-
-- **Status**: in_progress
-- **Updated**: 2026-04-02
-- **Progress log**:
-  - **2026-04-02 — intake**
-    - Human asked to verify whether query SQL with hints can incorrectly fail with `Only query SQL is supported by engine-query`, then requested a tracked fix when the bug was confirmed.
-    - Investigation confirmed the bug is specific to leading generic optimizer comments such as `/*+ ... */ SELECT ...`: `QueryExecutionService` validates `parsed.cleanSql`, but `CachePolicy#isQuerySql` only checks whether the trimmed string starts with `select`/`with`/`show`/`describe`/`explain`, so a leading non-routing comment causes a false non-query rejection even though the statement body is read-only. Supported Easy Engine metadata hints such as `YH_TARGET_ENGINE` are already stripped before this check and are not affected.
 
 ### CONFIG-REVIEW-001: AUDIT REPO FOR PROFILE-YAML-ONLY ENV CONFIG COMPLIANCE
 

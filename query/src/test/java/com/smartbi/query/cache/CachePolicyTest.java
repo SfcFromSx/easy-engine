@@ -17,6 +17,9 @@ class CachePolicyTest {
 
         assertTrue(policy.isQuerySql("SELECT 1"));
         assertTrue(policy.isQuerySql(" with x as (select 1) select * from x"));
+        assertTrue(policy.isQuerySql("/*+ INDEX(s idx_sales) */ SELECT 1"));
+        assertTrue(policy.isQuerySql("-- optimizer routing note\nSELECT 1"));
+        assertTrue(policy.isQuerySql("/* comment */\nWITH x AS (SELECT 1) SELECT * FROM x"));
         assertTrue(policy.isQuerySql("SHOW TABLES"));
         assertTrue(policy.isQuerySql("DESCRIBE SALES"));
         assertTrue(policy.isQuerySql("EXPLAIN SELECT 1"));
@@ -29,6 +32,7 @@ class CachePolicyTest {
 
         assertFalse(policy.isQuerySql(null));
         assertFalse(policy.isQuerySql("DELETE FROM SALES"));
+        assertFalse(policy.isQuerySql("/*+ INDEX(s idx_sales) */ DELETE FROM SALES"));
         assertFalse(policy.isQuerySql("INSERT INTO SALES VALUES (1)"));
     }
 

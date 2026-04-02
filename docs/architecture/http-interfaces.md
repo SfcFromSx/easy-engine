@@ -8,7 +8,7 @@ Base service: `query`
 
 | Method | Path | Status | Purpose | Notes |
 |---|---|---|---|---|
-| `POST` | `/kylin/api/query` | `Implemented` | Execute query requests | Query-only interface; blank SQL, non-query SQL, or unsupported top-level request fields are rejected with the compatibility exception payload, and Kylin-routed prepared requests are literalized inside `query` before execution. |
+| `POST` | `/kylin/api/query` | `Implemented` | Execute query requests | Query-only interface; blank SQL, non-query SQL, or unsupported top-level request fields are rejected with the compatibility exception payload, leading comments such as preserved metadata or `/*+ ... */` optimizer hints are ignored when detecting the query verb, and Kylin-routed prepared requests are literalized inside `query` before execution. |
 | `GET` | `/kylin/api/user/authentication` | `Implemented` | JDBC handshake compatibility shim | Returns a lightweight authenticated payload for Kylin JDBC clients targeting `query`; other metadata/catalog compatibility endpoints remain out of scope. |
 | `POST` | `/kylin/api/user/authentication` | `Implemented` | JDBC handshake compatibility shim | Same lightweight compatibility response as `GET`; not a standalone login/session API. |
 

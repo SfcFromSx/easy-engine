@@ -21,12 +21,36 @@ public class CachePolicy {
         if (sql == null) {
             return false;
         }
-        String normalized = sql.trim().toLowerCase();
+        String normalized = stripLeadingComments(sql).toLowerCase();
         return normalized.startsWith("select")
                 || normalized.startsWith("with")
                 || normalized.startsWith("show")
                 || normalized.startsWith("describe")
                 || normalized.startsWith("explain");
+    }
+
+    private String stripLeadingComments(String sql) {
+        String remaining = sql == null ? "" : sql.trim();
+        while (!remaining.isEmpty()) {
+            if (remaining.startsWith("/*")) {
+                int end = remaining.indexOf("*/");
+                if (end < 0) {
+                    return remaining;
+                }
+                remaining = remaining.substring(end + 2).trim();
+                continue;
+            }
+            if (remaining.startsWith("--")) {
+                int newline = remaining.indexOf('\n');
+                if (newline < 0) {
+                    return "";
+                }
+                remaining = remaining.substring(newline + 1).trim();
+                continue;
+            }
+            break;
+        }
+        return remaining;
     }
 
     public boolean shouldBypassCacheBeforeLookup(ParsedSql parsed) {

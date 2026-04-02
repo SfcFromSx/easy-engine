@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| QUERY-BUG-002 | ACCEPT QUERY SQL AFTER LEADING OPTIMIZER COMMENTS | query | `query` now treats leading SQL comments, including `/*+ ... */` optimizer hints, as ignorable when detecting read-only query verbs, preserves non-query rejection for commented write statements, updates the query contract docs, and passes focused plus full reactor query validation. |
 | BENCH-UX-010 | REPLACE SQL TEMPLATES WITH SQL LIB REFERENCE WORKFLOW | benchmark | Benchmark now uses SQL Lib as the reusable SQL source of truth, SQL file import moved into `/api/v1/sql-lib/upload` with filename/upload-time metadata and `.xlsx/.xls/.et/.csv/.txt/.sql` support, test sets now store ordered SQL Lib references instead of inline SQL payloads, and benchmark backend/frontend validation passed. |
 | QUERY-CACHE-001 | MAKE REDIS RESULT CACHE WRITES ASYNCHRONOUS | query | `query` now schedules Redis result-cache writes on a dedicated background executor instead of blocking the request thread, preserves best-effort cache failure handling, documents the async cache contract, and passes focused plus full reactor query validation. |
 | QUERY-ARCH-003 | EXTRACT SHARED ANALYZE MODULE FOR ROUTING AND SQL ANALYSIS | platform | Added the shared `analyze` Maven module and root reactor, switched query routing to `YH_TARGET_ENGINE`-only analysis-backed rewrites, added manager query-routing-context APIs plus shared parse/rewrite delegation, updated architecture/module docs, and verified the new analyzer, full query suite, and focused manager slice through reactor builds. |
@@ -76,6 +77,31 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+
+### QUERY-BUG-002: ACCEPT QUERY SQL AFTER LEADING OPTIMIZER COMMENTS
+
+- **Status**: done
+- **Updated**: 2026-04-02
+- **Progress log**:
+  - **2026-04-02 — intake**
+    - Human asked to verify whether query SQL with hints can incorrectly fail with `Only query SQL is supported by engine-query`, then requested a tracked fix when the bug was confirmed.
+    - Investigation confirmed the bug is specific to leading generic optimizer comments such as `/*+ ... */ SELECT ...`: `QueryExecutionService` validates `parsed.cleanSql`, but `CachePolicy#isQuerySql` only checks whether the trimmed string starts with `select`/`with`/`show`/`describe`/`explain`, so a leading non-routing comment causes a false non-query rejection even though the statement body is read-only. Supported Easy Engine metadata hints such as `YH_TARGET_ENGINE` are already stripped before this check and are not affected.
+  - **2026-04-02 — implementation**
+    - Files changed: `query/src/main/java/com/smartbi/query/cache/CachePolicy.java`, `query/src/test/java/com/smartbi/query/cache/CachePolicyTest.java`, `query/src/test/java/com/smartbi/query/web/QueryWebIntegrationTest.java`, `docs/modules/query.md`, `docs/modules/query-test-matrix.md`, `docs/architecture/http-interfaces.md`.
+    - Commands run: `rg`, `sed`, `git diff`.
+    - Result: Taught `CachePolicy#isQuerySql` to strip only leading block/line comments before checking the first SQL verb, so leading optimizer hints and other front-loaded comments no longer trigger false non-query rejections, while commented `DELETE`/`INSERT` statements still fail the read-only gate.
+  - **2026-04-02 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: Query-shape validation assumed the first non-whitespace characters were always the SQL verb, but generic optimizer comments survive `SqlCommentParser` and therefore left `cleanSql` starting with `/*` instead of `SELECT`.
+    - Cure: Moved the read-only gate to a comment-aware check that strips only leading line/block comments before matching the first keyword, and added both unit and HTTP regressions around hinted read-only and write statements.
+    - Generalization: Preserve strict statement-type validation, but normalize away syntax wrappers that are semantically outside the SQL verb before making allow/deny decisions.
+  - **2026-04-02 — verification**
+    - Validation status: approved
+    - Evidence: `mvn -q -pl query -am -DfailIfNoTests=false -Dtest=CachePolicyTest,QueryWebIntegrationTest test` passed; `mvn -q -pl query -am test` passed.
+    - Next action: none
+    - Escalation: none
+  - **2026-04-02 — doc-garden**
+    - Updated `docs/modules/query.md`, `docs/modules/query-test-matrix.md`, and `docs/architecture/http-interfaces.md` so the query request contract and coverage inventory now explicitly describe leading-comment query detection, including optimizer-hint comments.
 
 ### BENCH-UX-010: REPLACE SQL TEMPLATES WITH SQL LIB REFERENCE WORKFLOW
 

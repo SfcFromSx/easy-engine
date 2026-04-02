@@ -22,7 +22,7 @@
 ## Request Contract
 
 - `sql` and `params` are the authoritative request inputs.
-- `sql` must resolve to a supported read-only query shape after comment stripping; blank or non-query requests are rejected with the normal exception payload and do not reach datasource execution.
+- `sql` must resolve to a supported read-only query shape after leading-comment stripping; preserved metadata comments and leading optimizer hints such as `/*+ ... */` do not prevent query detection, but blank or non-query requests are still rejected with the normal exception payload and do not reach datasource execution.
 - Unknown top-level request fields are rejected through the same exception payload because `/kylin/api/query` only supports the query-request envelope, not other Kylin compatibility request shapes.
 - `project` is accepted for client compatibility but is not used for routing or execution.
 - `acceptPartial` is accepted but ignored; the current service always returns `partial = false`.

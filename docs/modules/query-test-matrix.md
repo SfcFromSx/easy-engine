@@ -14,7 +14,7 @@ Coverage evidence for this matrix is emitted by `mvn -q -f query/pom.xml test` u
 
 | Production function | Meaningful branches | Automated tests |
 |---|---|---|
-| `CachePolicy#isQuerySql` | read-only statements accepted; null and write statements rejected | `CachePolicyTest#shouldRecognizeSupportedReadOnlyStatements`, `CachePolicyTest#shouldRejectNullAndWriteStatementsAsNonQuerySql` |
+| `CachePolicy#isQuerySql` | read-only statements accepted after leading comment stripping; null and write statements rejected even when comments precede them | `CachePolicyTest#shouldRecognizeSupportedReadOnlyStatements`, `CachePolicyTest#shouldRejectNullAndWriteStatementsAsNonQuerySql`, `QueryWebIntegrationTest#shouldAcceptQuerySqlWithLeadingOptimizerHintComment` |
 | `CachePolicy#shouldBypassCacheBeforeLookup` | safe mode disabled; safe mode enabled with volatile SQL; safe mode enabled with stable SQL; null parsed SQL | `CachePolicyTest#shouldBypassCacheOnlyForSafeModeVolatileQueries` |
 | `CachePolicy#isFingerprintableParameterType` | supported types; unsupported types | `CachePolicyTest#shouldRecognizeFingerprintableParameterTypes` |
 | `CachePolicy#cacheModeKeyTag` | safe mode disabled/enabled rendering | `CachePolicyTest#shouldRenderCacheModeKeyTagFromSafeModeSetting` |
