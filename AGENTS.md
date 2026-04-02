@@ -113,6 +113,8 @@ If a task is awaiting human approval to proceed, update its status to `in_review
 - Always read `AGENTS.md` first when picking up a new task to ensure alignment with the latest project contract.
 - Task state lives in `tasks.md` and `tasks-done.md`. Do not create JSON, YAML, or other machine state files for task tracking.
 - If the foreman is uncertain, ask the human before proceeding.
+- When appending a rule to `docs/operations/best-practices.md`, you MUST simultaneously create a "generalization review" task in `tasks.md` to retroactively apply the new rule to existing code, and log a notification in `INBOX.md`.
+- Any modification to core harness documents (e.g., `AGENTS.md`, `tasks.md`, `INBOX.md`, navigation trees) MUST be actively reported to the human via a new entry in `INBOX.md`.
 
 ## Git Contract
 
