@@ -4,7 +4,7 @@ This file is a cheap-to-refresh context snapshot for agents.
 
 ## Top-Level Layout
 
-- `.agent/`: harness config, history, and runtime logs
+- `.agent/`: harness config and validation policies
 - `benchmark/`: benchmark backend and frontend
 - `doc-CN/`: selected Chinese mirrors
 - `docker/`: local infrastructure assets

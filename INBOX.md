@@ -9,6 +9,7 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Use this inbox for defects, harness/process concerns, and improvement suggestions that need human judgment.
 - Task-specific failures that are already fully captured in a task's progress log do not need a duplicate inbox entry.
 - Systemic harness, tooling, process, or documentation issues discovered while working another task must still be logged here, even if the triggering task is already tracked in `tasks.md`.
+- **Do not** log generalized coding practices, codebase styling rules, or post-mortem fixes here. These belong in task progress logs and `docs/operations/best-practices.md`.
 - When a task blocks at max attempts, its latest rejected or revalidation note in `tasks.md` must include `Escalation: none` or `Escalation: INBOX-...` so humans can tell whether the issue stayed task-local or was escalated here.
 - Do not convert inbox entries directly into implementation tasks without explicit human confirmation.
 - For tooling or infrastructure changes, prefer logging the issue here before changing the harness.

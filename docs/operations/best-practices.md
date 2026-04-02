@@ -1,0 +1,9 @@
+# Best Practices & Coding Standards
+
+This document is the central repository for generalized engineering rules, architectural patterns, and code style preferences derived from active development and task post-mortems.
+
+The foreman updates this document dynamically whenever a task resolving a bug or code style issue requires a generalized rule to prevent future regressions.
+
+## Rules
+
+*(Rules generated from task completions are appended below)*

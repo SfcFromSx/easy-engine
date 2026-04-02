@@ -12,6 +12,7 @@ Completed task history lives in [tasks-done.md](/Users/sfc/Documents/projects/en
 |--------|---------|
 | `todo` | Ready to work, dependencies met |
 | `in_progress` | Currently being worked |
+| `in_review` | Implemented, awaiting codebase/human code review |
 | `done` | Completed, committed, and archived in `tasks-done.md` |
 | `blocked` | Failed max attempts, needs human review |
 

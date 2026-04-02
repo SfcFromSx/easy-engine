@@ -19,7 +19,7 @@ Do not perform any of the following while the foreman is actively working a task
 - manual code edits outside the active task,
 - branch rewrites or force-pushes,
 - ad hoc file moves or directory renames,
-- direct edits to `.agent/config.json`, `.agent/history/`, or prompt templates,
+- direct edits to `.agent/config.json`,
 - edits to generated docs under `docs/generated/` unless work is paused,
 - silent deletion of task files, schema files, or validation scripts.
 
@@ -44,8 +44,7 @@ If a human needs to modify code, prompts, task state, or repo layout:
 ### Failed Validation
 
 1. Stop the foreman if failures keep repeating.
-2. Preserve evidence from `.agent/history/` and `.agent/runtime/runner-logs/`.
-3. Add or update a task in `tasks.md` with the failure evidence.
+2. Add or update a task in `tasks.md` with the failure evidence.
 4. Resume after the failure mode is documented.
 
 ### Git Conflict or Topology Drift

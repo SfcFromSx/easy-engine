@@ -4,7 +4,6 @@ Use this section for runbooks, validation, Git workflow, and documentation polic
 
 ## Core Docs
 
-- [agent-loop-runbook.md](/Users/sfc/Documents/projects/engine/docs/operations/agent-loop-runbook.md)
 - [human-collaboration.md](/Users/sfc/Documents/projects/engine/docs/operations/human-collaboration.md)
 - [local-development.md](/Users/sfc/Documents/projects/engine/docs/operations/local-development.md)
 - [validation-matrix.md](/Users/sfc/Documents/projects/engine/docs/operations/validation-matrix.md)
