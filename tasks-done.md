@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| QUERY-TRINO-001 | ADD TRINO DATASOURCE SUPPORT | query | `query` now bundles the Trino JDBC driver, routes `type=trino` datasource configs without SQL rewrites, exposes a `trino_local` fallback example, documents the Trino config contract, and `mvn -q -f query/pom.xml test` passes. |
 | QUERY-REVIEW-002 | AUDIT QUERY COMPATIBILITY INPUT VALIDATION | query | `query` now accepts empty `/kylin/api/query` bodies through the same compatibility exception payload as blank SQL, rejects unsupported top-level request shapes on the query endpoint, keeps the request docs/test matrix aligned, and `mvn -q -f query/pom.xml test` passes. |
 | QUERY-BUG-001 | REJECT NON-QUERY REQUESTS AT QUERY BOUNDARY | query | `query` now rejects blank and non-query SQL before cache/datasource work while preserving the compatibility exception payload contract, the request docs are updated, `mvn -q -f query/pom.xml test` passes, and broader compatibility-input review is tracked in `QUERY-REVIEW-002`. |
 | BENCH-TEST-002 | EXTERNALIZE PREFLIGHT CONTROLLER TEST FIXTURES | benchmark | `PreflightControllerTest` now loads its probe fixture values from `benchmark/src/test/resources/preflight-controller-test.properties` instead of inline literals, the focused benchmark validation passes, and the broader audit follow-up is tracked in `TEST-CONFIG-001`. |
@@ -68,6 +69,28 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+
+### QUERY-TRINO-001: ADD TRINO DATASOURCE SUPPORT
+
+- **Status**: done
+- **Updated**: 2026-04-02
+- **Progress log**:
+  - **2026-04-02 — intake**
+    - Human requested a new Trino datasource path for `query`, including task-ledger tracking and full closeout. Scope for this task: make Trino-backed datasource configs executable in `query`, add focused regression coverage, and doc-garden any query-facing datasource guidance that changes.
+  - **2026-04-02 — implementation**
+    - Files changed: `query/pom.xml`, `query/src/main/java/com/smartbi/query/route/SqlRouteService.java`, `query/src/main/resources/application.yml`, `query/src/test/java/com/smartbi/query/route/SqlRouteServiceTest.java`, `query/src/test/java/com/smartbi/query/datasource/TrinoDriverAvailabilityTest.java`, `query/src/test/java/com/smartbi/query/web/QueryTrinoRoutingIntegrationTest.java`, `docs/modules/query.md`.
+    - Commands run: `rg`, `sed`, `git diff`, `mvn -q -f query/pom.xml -Dtest=TrinoDriverAvailabilityTest,SqlRouteServiceTest,QueryTrinoRoutingIntegrationTest test`, `mvn -q -f query/pom.xml test`.
+    - Result: Bundled `io.trino:trino-jdbc`, taught `query` to treat `type=trino` as a first-class routed datasource, added a `trino_local` fallback example for manager-outage mode, and added regression coverage for both packaged-driver availability and Trino-routed query execution through `/kylin/api/query`.
+  - **2026-04-02 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Post-mortem: not applicable; this task adds datasource capability rather than correcting a bug or style regression.
+  - **2026-04-02 — verification**
+    - Validation status: approved
+    - Evidence: `mvn -q -f query/pom.xml -Dtest=TrinoDriverAvailabilityTest,SqlRouteServiceTest,QueryTrinoRoutingIntegrationTest test` passed, including the new routed Trino integration path; `mvn -q -f query/pom.xml test` also passed for the full query module.
+    - Next action: none
+    - Escalation: none
+  - **2026-04-02 — doc-garden**
+    - Updated `docs/modules/query.md` so the prepared-parameter contract now explicitly includes Trino in the non-Kylin JDBC path and the routing notes document the expected `type`, driver class, and JDBC URL shape for Trino datasource configs. No additional architecture or local-development drift was required for this task.
 
 ### QUERY-REVIEW-002: AUDIT QUERY COMPATIBILITY INPUT VALIDATION
 

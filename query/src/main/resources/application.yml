@@ -56,6 +56,16 @@ engine:
           max-pool-size: 4
           min-idle: 1
           connection-timeout-ms: 10000
+        trino_local:
+          name: trino_local
+          type: trino
+          driver-class: io.trino.jdbc.TrinoDriver
+          jdbc-url: ${ENGINE_QUERY_TRINO_JDBC_URL:jdbc:trino://localhost:8080/tpch/tiny}
+          username: ${ENGINE_QUERY_TRINO_USER:admin}
+          password: ${ENGINE_QUERY_TRINO_PASSWORD:}
+          max-pool-size: 4
+          min-idle: 1
+          connection-timeout-ms: 10000
 
 logging:
   level:

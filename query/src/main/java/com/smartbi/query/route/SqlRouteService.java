@@ -23,6 +23,7 @@ public class SqlRouteService {
         this.registry = registry;
         adapters.put("kylin", new PassThroughSqlAdapter());
         adapters.put("presto", new PassThroughSqlAdapter());
+        adapters.put("trino", new PassThroughSqlAdapter());
         adapters.put("default", new PassThroughSqlAdapter());
     }
 

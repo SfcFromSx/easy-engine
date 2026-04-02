@@ -62,6 +62,18 @@ class SqlRouteServiceTest {
         assertEquals("SELECT * FROM SALES", routed.executionSql);
     }
 
+    // Covers SqlRouteService#routeAndRewrite explicit Trino adapter lookup.
+    @Test
+    void shouldRouteTrinoDatasourcesWithoutSqlRewrite() {
+        SqlRouteService service = new SqlRouteService(registry(managerConfigs("trino_local", "TRINO", true)));
+
+        RoutedSql routed = service.routeAndRewrite("SELECT * FROM NATION", SqlCommentParser.parse("SELECT * FROM NATION"));
+
+        assertEquals("trino_local", routed.datasourceName);
+        assertEquals("TRINO", routed.datasourceType);
+        assertEquals("SELECT * FROM NATION", routed.executionSql);
+    }
+
     // Covers SqlRouteService#routeAndRewrite parsed-null fallback branch.
     @Test
     void shouldHandleNullParsedSqlByPassingThroughOriginalSql() {

@@ -21,6 +21,7 @@
         <java.version>1.8</java.version>
         <kylin.jdbc.version>4.0.1</kylin.jdbc.version>
         <presto.jdbc.version>0.276.2</presto.jdbc.version>
+        <trino.jdbc.version>469</trino.jdbc.version>
     </properties>
 
     <dependencies>
@@ -45,6 +46,11 @@
             <groupId>com.facebook.presto</groupId>
             <artifactId>presto-jdbc</artifactId>
             <version>${presto.jdbc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.trino</groupId>
+            <artifactId>trino-jdbc</artifactId>
+            <version>${trino.jdbc.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.kylin</groupId>

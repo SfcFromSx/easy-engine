@@ -55,7 +55,7 @@
 ## Prepared Parameter Contract
 
 - Typed conversion is supported for `java.lang.String`, `java.lang.Integer`, `java.lang.Long`, `java.lang.Short`, `java.lang.Double`, `java.lang.Float`, `java.math.BigDecimal`, `java.lang.Boolean`, `java.sql.Date`, `java.sql.Time`, and `java.sql.Timestamp`.
-- For non-Kylin datasources, `query` preserves the current JDBC prepared path and passes converted values through `PreparedStatement#setObject(...)`.
+- For non-Kylin datasources such as H2, Presto, and Trino, `query` preserves the current JDBC prepared path and passes converted values through `PreparedStatement#setObject(...)`.
 - For routed Kylin datasources, `query` renders prepared parameters into SQL literals before execution because downstream Kylin planning rejects `?` placeholders; numerics stay unquoted, booleans render as `TRUE`/`FALSE`, strings/date/time/timestamp values are single-quoted, and `null` renders as `NULL`.
 - Unsupported `className` values also fall back to the raw string value, so execution may still succeed if the driver coerces it, but prepared-result cache fingerprinting is disabled for those requests.
 - `java.util.Date` is intentionally treated as unsupported today because the service does not define a canonical string-to-`java.util.Date` conversion format.
@@ -77,6 +77,7 @@ Query-side routing precedence is:
 3. the default datasource fallback
 
 - The standard benchmark path is `benchmark (Kylin JDBC) -> query`.
+- Trino datasource configs should use `type=trino`, `driverClass=io.trino.jdbc.TrinoDriver`, and a normal Trino JDBC URL such as `jdbc:trino://host:8080/catalog/schema`.
 - When a JDBC client must select a specific engine, preserved metadata comments are the reliable mechanism:
 
 ```sql

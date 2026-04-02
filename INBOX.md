@@ -86,6 +86,15 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Suggested next step: Keep the ledger archive and task commit aligned for `QUERY-REVIEW-002` closeout.
 - Human decision: pending
 
+### INBOX-20260402-009
+- Area: Harness audit trail
+- Related task(s): `QUERY-TRINO-001`
+- Summary: `tasks-done.md` was updated on 2026-04-02 to archive the completion of `QUERY-TRINO-001`, while preserving a concurrently introduced `tasks.md` intake for unrelated task `ARCH-015`.
+- Evidence: The Trino task now has a full archived progress log and done signal in `tasks-done.md`; `tasks.md` was left aligned with the separately in-progress `ARCH-015` entry instead of being overwritten during closeout.
+- Impact/Risk: Without an explicit note, later recovery could misread the ledger state and assume the missing active-row history for `QUERY-TRINO-001` was accidental rather than the result of concurrent harness edits being preserved.
+- Suggested next step: Keep the archived Trino entry and its task commit aligned, and let the active ledger continue tracking `ARCH-015` independently.
+- Human decision: pending
+
 ## Template
 
 ```md
