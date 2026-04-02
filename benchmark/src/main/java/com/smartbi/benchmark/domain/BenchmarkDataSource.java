@@ -14,7 +14,7 @@ public class BenchmarkDataSource {
     @Column(nullable = false)
     private String name;
 
-    @Column(name = "jdbc_url", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "jdbc_url", nullable = false, columnDefinition = "MEDIUMTEXT")
     private String jdbcUrl;
 
     @Column(name = "jdbc_user")

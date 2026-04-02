@@ -23,10 +23,10 @@ public class AccelerationTable {
     @Column(name = "schema_name", nullable = false)
     private String schemaName = "public";
 
-    @Column(name = "ddl_text", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "ddl_text", nullable = false, columnDefinition = "MEDIUMTEXT")
     private String ddlText;
 
-    @Column(name = "refresh_sql", columnDefinition = "TEXT")
+    @Column(name = "refresh_sql", columnDefinition = "MEDIUMTEXT")
     private String refreshSql;
 
     @Column(name = "cron_expr")
@@ -40,7 +40,7 @@ public class AccelerationTable {
     @Column(nullable = false, length = 32)
     private AccelerationSource source = AccelerationSource.MANUAL;
 
-    @Column(name = "recommendation_note", columnDefinition = "TEXT")
+    @Column(name = "recommendation_note", columnDefinition = "MEDIUMTEXT")
     private String recommendationNote;
 
     @PreUpdate

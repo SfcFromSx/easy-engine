@@ -27,7 +27,7 @@ public class QueryDatasourceConfig {
     @Column(name = "driver_class", nullable = false, length = 512)
     private String driverClass;
 
-    @Column(name = "jdbc_url", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "jdbc_url", nullable = false, columnDefinition = "MEDIUMTEXT")
     private String jdbcUrl;
 
     private String username;

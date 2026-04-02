@@ -292,7 +292,24 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Evidence: The active row for `QUERY-TRINO-002` was removed from `tasks.md`, its full progress log and done signal were archived under `tasks-done.md`, and the fix for `manager_sql_execution_record` drift was verified with a green `TrinoRoutingE2ETest` run.
 - Impact/Risk: Without an explicit audit note, later recovery or review could miss the dual-purpose nature of this task's edits across the build surface and the metadata store.
 - Suggested next step: Keep the archived Trino entry and its task commit aligned.
+### INBOX-20260402-033
+- Area: Harness audit trail
+- Related task(s): `MIGRATION-001`
+- Summary: `tasks.md` was updated on 2026-04-02 to intake a human-requested database migration task to upgrade `TEXT` columns to `MEDIUMTEXT` across all modules to support long SQL queries.
+- Evidence: Active ledger row and task section for `MIGRATION-001` were added to `tasks.md` before implementation began.
+- Impact/Risk: Without an explicit audit note, later recovery or review could miss why the active ledger changed during this session.
+- Suggested next step: Keep the task ledger and eventual commit aligned when `MIGRATION-001` closes.
 - Human decision: pending
+
+### INBOX-20260402-034
+- Area: Harness audit trail
+- Related task(s): `MIGRATION-001`
+- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-02 to archive the completion of `MIGRATION-001`, which upgraded 10 JPA domain classes and added matched Flyway migrations for large SQL support.
+- Evidence: The active row for `MIGRATION-001` was removed from `tasks.md`, its full progress log and done signal were archived under `tasks-done.md`, and a new best practice for `MEDIUMTEXT` was exported.
+- Impact/Risk: Without an explicit audit note, later recovery or review could miss the scope of this migration across the benchmark, query, and manager modules.
+- Suggested next step: Keep the archived migration entry and its task commit aligned.
+- Human decision: pending
+
 
 ## Template
 

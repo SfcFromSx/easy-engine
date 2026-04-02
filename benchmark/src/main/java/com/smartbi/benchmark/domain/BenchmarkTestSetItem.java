@@ -22,7 +22,7 @@ public class BenchmarkTestSetItem {
     @Column(length = 512)
     private String label;
 
-    @Column(name = "sql_text", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "sql_text", nullable = false, columnDefinition = "MEDIUMTEXT")
     private String sqlText;
 
     @Column(nullable = false)
@@ -31,7 +31,7 @@ public class BenchmarkTestSetItem {
     @Column(name = "execution_mode", nullable = false, length = 32)
     private String executionMode = "STATEMENT";
 
-    @Column(name = "param_json", columnDefinition = "TEXT")
+    @Column(name = "param_json", columnDefinition = "MEDIUMTEXT")
     private String paramJson;
 
     @ManyToOne(fetch = FetchType.LAZY)

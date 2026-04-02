@@ -47,15 +47,15 @@ public class BenchmarkRun {
     @Column(name = "p99_ms")
     private Double p99Ms;
 
-    @Column(name = "error_sample", columnDefinition = "TEXT")
+    @Column(name = "error_sample", columnDefinition = "MEDIUMTEXT")
     private String errorSample;
 
     /** 压测开始时任务配置快照（JSON），便于与 evaluation 一并做版本对比 */
-    @Column(name = "job_snapshot_json", columnDefinition = "TEXT")
+    @Column(name = "job_snapshot_json", columnDefinition = "MEDIUMTEXT")
     private String jobSnapshotJson;
 
     /** 结构化评价与 JDBC 对比提示（JSON） */
-    @Column(name = "evaluation_json", columnDefinition = "TEXT")
+    @Column(name = "evaluation_json", columnDefinition = "MEDIUMTEXT")
     private String evaluationJson;
 
     @Column(name = "current_progress")

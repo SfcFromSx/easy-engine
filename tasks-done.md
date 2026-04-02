@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| MIGRATION-001 | UPGRADE TEXT COLUMNS TO MEDIUMTEXT FOR LONG SQL SUPPORT | platform | Upgraded 10 JPA domain classes across `benchmark`, `query`, and `manager` to `MEDIUMTEXT` (16MB). Added Flyway migrations `benchmark/V18` and `manager/V11`. Verified compilation of all affected modules. |
 | QUERY-TRINO-002 | ADD LOCAL TRINO SERVICE AND E2E COVERAGE | query | Trino service added to `docker-compose.yml`, seeded in `manager`, and verified with `TrinoRoutingE2ETest` passing 5/5 cases. Fixed repo-wide table name prefixing drift for `manager_sql_execution_record`. |
 | QUERY-BUG-003 | MAKE CLEAN SQL INDEPENDENT OF COMMENT VALUES | query | `cleanSql` now strips all SQL comments regardless of their contents, `executionSql` still preserves pass-through downstream comments, query docs/test matrix now describe the split contract explicitly, and the focused plus full `analyze`/`query` reactor validations pass. |
 | QUERY-BUG-002 | ACCEPT QUERY SQL AFTER LEADING OPTIMIZER COMMENTS | query | `query` now treats leading SQL comments, including `/*+ ... */` optimizer hints, as ignorable when detecting read-only query verbs, preserves non-query rejection for commented write statements, updates the query contract docs, and passes focused plus full reactor query validation. |
@@ -518,3 +519,25 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
   - **2026-04-01 — verification**
     - Verified Spring Boot configuration handles SPA history mode.
     - Verified static resource paths match Maven project standards.
+
+### MIGRATION-001: UPGRADE TEXT COLUMNS TO MEDIUMTEXT FOR LONG SQL SUPPORT
+
+- **Status**: done
+- **Updated**: 2026-04-02
+- **Progress log**:
+  - **2026-04-02 — intake**
+    - User reported SQL length issues with `error_sample` (truncated error reports).
+    - Identified multiple `TEXT` columns (64KB limit) in MySQL that risk overflow for long SQLs (thousands of lines) and large JSON evaluation snapshots.
+    - Decided to upgrade all relevant SQL/JSON storage columns to `MEDIUMTEXT` (16MB).
+  - **2026-04-02 — implementation**
+    - Updated JPA domain classes in `benchmark`, `query`, and `manager` modules (10 files total).
+    - Created Flyway migration scripts: `benchmark/V18` and `manager/V11`.
+    - Verified compilation of all affected modules with `mvn clean compile`.
+  - **2026-04-02 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: Default `TEXT` type in MySQL (64KB) is insufficient for complex SQL queries (thousands of lines) and large JSON snapshots.
+    - Cure: Upgraded affected columns to `MEDIUMTEXT` (16MB).
+    - Generalization: "Use `MEDIUMTEXT` (16MB) instead of default `TEXT` (64KB) for all database columns that store raw SQL text, complex JSON snapshots, error samples, or evaluation reports." (added to `best-practices.md`)
+  - **2026-04-02 — verification**
+    - Validation status: approved
+    - Evidence: All backend modules compiled successfully. Flyway scripts follow existing naming conventions for both shared and module-prefixed schemas.

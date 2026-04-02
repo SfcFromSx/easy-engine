@@ -14,7 +14,7 @@ public class SqlExecutionRecord {
     @Column(name = "received_at", nullable = false)
     private Instant receivedAt = Instant.now();
 
-    @Column(name = "raw_payload", columnDefinition = "TEXT")
+    @Column(name = "raw_payload", columnDefinition = "MEDIUMTEXT")
     private String rawPayload;
 
     @Column(name = "datasource_name")
@@ -23,16 +23,16 @@ public class SqlExecutionRecord {
     @Column(name = "datasource_type")
     private String datasourceType;
 
-    @Column(name = "original_sql", columnDefinition = "TEXT")
+    @Column(name = "original_sql", columnDefinition = "MEDIUMTEXT")
     private String originalSql;
 
-    @Column(name = "clean_sql", columnDefinition = "TEXT")
+    @Column(name = "clean_sql", columnDefinition = "MEDIUMTEXT")
     private String cleanSql;
 
     @Column(name = "param_fingerprint")
     private String paramFingerprint;
 
-    @Column(name = "parameter_payload", columnDefinition = "TEXT")
+    @Column(name = "parameter_payload", columnDefinition = "MEDIUMTEXT")
     private String parameterPayload;
 
     @Column(name = "execution_mode", length = 32)
@@ -46,17 +46,17 @@ public class SqlExecutionRecord {
     @Column(name = "duration_ms")
     private Long durationMs;
 
-    @Column(name = "error_message", columnDefinition = "TEXT")
+    @Column(name = "error_message", columnDefinition = "MEDIUMTEXT")
     private String errorMessage;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "parse_status", nullable = false, length = 32)
     private ParseStatus parseStatus;
 
-    @Column(name = "parse_error", columnDefinition = "TEXT")
+    @Column(name = "parse_error", columnDefinition = "MEDIUMTEXT")
     private String parseError;
 
-    @Column(name = "signature_json", columnDefinition = "TEXT")
+    @Column(name = "signature_json", columnDefinition = "MEDIUMTEXT")
     private String signatureJson;
 
     @Column(name = "sql_fingerprint")

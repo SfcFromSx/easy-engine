@@ -19,7 +19,7 @@ public class SqlPatternStats {
     @Column(name = "sql_fingerprint", nullable = false, unique = true, length = 64)
     private String sqlFingerprint;
 
-    @Column(name = "clean_sql_sample", columnDefinition = "TEXT")
+    @Column(name = "clean_sql_sample", columnDefinition = "MEDIUMTEXT")
     private String cleanSqlSample;
 
     @Column(name = "execution_count", nullable = false)
@@ -31,7 +31,7 @@ public class SqlPatternStats {
     @Column(name = "avg_duration_ms")
     private Double avgDurationMs;
 
-    @Column(name = "signature_json", columnDefinition = "TEXT")
+    @Column(name = "signature_json", columnDefinition = "MEDIUMTEXT")
     private String signatureJson;
 
     public Long getId() {
