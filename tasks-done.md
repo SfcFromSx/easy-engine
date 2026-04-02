@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| BENCH-UX-010 | REPLACE SQL TEMPLATES WITH SQL LIB REFERENCE WORKFLOW | benchmark | Benchmark now uses SQL Lib as the reusable SQL source of truth, SQL file import moved into `/api/v1/sql-lib/upload` with filename/upload-time metadata and `.xlsx/.xls/.et/.csv/.txt/.sql` support, test sets now store ordered SQL Lib references instead of inline SQL payloads, and benchmark backend/frontend validation passed. |
 | QUERY-CACHE-001 | MAKE REDIS RESULT CACHE WRITES ASYNCHRONOUS | query | `query` now schedules Redis result-cache writes on a dedicated background executor instead of blocking the request thread, preserves best-effort cache failure handling, documents the async cache contract, and passes focused plus full reactor query validation. |
 | QUERY-ARCH-003 | EXTRACT SHARED ANALYZE MODULE FOR ROUTING AND SQL ANALYSIS | platform | Added the shared `analyze` Maven module and root reactor, switched query routing to `YH_TARGET_ENGINE`-only analysis-backed rewrites, added manager query-routing-context APIs plus shared parse/rewrite delegation, updated architecture/module docs, and verified the new analyzer, full query suite, and focused manager slice through reactor builds. |
 | CONFIG-PROFILE-001 | UNIFY MODULE ENV CONFIG INTO DEV TEST PRO PROFILES | platform | `manager`, `query`, and `benchmark` now centralize environment settings in `application-dev.yml`, `application-test.yml`, and `application-pro.yml`; code/tests/scripts/POM defaults no longer own env config; profile-driven DB init works for `dev` and `test`; backend tests pass; frontend builds pass; and the new profile-governance rule is recorded in `docs/operations/best-practices.md` with follow-up audit task `CONFIG-REVIEW-001`. |
@@ -75,6 +76,29 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+
+### BENCH-UX-010: REPLACE SQL TEMPLATES WITH SQL LIB REFERENCE WORKFLOW
+
+- **Status**: done
+- **Updated**: 2026-04-02
+- **Progress log**:
+  - **2026-04-02 — intake**
+    - Human requested that benchmark rename user-facing SQL Templates to SQL Lib, move file uploads into SQL Lib, make test cases reference SQL Lib entries instead of owning editable SQL copies, widen supported import types to `.et`, `.txt`, `.csv`, and `.sql`, and replace the current right-side test-set SQL drawer workflow with list-first management that opens one SQL record at a time for detail/editing.
+    - Investigation confirmed the current structure is template-centric: `/api/v1/templates` owns the global SQL pool, test-set items persist their own SQL payload, test-set upload only accepts Excel files into `benchmark_test_set_item`, and the frontend still renders full test-set SQL details inline in a right drawer. Scope for this task: preserve existing benchmark behavior through a forward migration while switching runtime/test-case membership to SQL Lib references.
+  - **2026-04-02 — implementation**
+    - Files changed: benchmark schema/runtime/API sources under `benchmark/src/main/java`, new Flyway Java migration `benchmark/src/main/java/db/migration/V18__sql_lib_reference_workflow.java`, new SQL import helpers/tests under `benchmark/src/{main,test}/java/com/smartbi/benchmark/sql`, benchmark frontend SQL Lib/test-set files under `benchmark/frontend/src/{api,router,utils,views}` plus focused frontend tests, and benchmark-facing docs under `docs/modules` and `docs/architecture`.
+    - Commands run: `rg`, `sed`, `mvn -q -f benchmark/pom.xml -DskipTests compile`.
+    - Result: Replaced the benchmark template-centric workflow with SQL Lib-backed reference membership, added source filename/upload timestamp metadata plus SQL Lib upload for `.xlsx`, `.xls`, Excel-compatible `.et`, `.csv`, `.txt`, and `.sql`, switched test sets to list/detail SQL Lib selection instead of inline SQL editing, kept `/api/v1/templates` as a compatibility alias, and forward-migrated existing test-set rows onto `sql_lib_id` references while leaving legacy payload columns in place for safe transition.
+  - **2026-04-02 — review**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Notes: Verified that benchmark runtime now reads test-set SQLs from linked SQL Lib entries when present, SQL Lib deletion is blocked while referenced by test sets, direct test-set upload is rejected with guidance to SQL Lib, and frontend list/detail flows no longer require rendering thousands of full SQL payloads in a side drawer.
+  - **2026-04-02 — verification**
+    - Validation status: approved
+    - Evidence: `mvn -q -f benchmark/pom.xml test` passed; `npm --prefix benchmark/frontend run test` passed; `npm --prefix benchmark/frontend run build` passed.
+    - Next action: none
+    - Escalation: Docker-backed Flyway seed coverage still logs the pre-existing local Docker-unavailable skip path, but the benchmark Maven suite completed successfully in this environment.
+  - **2026-04-02 — doc-garden**
+    - Updated `docs/modules/benchmark.md`, `docs/modules/benchmark-test-matrix.md`, `docs/modules/benchmark-sample-data.md`, and benchmark-related architecture docs so the documented benchmark contract now reflects SQL Lib terminology, SQL Lib upload formats, reference-only test-set membership, and the compatibility aliasing around `/api/v1/templates`.
 
 ### QUERY-CACHE-001: MAKE REDIS RESULT CACHE WRITES ASYNCHRONOUS
 

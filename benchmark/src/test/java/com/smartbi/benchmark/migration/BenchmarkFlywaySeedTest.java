@@ -69,7 +69,7 @@ class BenchmarkFlywaySeedTest {
     @Test
     void flywaySeedsTemplatesJobsAndTestSet() {
         long templates = sqlTemplateRepository.count();
-        assertTrue(templates >= 22, "全局 SQL 模板应 >= 22（V2 两条 + V5 约 20 条）, actual=" + templates);
+        assertTrue(templates >= 22, "SQL Lib starter entries should remain seeded on a fresh schema, actual=" + templates);
 
         List<String> templateNames = sqlTemplateRepository.findAll().stream()
                 .map(template -> template.getName())

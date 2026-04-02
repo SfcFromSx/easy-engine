@@ -27,7 +27,7 @@
         </el-select>
         <el-select v-model="selectedTestSetFilter" clearable filterable class="toolbar-select"
           :placeholder="$t('jobs.filterTestSetPlaceholder')">
-          <el-option :label="$t('jobs.filterTemplatesOnly')" value="__templates__" />
+          <el-option :label="$t('jobs.filterTemplatesOnly')" value="__sql_lib__" />
           <el-option v-for="testSet in testSets" :key="testSet.id" :label="testSet.name" :value="String(testSet.id)" />
         </el-select>
       </div>

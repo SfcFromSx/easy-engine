@@ -48,10 +48,10 @@ describe('benchmarkViewHelpers', () => {
     expect(filterJobs(jobs, '', '11', '', '', dataSources, testSets)).toEqual([jobs[1]])
     expect(filterJobs(jobs, '32', '', '', '', dataSources, testSets)).toEqual([jobs[0]])
     expect(filterJobs(jobs, '', '', 'CACHE_PENETRATION', '', dataSources, testSets)).toEqual([jobs[1]])
-    expect(filterJobs(jobs, '', '', '', '__templates__', dataSources, testSets)).toEqual([jobs[1]])
+    expect(filterJobs(jobs, '', '', '', '__sql_lib__', dataSources, testSets)).toEqual([jobs[1]])
     expect(filterJobs(jobs, '', '', '', '100', dataSources, testSets)).toEqual([jobs[0]])
     expect(getDataSourceName(dataSources, 999)).toBe('DataSource #999')
-    expect(getTestSetName(testSets, null)).toBe('Default (Templates)')
+    expect(getTestSetName(testSets, null)).toBe('Default (SQL Lib)')
     expect(strategyTagType('CACHE_PENETRATION')).toBe('warning')
   })
 

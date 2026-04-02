@@ -64,12 +64,12 @@ public class BenchmarkExecutionService {
         if (job.getTestSetId() != null) {
             long n = testSetItemRepository.countByTestSetId(job.getTestSetId());
             if (n == 0) {
-                throw new IllegalStateException("所选测试集为空或不存在，请先导入 Excel");
+                throw new IllegalStateException("所选测试集为空或不存在，请先从 SQL Lib 选择 SQL");
             }
         } else {
             List<SqlTemplate> templates = templateRepository.findAllByOrderByIdAsc();
             if (templates.isEmpty()) {
-                throw new IllegalStateException("未绑定测试集且全局 SQL 模板为空，请导入测试集或维护模板");
+                throw new IllegalStateException("未绑定测试集且 SQL Lib 为空，请先维护 SQL Lib 或关联测试集");
             }
         }
         BenchmarkRun run = new BenchmarkRun();

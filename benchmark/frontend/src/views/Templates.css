@@ -6,6 +6,36 @@
   margin-bottom: 16px;
 }
 
+.upload-card {
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.upload-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.upload-card__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.upload-card__hint {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.sql-lib-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
 .flow-callout {
   margin-bottom: 12px;
   padding: 8px 12px;
@@ -37,6 +67,59 @@
 
 .table-card {
   padding: 0;
+}
+
+.detail-card {
+  padding: 16px;
+}
+
+.detail-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.detail-card__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.detail-card__hint {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.detail-card__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.detail-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.detail-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.detail-meta__label {
+  font-size: 11px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 :deep(.el-table__row) {
@@ -82,6 +165,10 @@
   flex: none;
 }
 
+.detail-preview-actions {
+  margin-top: 6px;
+}
+
 .sql-dialog-summary {
   margin-bottom: 10px;
   font-size: 12px;
@@ -106,4 +193,46 @@
 .mini-code {
   font-family: var(--font-family-mono);
   font-size: var(--font-size-mono);
+}
+
+.sql-lib-uploader {
+  width: 100%;
+}
+
+.selected-upload-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 10px;
+}
+
+.item-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 1100px) {
+  .sql-lib-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .upload-card__header,
+  .detail-card__header,
+  .detail-card__actions,
+  .selected-upload-file {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .detail-meta-grid,
+  .item-form-grid {
+    grid-template-columns: 1fr;
+  }
 }

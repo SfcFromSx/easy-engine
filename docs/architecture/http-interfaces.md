@@ -77,20 +77,27 @@ Base service: `benchmark`
 | Method | Path | Status | Purpose | Notes |
 |---|---|---|---|---|
 | `GET` | `/api/v1/test-sets` | `Implemented` | List test sets | Returns count and descriptive fields. |
-| `GET` | `/api/v1/test-sets/{id}/items` | `Implemented` | List test set items | Ordered by sort order. |
+| `GET` | `/api/v1/test-sets/{id}/items` | `Implemented` | List test set items | Paged SQL Lib-backed rows ordered by sort order; supports keyword filtering. |
 | `POST` | `/api/v1/test-sets` | `Implemented` | Create test set | Manual metadata create. |
 | `PUT` | `/api/v1/test-sets/{id}` | `Implemented` | Update test set |  |
-| `POST` | `/api/v1/test-sets/upload` | `Implemented` | Import test set from Excel | Supports optional prepared columns. |
+| `POST` | `/api/v1/test-sets/upload` | `Implemented` | Reject legacy direct import | Returns guidance to upload into SQL Lib first. |
+| `POST` | `/api/v1/test-sets/{id}/items/add-sql-lib` | `Implemented` | Append SQL Lib references into a test set | Preserves incoming order and allows duplicates. |
 | `DELETE` | `/api/v1/test-sets/{id}` | `Implemented` | Delete test set | Cascades through DB constraints. |
 
-### Templates
+### SQL Lib
 
 | Method | Path | Status | Purpose | Notes |
 |---|---|---|---|---|
-| `GET` | `/api/v1/templates` | `Implemented` | List templates | Supports pagination and keyword filter. |
-| `POST` | `/api/v1/templates` | `Implemented` | Create template | Supports execution mode and params. |
-| `PUT` | `/api/v1/templates/{id}` | `Implemented` | Update template |  |
-| `DELETE` | `/api/v1/templates/{id}` | `Implemented` | Delete template |  |
+| `GET` | `/api/v1/sql-lib` | `Implemented` | List SQL Lib entries | Supports pagination plus keyword, execution mode, source filename, and upload-time filtering. |
+| `GET` | `/api/v1/sql-lib/{id}` | `Implemented` | Get one SQL Lib entry | Returns source file and upload time metadata. |
+| `POST` | `/api/v1/sql-lib` | `Implemented` | Create SQL Lib entry | Supports execution mode and params. |
+| `PUT` | `/api/v1/sql-lib/{id}` | `Implemented` | Update SQL Lib entry |  |
+| `DELETE` | `/api/v1/sql-lib/{id}` | `Implemented` | Delete SQL Lib entry | Guarded while any test set still references the entry. |
+| `POST` | `/api/v1/sql-lib/upload` | `Implemented` | Upload SQL source file(s) into SQL Lib | Accepts `.xlsx`, `.xls`, Excel-compatible `.et`, `.csv`, `.txt`, and `.sql`. |
+| `GET` | `/api/v1/templates` | `Implemented` | Compatibility alias for listing SQL Lib | Maintained for transition compatibility. |
+| `POST` | `/api/v1/templates` | `Implemented` | Compatibility alias for creating SQL Lib entries | Maintained for transition compatibility. |
+| `PUT` | `/api/v1/templates/{id}` | `Implemented` | Compatibility alias for updating SQL Lib entries | Maintained for transition compatibility. |
+| `DELETE` | `/api/v1/templates/{id}` | `Implemented` | Compatibility alias for deleting SQL Lib entries | Maintained for transition compatibility. |
 
 ### Runs
 

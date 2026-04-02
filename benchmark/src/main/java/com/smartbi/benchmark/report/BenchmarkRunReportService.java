@@ -70,7 +70,7 @@ public class BenchmarkRunReportService {
         snap.put("rounds", job.getRounds());
         snap.put("testSetId", job.getTestSetId());
         snap.put("testSetName", testSetName);
-        snap.put("sqlSourceKind", job.getTestSetId() != null ? "test_set" : "global_templates");
+        snap.put("sqlSourceKind", job.getTestSetId() != null ? "test_set" : "sql_lib");
         snap.put("sqlSourceCount", sqlSourceCount);
         snap.put("executionModeSummary", summarizeExecutionModes(executionModes));
         return toJson(snap);

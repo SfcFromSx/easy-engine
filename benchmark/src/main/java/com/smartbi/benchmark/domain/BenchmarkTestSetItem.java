@@ -16,6 +16,9 @@ public class BenchmarkTestSetItem {
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
 
+    @Column(name = "sql_lib_id")
+    private Long sqlLibId;
+
     @Column(length = 512)
     private String label;
 
@@ -30,6 +33,10 @@ public class BenchmarkTestSetItem {
 
     @Column(name = "param_json", columnDefinition = "TEXT")
     private String paramJson;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sql_lib_id", insertable = false, updatable = false)
+    private SqlTemplate sqlLib;
 
     public Long getId() {
         return id;
@@ -49,6 +56,14 @@ public class BenchmarkTestSetItem {
 
     public void setSortOrder(int sortOrder) {
         this.sortOrder = sortOrder;
+    }
+
+    public Long getSqlLibId() {
+        return sqlLibId;
+    }
+
+    public void setSqlLibId(Long sqlLibId) {
+        this.sqlLibId = sqlLibId;
     }
 
     public String getLabel() {
@@ -89,5 +104,13 @@ public class BenchmarkTestSetItem {
 
     public void setParamJson(String paramJson) {
         this.paramJson = paramJson;
+    }
+
+    public SqlTemplate getSqlLib() {
+        return sqlLib;
+    }
+
+    public void setSqlLib(SqlTemplate sqlLib) {
+        this.sqlLib = sqlLib;
     }
 }

@@ -259,12 +259,13 @@ public class BenchmarkAsyncRunner {
             List<BenchmarkTestSetItem> items = testSetItemRepository.findByTestSetIdOrderBySortOrderAsc(job.getTestSetId());
             List<WeightedSql> list = new ArrayList<WeightedSql>();
             for (BenchmarkTestSetItem it : items) {
+                SqlTemplate sqlLib = it.getSqlLib();
                 list.add(new WeightedSql(
-                        it.getSqlText(),
-                        it.getWeight(),
-                        SqlExecutionMode.from(it.getExecutionMode()),
-                        parseParams(it.getParamJson()),
-                        it.getLabel()));
+                        sqlLib != null ? sqlLib.getSqlText() : it.getSqlText(),
+                        sqlLib != null ? sqlLib.getWeight() : it.getWeight(),
+                        SqlExecutionMode.from(sqlLib != null ? sqlLib.getExecutionMode() : it.getExecutionMode()),
+                        parseParams(sqlLib != null ? sqlLib.getParamJson() : it.getParamJson()),
+                        sqlLib != null ? sqlLib.getName() : it.getLabel()));
             }
             return list;
         }

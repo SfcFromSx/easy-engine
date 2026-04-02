@@ -1,6 +1,7 @@
 package com.smartbi.benchmark.domain;
 
 import javax.persistence.*;
+import java.time.Instant;
 
 @Entity
 @Table(name = "benchmark_sql_template")
@@ -26,6 +27,12 @@ public class SqlTemplate {
 
     @Column(name = "param_json", columnDefinition = "TEXT")
     private String paramJson;
+
+    @Column(name = "source_filename", length = 512)
+    private String sourceFilename;
+
+    @Column(name = "uploaded_at", nullable = false)
+    private Instant uploadedAt = Instant.now();
 
     public Long getId() {
         return id;
@@ -81,5 +88,21 @@ public class SqlTemplate {
 
     public void setParamJson(String paramJson) {
         this.paramJson = paramJson;
+    }
+
+    public String getSourceFilename() {
+        return sourceFilename;
+    }
+
+    public void setSourceFilename(String sourceFilename) {
+        this.sourceFilename = sourceFilename;
+    }
+
+    public Instant getUploadedAt() {
+        return uploadedAt;
+    }
+
+    public void setUploadedAt(Instant uploadedAt) {
+        this.uploadedAt = uploadedAt;
     }
 }

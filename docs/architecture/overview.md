@@ -19,7 +19,7 @@ manager ----> query datasource configs
 
 ## Architectural Boundaries
 
-- `benchmark` owns benchmark-only concerns: benchmark datasources, templates, test sets, runs, preflight checks, and JDBC driver uploads used by its own datasource test/debug/benchmark paths.
+- `benchmark` owns benchmark-only concerns: benchmark datasources, SQL Lib entries, test sets, runs, preflight checks, and JDBC driver uploads used by its own datasource test/debug/benchmark paths.
 - `query` owns execution semantics: JDBC compatibility, preserved metadata parsing, routing precedence, cache behavior, query execution, and trace emission.
 - `manager` owns control-plane state: query datasource configuration, trace browsing, SQL pattern analysis, and acceleration metadata lifecycle.
 

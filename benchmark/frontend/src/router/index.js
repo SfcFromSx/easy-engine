@@ -14,7 +14,7 @@ export default createRouter({
     { path: '/jobs', component: Jobs, meta: { title: '任务配置' } },
     { path: '/jobs/:id', component: JobDetail, meta: { title: '任务详情' } },
     { path: '/test-sets', component: TestSets, meta: { title: '测试集' } },
-    { path: '/templates', component: Templates, meta: { title: 'SQL 模板' } },
+    { path: '/sql-lib', alias: '/templates', component: Templates, meta: { title: 'SQL Lib' } },
     { path: '/datasources', component: DataSources, meta: { title: '数据源管理' } },
     { path: '/runs', component: Runs, meta: { title: '运行记录' } }
   ]

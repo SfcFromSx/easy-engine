@@ -1,67 +1,63 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, UploadCloud } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
+import { Plus } from 'lucide-vue-next'
 import client from '../api/client'
 import {
   API_ENDPOINTS,
   TEST_SET_ITEMS,
   TEST_SET_ITEM_BY_ID,
-  TEST_SET_ITEMS_COPY_TEMPLATES,
+  TEST_SET_ITEMS_ADD_SQL_LIB,
   TEST_SET_ITEMS_REORDER
 } from '../api/endpoints'
 import CodeBlock from '../components/CodeBlock.vue'
 import { filterTestSets, formatParamJson } from '../utils/benchmarkViewHelpers'
-import { getSqlPreview } from '../utils/sqlPreview'
 
 export default {
   __name: 'TestSets',
   components: {
     Plus,
-    UploadCloud,
     CodeBlock
   },
   setup(__props, { expose: __expose }) {
     __expose()
 
+    const router = useRouter()
     const { t } = useI18n()
     const testSets = ref([])
     const loading = ref(false)
     const dlg = ref(false)
     const savingSet = ref(false)
-    const drawerVisible = ref(false)
+    const managerVisible = ref(false)
+    const pickerVisible = ref(false)
     const itemsLoading = ref(false)
     const items = ref([])
+    const itemsTotal = ref(0)
+    const itemsPage = ref(1)
+    const itemsPageSize = ref(20)
+    const itemsKeyword = ref('')
     const activeSet = ref(null)
+    const selectedItemId = ref(null)
     const keyword = ref('')
     const sourceFilter = ref('all')
-    const createMode = ref('empty')
-    const createFile = ref(null)
-    const createFileName = ref('')
-    const itemDlg = ref(false)
-    const itemSaving = ref(false)
-    const templateDlg = ref(false)
-    const templateLoading = ref(false)
-    const copyingTemplates = ref(false)
-    const availableTemplates = ref([])
-    const selectedTemplateIds = ref([])
-    const templateKeyword = ref('')
-    const templateModeFilter = ref('')
+
+    const sqlLibLoading = ref(false)
+    const addingSqlLib = ref(false)
+    const availableSqlLib = ref([])
+    const selectedSqlLibIds = ref([])
+    const sqlLibKeyword = ref('')
+    const sqlLibModeFilter = ref('')
+    const sqlLibPage = ref(1)
+    const sqlLibPageSize = ref(20)
+    const sqlLibTotal = ref(0)
 
     const form = reactive({ id: null, name: '', description: '' })
-    const itemForm = reactive({
-      id: null,
-      label: '',
-      sqlText: '',
-      weight: 1,
-      executionMode: 'STATEMENT',
-      paramJson: ''
-    })
 
     const filteredTestSets = computed(() => filterTestSets(testSets.value, keyword.value, sourceFilter.value))
     const isEditingSet = computed(() => Boolean(form.id))
-    const isPreparedItemMode = computed(() => itemForm.executionMode === 'PREPARED_STATEMENT')
-    const selectedTemplateCount = computed(() => selectedTemplateIds.value.length)
+    const selectedItem = computed(() => items.value.find((item) => item.id === selectedItemId.value) || null)
+    const selectedSqlLibCount = computed(() => selectedSqlLibIds.value.length)
 
     async function load() {
       loading.value = true
@@ -79,29 +75,26 @@ export default {
       }
     }
 
-    function previewSql(sqlText) {
-      return getSqlPreview(sqlText).previewText
-    }
-
-    function resetCreateFile() {
-      createFile.value = null
-      createFileName.value = ''
-    }
-
-    function handleCreateFileChange(file) {
-      createFile.value = file?.raw || file || null
-      createFileName.value = file?.name || file?.raw?.name || ''
-    }
-
-    function clearCreateFile() {
-      resetCreateFile()
-    }
-
     async function fetchItems(testSetId) {
       itemsLoading.value = true
       try {
-        const { data } = await client.get(TEST_SET_ITEMS(testSetId))
-        items.value = data
+        const { data } = await client.get(TEST_SET_ITEMS(testSetId), {
+          params: {
+            page: itemsPage.value - 1,
+            size: itemsPageSize.value,
+            keyword: itemsKeyword.value || undefined
+          }
+        })
+        items.value = data.content || []
+        itemsTotal.value = data.totalElements || items.value.length
+        if (!items.value.length) {
+          selectedItemId.value = null
+          return
+        }
+        const stillVisible = items.value.find((item) => item.id === selectedItemId.value)
+        if (!stillVisible) {
+          selectedItemId.value = items.value[0].id
+        }
       } catch (e) {
         ElMessage.error(e.response?.data?.message || t('testSets.loadItemsFailed'))
       } finally {
@@ -111,7 +104,10 @@ export default {
 
     async function manageItems(row) {
       activeSet.value = row
-      drawerVisible.value = true
+      managerVisible.value = true
+      itemsPage.value = 1
+      itemsKeyword.value = ''
+      selectedItemId.value = null
       await fetchItems(row.id)
     }
 
@@ -124,15 +120,11 @@ export default {
 
     function openCreate() {
       Object.assign(form, { id: null, name: '', description: '' })
-      createMode.value = 'empty'
-      resetCreateFile()
       dlg.value = true
     }
 
     function edit(row) {
       Object.assign(form, { id: row.id, name: row.name, description: row.description || '' })
-      createMode.value = 'empty'
-      resetCreateFile()
       dlg.value = true
     }
 
@@ -141,40 +133,23 @@ export default {
         ElMessage.warning(t('testSets.nameRequired'))
         return
       }
-      if (!isEditingSet.value && createMode.value === 'upload' && !createFile.value) {
-        ElMessage.warning(t('testSets.uploadFileRequired'))
-        return
-      }
-
       const editingExisting = isEditingSet.value
-      let createdSet = null
       savingSet.value = true
       try {
-        if (editingExisting) {
-          const { data } = await client.put(`${API_ENDPOINTS.TEST_SETS}/${form.id}`, form)
-          createdSet = data
-          ElMessage.success(t('testSets.saveSuccess'))
-        } else if (createMode.value === 'upload') {
-          const fd = new FormData()
-          fd.append('file', createFile.value)
-          fd.append('name', form.name.trim())
-          if (form.description?.trim()) {
-            fd.append('description', form.description.trim())
-          }
-          const { data } = await client.post(`${API_ENDPOINTS.TEST_SETS}/upload`, fd)
-          createdSet = data.testSet
-          ElMessage.success(t('testSets.uploadSuccess', { name: data.testSet.name, count: data.itemCount }))
-        } else {
-          const { data } = await client.post(API_ENDPOINTS.TEST_SETS, form)
-          createdSet = data
-          ElMessage.success(t('testSets.emptyCreateSuccess', { name: data.name }))
+        const payload = {
+          id: form.id,
+          name: form.name.trim(),
+          description: form.description?.trim() || ''
         }
+        const { data } = editingExisting
+          ? await client.put(`${API_ENDPOINTS.TEST_SETS}/${form.id}`, payload)
+          : await client.post(API_ENDPOINTS.TEST_SETS, payload)
 
+        ElMessage.success(editingExisting ? t('testSets.saveSuccess') : t('testSets.emptyCreateSuccess', { name: data.name }))
         dlg.value = false
         await load()
-
-        if (!editingExisting && createMode.value === 'empty' && createdSet?.id) {
-          const latest = testSets.value.find((row) => row.id === createdSet.id) || createdSet
+        if (!editingExisting && data?.id) {
+          const latest = testSets.value.find((row) => row.id === data.id) || data
           await manageItems(latest)
         }
       } catch (e) {
@@ -187,84 +162,41 @@ export default {
     async function remove(row) {
       try {
         await ElMessageBox.confirm(
-          `确定删除测试集「${row.name}」吗？这将导致关联的所有 SQL 明细被永久物理删除，且不可恢复。`,
-          '危险操作提示',
+          t('testSets.removeConfirm', { name: row.name }),
+          t('testSets.removeTitle'),
           {
-            confirmButtonText: '确认删除',
-            cancelButtonText: '取消',
-            type: 'error',
-            confirmButtonClass: 'el-button--danger'
+            confirmButtonText: t('common.delete'),
+            cancelButtonText: t('common.cancel'),
+            type: 'warning'
           }
         )
         await client.delete(`${API_ENDPOINTS.TEST_SETS}/${row.id}`)
         if (activeSet.value?.id === row.id) {
-          drawerVisible.value = false
+          managerVisible.value = false
           activeSet.value = null
           items.value = []
+          selectedItemId.value = null
         }
         ElMessage.success(t('testSets.removeSuccess'))
         await load()
-      } catch { /* cancel */ }
-    }
-
-    function resetItemForm() {
-      Object.assign(itemForm, {
-        id: null,
-        label: '',
-        sqlText: '',
-        weight: 1,
-        executionMode: 'STATEMENT',
-        paramJson: ''
-      })
-    }
-
-    function openAddItem() {
-      resetItemForm()
-      itemDlg.value = true
-    }
-
-    function editItem(item) {
-      Object.assign(itemForm, {
-        id: item.id,
-        label: item.label || '',
-        sqlText: item.sqlText || '',
-        weight: item.weight || 1,
-        executionMode: item.executionMode || 'STATEMENT',
-        paramJson: item.paramJson || ''
-      })
-      itemDlg.value = true
-    }
-
-    async function saveItem() {
-      if (!activeSet.value?.id) {
-        return
-      }
-      if (!itemForm.sqlText?.trim()) {
-        ElMessage.warning(t('testSets.itemSqlRequired'))
-        return
-      }
-      itemSaving.value = true
-      try {
-        const payload = {
-          label: itemForm.label,
-          sqlText: itemForm.sqlText,
-          weight: itemForm.weight || 1,
-          executionMode: itemForm.executionMode,
-          paramJson: isPreparedItemMode.value ? (itemForm.paramJson || '') : null
-        }
-        if (itemForm.id) {
-          await client.put(TEST_SET_ITEM_BY_ID(activeSet.value.id, itemForm.id), payload)
-        } else {
-          await client.post(TEST_SET_ITEMS(activeSet.value.id), payload)
-        }
-        ElMessage.success(t('testSets.itemSaveSuccess'))
-        itemDlg.value = false
-        await refreshActiveSet()
       } catch (e) {
-        ElMessage.error(e.response?.data?.message || t('testSets.itemSaveFailed'))
-      } finally {
-        itemSaving.value = false
+        if (e !== 'cancel' && e !== 'close') {
+          ElMessage.error(e.response?.data?.message || t('testSets.removeFailed'))
+        }
       }
+    }
+
+    function selectItem(item) {
+      selectedItemId.value = item.id
+    }
+
+    function handleItemsSearch() {
+      itemsPage.value = 1
+      fetchItems(activeSet.value.id)
+    }
+
+    function handleItemsPageChange() {
+      fetchItems(activeSet.value.id)
     }
 
     async function removeItem(item) {
@@ -273,7 +205,7 @@ export default {
       }
       try {
         await ElMessageBox.confirm(
-          t('testSets.itemDeleteConfirm', { label: item.label || `#${item.sortOrder}` }),
+          t('testSets.itemDeleteConfirm', { label: item.name || `#${item.sortOrder}` }),
           t('testSets.itemDeleteTitle'),
           {
             confirmButtonText: t('testSets.itemDeleteConfirmBtn'),
@@ -284,7 +216,11 @@ export default {
         await client.delete(TEST_SET_ITEM_BY_ID(activeSet.value.id, item.id))
         ElMessage.success(t('testSets.itemDeleteSuccess'))
         await refreshActiveSet()
-      } catch { /* cancel */ }
+      } catch (e) {
+        if (e !== 'cancel' && e !== 'close') {
+          ElMessage.error(e.response?.data?.message || t('testSets.itemDeleteFailed'))
+        }
+      }
     }
 
     async function moveItem(item, offset) {
@@ -310,67 +246,73 @@ export default {
       }
     }
 
-    async function loadTemplates() {
-      templateLoading.value = true
+    async function loadSqlLib() {
+      sqlLibLoading.value = true
       try {
-        const { data } = await client.get(API_ENDPOINTS.TEMPLATES, {
+        const { data } = await client.get(API_ENDPOINTS.SQL_LIB, {
           params: {
-            page: 0,
-            size: 200,
-            keyword: templateKeyword.value || undefined,
-            executionMode: templateModeFilter.value || undefined
+            page: sqlLibPage.value - 1,
+            size: sqlLibPageSize.value,
+            keyword: sqlLibKeyword.value || undefined,
+            executionMode: sqlLibModeFilter.value || undefined
           }
         })
-        availableTemplates.value = data.content || data || []
+        availableSqlLib.value = data.content || []
+        sqlLibTotal.value = data.totalElements || availableSqlLib.value.length
       } catch (e) {
         ElMessage.error(e.response?.data?.message || t('testSets.templateLoadFailed'))
       } finally {
-        templateLoading.value = false
+        sqlLibLoading.value = false
       }
     }
 
-    async function openTemplatePicker() {
-      selectedTemplateIds.value = []
-      templateKeyword.value = ''
-      templateModeFilter.value = ''
-      templateDlg.value = true
-      await loadTemplates()
+    async function openSqlLibPicker() {
+      selectedSqlLibIds.value = []
+      sqlLibKeyword.value = ''
+      sqlLibModeFilter.value = ''
+      sqlLibPage.value = 1
+      pickerVisible.value = true
+      await loadSqlLib()
     }
 
-    function toggleTemplateSelection(templateId, checked) {
+    function toggleSqlLibSelection(sqlLibId, checked) {
       if (checked) {
-        if (!selectedTemplateIds.value.includes(templateId)) {
-          selectedTemplateIds.value = selectedTemplateIds.value.concat(templateId)
+        if (!selectedSqlLibIds.value.includes(sqlLibId)) {
+          selectedSqlLibIds.value = selectedSqlLibIds.value.concat(sqlLibId)
         }
         return
       }
-      selectedTemplateIds.value = selectedTemplateIds.value.filter((id) => id !== templateId)
+      selectedSqlLibIds.value = selectedSqlLibIds.value.filter((id) => id !== sqlLibId)
     }
 
-    async function copySelectedTemplates() {
+    async function addSelectedSqlLib() {
       if (!activeSet.value?.id) {
         return
       }
-      const orderedTemplateIds = availableTemplates.value
-        .filter((template) => selectedTemplateIds.value.includes(template.id))
-        .map((template) => template.id)
+      const orderedSqlLibIds = availableSqlLib.value
+        .filter((row) => selectedSqlLibIds.value.includes(row.id))
+        .map((row) => row.id)
 
-      if (orderedTemplateIds.length === 0) {
+      if (!orderedSqlLibIds.length) {
         ElMessage.warning(t('testSets.templatePickRequired'))
         return
       }
 
-      copyingTemplates.value = true
+      addingSqlLib.value = true
       try {
-        await client.post(TEST_SET_ITEMS_COPY_TEMPLATES(activeSet.value.id), { templateIds: orderedTemplateIds })
-        templateDlg.value = false
-        ElMessage.success(t('testSets.templateCopySuccess', { count: orderedTemplateIds.length }))
+        await client.post(TEST_SET_ITEMS_ADD_SQL_LIB(activeSet.value.id), { sqlLibIds: orderedSqlLibIds })
+        pickerVisible.value = false
+        ElMessage.success(t('testSets.templateCopySuccess', { count: orderedSqlLibIds.length }))
         await refreshActiveSet()
       } catch (e) {
         ElMessage.error(e.response?.data?.message || t('testSets.templateCopyFailed'))
       } finally {
-        copyingTemplates.value = false
+        addingSqlLib.value = false
       }
+    }
+
+    function openSelectedInSqlLib() {
+      router.push('/sql-lib')
     }
 
     onMounted(load)
@@ -381,34 +323,33 @@ export default {
       loading,
       dlg,
       savingSet,
-      drawerVisible,
+      managerVisible,
+      pickerVisible,
       itemsLoading,
       items,
+      itemsTotal,
+      itemsPage,
+      itemsPageSize,
+      itemsKeyword,
       activeSet,
+      selectedItemId,
       keyword,
       sourceFilter,
-      createMode,
-      createFile,
-      createFileName,
-      itemDlg,
-      itemSaving,
-      templateDlg,
-      templateLoading,
-      copyingTemplates,
-      availableTemplates,
-      selectedTemplateIds,
-      templateKeyword,
-      templateModeFilter,
+      sqlLibLoading,
+      addingSqlLib,
+      availableSqlLib,
+      selectedSqlLibIds,
+      sqlLibKeyword,
+      sqlLibModeFilter,
+      sqlLibPage,
+      sqlLibPageSize,
+      sqlLibTotal,
       form,
-      itemForm,
       filteredTestSets,
       isEditingSet,
-      isPreparedItemMode,
-      selectedTemplateCount,
+      selectedItem,
+      selectedSqlLibCount,
       load,
-      previewSql,
-      handleCreateFileChange,
-      clearCreateFile,
       fetchItems,
       manageItems,
       refreshActiveSet,
@@ -416,16 +357,17 @@ export default {
       edit,
       saveTestSet,
       remove,
-      resetItemForm,
-      openAddItem,
-      editItem,
-      saveItem,
+      selectItem,
+      handleItemsSearch,
+      handleItemsPageChange,
       removeItem,
       moveItem,
-      loadTemplates,
-      openTemplatePicker,
-      toggleTemplateSelection,
-      copySelectedTemplates,
+      loadSqlLib,
+      openSqlLibPicker,
+      toggleSqlLibSelection,
+      addSelectedSqlLib,
+      openSelectedInSqlLib,
+      formatParamJson,
       computed,
       onMounted,
       reactive,
@@ -433,18 +375,16 @@ export default {
       get useI18n() { return useI18n },
       get ElMessage() { return ElMessage },
       get ElMessageBox() { return ElMessageBox },
+      get useRouter() { return useRouter },
       get Plus() { return Plus },
-      get UploadCloud() { return UploadCloud },
       get client() { return client },
       get API_ENDPOINTS() { return API_ENDPOINTS },
       get TEST_SET_ITEMS() { return TEST_SET_ITEMS },
       get TEST_SET_ITEM_BY_ID() { return TEST_SET_ITEM_BY_ID },
-      get TEST_SET_ITEMS_COPY_TEMPLATES() { return TEST_SET_ITEMS_COPY_TEMPLATES },
+      get TEST_SET_ITEMS_ADD_SQL_LIB() { return TEST_SET_ITEMS_ADD_SQL_LIB },
       get TEST_SET_ITEMS_REORDER() { return TEST_SET_ITEMS_REORDER },
       CodeBlock,
-      get filterTestSets() { return filterTestSets },
-      get formatParamJson() { return formatParamJson },
-      get getSqlPreview() { return getSqlPreview }
+      get filterTestSets() { return filterTestSets }
     }
     return __returned__
   }

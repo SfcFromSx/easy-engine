@@ -18,8 +18,8 @@ describe('split component registrations', () => {
     [Jobs, ['Plus', 'Connection']],
     [JobDetail, ['FileJson', 'Setting', 'DataLine', 'Clock', 'VideoPlay', 'PerformanceCharts']],
     [Runs, ['RefreshRight', 'CaretTop', 'CaretBottom', 'PerformanceCharts']],
-    [Templates, ['Plus', 'Search', 'Play', 'DebuggerDialog']],
-    [TestSets, ['Plus', 'UploadCloud', 'CodeBlock']],
+    [Templates, ['Plus', 'Search', 'Play', 'UploadCloud', 'DebuggerDialog']],
+    [TestSets, ['Plus', 'CodeBlock']],
     [CodeBlock, ['CopyDocument']],
     [DebuggerDialog, ['Play', 'Terminal', 'Activity', 'AlertCircle']],
     [PerformanceCharts, ['VChart']]

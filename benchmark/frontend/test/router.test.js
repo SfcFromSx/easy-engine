@@ -7,6 +7,7 @@ describe('benchmark router', () => {
 
     expect(routes.find((route) => route.path === '/')).toBeTruthy()
     expect(routes.find((route) => route.path === '/jobs/:id')?.meta.title).toBe('任务详情')
+    expect(routes.find((route) => route.path === '/sql-lib')?.meta.title).toBe('SQL Lib')
     expect(routes.find((route) => route.path === '/runs')?.meta.title).toBe('运行记录')
     expect(routes.find((route) => route.path === '/datasources')).toBeTruthy()
   })

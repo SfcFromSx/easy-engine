@@ -55,9 +55,10 @@ This file summarizes the current functional surface of the Easy Engine services.
 | Benchmark datasource CRUD | `Implemented` | Create, list, get, update, and guarded delete are supported. |
 | Datasource connectivity test | `Implemented` | Connectivity-only validation endpoint exists. |
 | Datasource ad hoc SQL debug query | `Implemented` | Statement-style debug path exists. |
-| Global SQL template CRUD | `Implemented` | Supports weight and execution mode fields. |
-| Test set CRUD | `Implemented` | Manual create/update/delete plus item listing are available. |
-| Excel test-set import | `Implemented` | Supports prepared columns. |
+| SQL Lib CRUD | `Implemented` | Supports weight, execution mode, source filename, and upload-time metadata. |
+| SQL Lib file upload | `Implemented` | Supports `.xlsx`, `.xls`, Excel-compatible `.et`, `.csv`, `.txt`, and `.sql`. |
+| Test set CRUD | `Implemented` | Metadata create/update/delete plus paged SQL Lib-backed item listing are available. |
+| Direct test-set file import | `Implemented` | Legacy upload endpoint now rejects direct imports and redirects operators to SQL Lib upload. |
 | Benchmark job CRUD | `Implemented` | Create, list, get, update, and guarded delete are supported. |
 | Start benchmark run | `Implemented` | Async run creation and execution are supported. |
 | Run progress polling | `Implemented` | Active run and per-run progress are exposed. |
@@ -65,7 +66,7 @@ This file summarizes the current functional surface of the Easy Engine services.
 | Structured evaluation report | `Implemented` | `evaluationJson` and comparison context are produced, including grouped failure diagnostics by SQL label, execution mode, and routed target. |
 | Previous-run comparison delta | `Implemented` | Context endpoint compares with prior completed runs. |
 | Stale running-run recovery on startup | `Implemented` | Orphan `RUNNING` rows are reconciled to `FAILED`. |
-| PreparedStatement benchmark execution | `Implemented` | Templates and test sets can drive prepared execution. |
+| PreparedStatement benchmark execution | `Implemented` | SQL Lib and linked test sets can drive prepared execution. |
 | Prepared SQL debug tooling in datasource query path | `Partial` | Datasource debug is still statement-oriented. |
 | Run cancel / stop / abort | `Planned` | No stop endpoint exists today. |
 

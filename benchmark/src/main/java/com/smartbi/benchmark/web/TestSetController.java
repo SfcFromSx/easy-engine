@@ -5,11 +5,12 @@ import com.smartbi.benchmark.domain.BenchmarkTestSetItem;
 import com.smartbi.benchmark.repo.BenchmarkTestSetItemRepository;
 import com.smartbi.benchmark.repo.BenchmarkTestSetRepository;
 import com.smartbi.benchmark.testset.TestSetAuthoringService;
-import com.smartbi.benchmark.testset.TestSetImportService;
 import com.smartbi.benchmark.web.dto.TestSetItemReorderRequest;
+import com.smartbi.benchmark.web.dto.TestSetItemListVo;
 import com.smartbi.benchmark.web.dto.TestSetListVo;
-import com.smartbi.benchmark.web.dto.TestSetItemWriteRequest;
+import com.smartbi.benchmark.web.dto.TestSetItemReferenceRequest;
 import com.smartbi.benchmark.web.dto.TestSetTemplateCopyRequest;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -24,16 +25,13 @@ import java.util.Map;
 @RequestMapping("/api/v1/test-sets")
 public class TestSetController {
 
-    private final TestSetImportService importService;
     private final TestSetAuthoringService authoringService;
     private final BenchmarkTestSetRepository testSetRepository;
     private final BenchmarkTestSetItemRepository itemRepository;
 
-    public TestSetController(TestSetImportService importService,
-                             TestSetAuthoringService authoringService,
+    public TestSetController(TestSetAuthoringService authoringService,
                              BenchmarkTestSetRepository testSetRepository,
                              BenchmarkTestSetItemRepository itemRepository) {
-        this.importService = importService;
         this.authoringService = authoringService;
         this.testSetRepository = testSetRepository;
         this.itemRepository = itemRepository;
@@ -57,8 +55,11 @@ public class TestSetController {
     }
 
     @GetMapping("/{id}/items")
-    public List<BenchmarkTestSetItem> items(@PathVariable long id) {
-        return itemRepository.findByTestSetIdOrderBySortOrderAsc(id);
+    public Page<TestSetItemListVo> items(@PathVariable long id,
+                                         @RequestParam(defaultValue = "0") int page,
+                                         @RequestParam(defaultValue = "20") int size,
+                                         @RequestParam(required = false) String keyword) {
+        return authoringService.listItems(id, page, size, keyword);
     }
 
     @PostMapping
@@ -81,18 +82,7 @@ public class TestSetController {
             @RequestPart("file") MultipartFile file,
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "description", required = false) String description) {
-        try {
-            BenchmarkTestSet set = importService.importFromExcel(file, name, description);
-            long cnt = itemRepository.countByTestSetId(set.getId());
-            Map<String, Object> m = new HashMap<>();
-            m.put("testSet", set);
-            m.put("itemCount", cnt);
-            return m;
-        } catch (IllegalArgumentException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Excel 解析失败: " + e.getMessage());
-        }
+        throw new IllegalStateException("测试集不再支持直接上传，请先上传到 SQL Lib 再选择 SQL。");
     }
 
     @DeleteMapping("/{id}")
@@ -101,15 +91,15 @@ public class TestSetController {
     }
 
     @PostMapping("/{id}/items")
-    public BenchmarkTestSetItem createItem(@PathVariable long id,
-                                           @RequestBody TestSetItemWriteRequest request) {
+    public Object createItem(@PathVariable long id,
+                             @RequestBody TestSetItemReferenceRequest request) {
         return authoringService.createItem(id, request);
     }
 
     @PutMapping("/{id}/items/{itemId}")
-    public BenchmarkTestSetItem updateItem(@PathVariable long id,
-                                           @PathVariable long itemId,
-                                           @RequestBody TestSetItemWriteRequest request) {
+    public Object updateItem(@PathVariable long id,
+                             @PathVariable long itemId,
+                             @RequestBody TestSetItemReferenceRequest request) {
         return authoringService.updateItem(id, itemId, request);
     }
 
@@ -118,10 +108,16 @@ public class TestSetController {
         authoringService.deleteItem(id, itemId);
     }
 
+    @PostMapping("/{id}/items/add-sql-lib")
+    public List<?> addSqlLibItems(@PathVariable long id,
+                                  @RequestBody TestSetTemplateCopyRequest request) {
+        return authoringService.addSqlLibItems(id, request);
+    }
+
     @PostMapping("/{id}/items/copy-templates")
-    public List<BenchmarkTestSetItem> copyTemplates(@PathVariable long id,
-                                                    @RequestBody TestSetTemplateCopyRequest request) {
-        return authoringService.copyTemplates(id, request);
+    public List<?> copyTemplates(@PathVariable long id,
+                                 @RequestBody TestSetTemplateCopyRequest request) {
+        return authoringService.addSqlLibItems(id, request);
     }
 
     @PutMapping("/{id}/items/reorder")

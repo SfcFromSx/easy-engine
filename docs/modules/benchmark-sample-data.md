@@ -22,20 +22,19 @@ Easy Engine now keeps a reproducible public TPC-H / Presto-style test-set sample
 
 ### Re-import
 
-Run the existing benchmark upload path against a local benchmark service on port `8091`:
+Upload the sample workbook into SQL Lib against a local benchmark service on port `8091`:
 
 ```bash
 curl -fsS \
   -F "file=@benchmark/src/main/resources/samples/test-sets/tpch-presto-import.xlsx" \
-  -F "name=tpch_presto_public" \
-  http://127.0.0.1:8091/api/v1/test-sets/upload
+  http://127.0.0.1:8091/api/v1/sql-lib/upload
 ```
 
-If `tpch_presto_public` already exists, delete the older test set first through the Benchmark UI or `DELETE /api/v1/test-sets/{id}` so the name stays unique in MySQL-backed local runs.
+Then create a test set in the Benchmark UI and add the imported SQL Lib rows to that test set, or call `POST /api/v1/test-sets/{id}/items/add-sql-lib` with the ordered SQL Lib IDs you want to attach.
 
-Then verify the imported row count in MySQL:
+Then verify the imported SQL Lib row count in MySQL:
 
 ```bash
 mysql -h127.0.0.1 -P3307 -uengine -pengine123 engine_db \
-  -e "SELECT s.name, COUNT(i.id) AS item_count FROM benchmark_test_set s LEFT JOIN benchmark_test_set_item i ON i.test_set_id = s.id WHERE s.name = 'tpch_presto_public' GROUP BY s.id, s.name;"
+  -e "SELECT COUNT(*) AS sql_lib_count FROM benchmark_sql_template WHERE source_filename = 'tpch-presto-import.xlsx';"
 ```

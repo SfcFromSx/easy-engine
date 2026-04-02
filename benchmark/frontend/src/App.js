@@ -38,7 +38,7 @@ const menuActive = computed(() => {
   const p = route.path
   if (p === '/jobs' || p.startsWith('/jobs/')) return '/jobs'
   if (p === '/test-sets') return '/test-sets'
-  if (p === '/templates') return '/templates'
+  if (p === '/sql-lib' || p === '/templates') return '/sql-lib'
   if (p === '/datasources') return '/datasources'
   if (p === '/runs') return '/runs'
   return '/'

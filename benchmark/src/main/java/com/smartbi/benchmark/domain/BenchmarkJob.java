@@ -31,7 +31,7 @@ public class BenchmarkJob {
     private Instant createdAt = Instant.now();
 
     /**
-     * 非空时压测仅使用该测试集中的 SQL；为空时使用全局 {@code benchmark_sql_template}。
+     * 非空时压测仅使用该测试集中的 SQL；为空时使用全局 SQL Lib（物理表仍为 {@code benchmark_sql_template}）。
      */
     @Column(name = "test_set_id")
     private Long testSetId;

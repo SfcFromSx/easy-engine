@@ -47,6 +47,13 @@ vi.mock('vue-i18n', () => ({
   })
 }))
 
+const push = vi.fn()
+vi.mock('vue-router', () => ({
+  useRouter: () => ({
+    push
+  })
+}))
+
 import TestSets from '../src/views/TestSets.vue'
 
 const stubs = {
@@ -57,23 +64,21 @@ const stubs = {
   'el-icon': true,
   'el-table': true,
   'el-table-column': true,
-  'el-drawer': true,
   'el-dialog': true,
   'el-form': true,
   'el-form-item': true,
-  'el-upload': true,
   'el-input-number': true,
   'el-tag': true,
   CodeBlock: true,
-  Plus: true,
-  UploadCloud: true
+  'el-pagination': true,
+  Plus: true
 }
 
 function buildClientGet(url) {
   if (url === '/test-sets') {
     return Promise.resolve({ data: [] })
   }
-  if (url === '/templates') {
+  if (url === '/sql-lib') {
     return Promise.resolve({
       data: {
         content: [],
@@ -98,45 +103,8 @@ describe('TestSets view', () => {
     messageWarning.mockReset()
     confirmDialog.mockReset()
     confirmDialog.mockResolvedValue(true)
+    push.mockReset()
     clientGet.mockImplementation((url) => buildClientGet(url))
-  })
-
-  // Covers dialog-based upload creation in TestSets.vue.
-  it('creates a new uploaded test set from the new-set dialog', async () => {
-    clientPost.mockResolvedValueOnce({
-      data: {
-        testSet: { id: 8, name: 'Upload Set' },
-        itemCount: 2
-      }
-    })
-
-    const wrapper = shallowMount(TestSets, {
-      global: {
-        stubs,
-        directives: {
-          loading: () => {}
-        }
-      }
-    })
-    await flushPromises()
-
-    wrapper.vm.openCreate()
-    wrapper.vm.createMode = 'upload'
-    wrapper.vm.form.name = 'Upload Set'
-    wrapper.vm.form.description = 'Excel import'
-    wrapper.vm.handleCreateFileChange({
-      raw: new Blob(['sql']),
-      name: 'cases.xlsx'
-    })
-
-    await wrapper.vm.saveTestSet()
-    await flushPromises()
-
-    expect(clientPost).toHaveBeenCalledTimes(1)
-    expect(clientPost.mock.calls[0][0]).toBe('/test-sets/upload')
-    expect(clientPost.mock.calls[0][1].get('name')).toBe('Upload Set')
-    expect(clientPost.mock.calls[0][1].get('description')).toBe('Excel import')
-    expect(clientPost.mock.calls[0][1].get('file')).toBeTruthy()
   })
 
   // Covers empty-set creation opening the SQL manager immediately.
@@ -148,7 +116,12 @@ describe('TestSets view', () => {
         })
       }
       if (url === '/test-sets/5/items') {
-        return Promise.resolve({ data: [] })
+        return Promise.resolve({
+          data: {
+            content: [],
+            totalElements: 0
+          }
+        })
       }
       return buildClientGet(url)
     })
@@ -178,12 +151,18 @@ describe('TestSets view', () => {
       name: 'Manual Set',
       description: 'desc'
     })
-    expect(wrapper.vm.drawerVisible).toBe(true)
-    expect(clientGet).toHaveBeenCalledWith('/test-sets/5/items')
+    expect(wrapper.vm.managerVisible).toBe(true)
+    expect(clientGet).toHaveBeenCalledWith('/test-sets/5/items', {
+      params: {
+        page: 0,
+        size: 20,
+        keyword: undefined
+      }
+    })
   })
 
-  // Covers ordered template copy request shaping.
-  it('copies selected templates into the active test set in visible order', async () => {
+  // Covers ordered SQL Lib add request shaping.
+  it('adds selected sql lib rows into the active test set in visible order', async () => {
     const wrapper = shallowMount(TestSets, {
       global: {
         stubs,
@@ -195,23 +174,23 @@ describe('TestSets view', () => {
     await flushPromises()
 
     wrapper.vm.activeSet = { id: 9, name: 'Target Set' }
-    wrapper.vm.availableTemplates = [
+    wrapper.vm.availableSqlLib = [
       { id: 10, name: 'First', sqlText: 'SELECT 1', weight: 1, executionMode: 'STATEMENT' },
       { id: 20, name: 'Second', sqlText: 'SELECT 2', weight: 1, executionMode: 'STATEMENT' }
     ]
-    wrapper.vm.selectedTemplateIds = [20, 10]
+    wrapper.vm.selectedSqlLibIds = [20, 10]
     clientPost.mockResolvedValueOnce({ data: [] })
 
-    await wrapper.vm.copySelectedTemplates()
+    await wrapper.vm.addSelectedSqlLib()
     await flushPromises()
 
-    expect(clientPost).toHaveBeenCalledWith('/test-sets/9/items/copy-templates', {
-      templateIds: [10, 20]
+    expect(clientPost).toHaveBeenCalledWith('/test-sets/9/items/add-sql-lib', {
+      sqlLibIds: [10, 20]
     })
   })
 
-  // Covers manual item save/delete/reorder actions.
-  it('saves deletes and reorders test-set SQL rows through the item APIs', async () => {
+  // Covers delete/reorder actions for SQL Lib-backed test-set memberships.
+  it('deletes and reorders test-set sql memberships through the item APIs', async () => {
     const wrapper = shallowMount(TestSets, {
       global: {
         stubs,
@@ -224,32 +203,18 @@ describe('TestSets view', () => {
 
     wrapper.vm.activeSet = { id: 5, name: 'Manual Set' }
     wrapper.vm.items = [
-      { id: 1, sortOrder: 0, sqlText: 'SELECT 1', executionMode: 'STATEMENT', weight: 1 },
-      { id: 2, sortOrder: 1, sqlText: 'SELECT 2', executionMode: 'STATEMENT', weight: 1 }
+      { id: 1, sortOrder: 0, name: 'SELECT 1', sqlText: 'SELECT 1', executionMode: 'STATEMENT', weight: 1 },
+      { id: 2, sortOrder: 1, name: 'SELECT 2', sqlText: 'SELECT 2', executionMode: 'STATEMENT', weight: 1 }
     ]
 
-    clientPost.mockResolvedValueOnce({ data: { id: 3 } })
-    wrapper.vm.itemForm.sqlText = 'SELECT 3'
-    wrapper.vm.itemForm.weight = 1
-    wrapper.vm.itemForm.executionMode = 'STATEMENT'
-    await wrapper.vm.saveItem()
-    await flushPromises()
-    expect(clientPost).toHaveBeenCalledWith('/test-sets/5/items', {
-      label: '',
-      sqlText: 'SELECT 3',
-      weight: 1,
-      executionMode: 'STATEMENT',
-      paramJson: null
-    })
-
     clientDelete.mockResolvedValueOnce({})
-    await wrapper.vm.removeItem({ id: 1, sortOrder: 0, label: 'Row 1' })
+    await wrapper.vm.removeItem({ id: 1, sortOrder: 0, name: 'SQL 1' })
     await flushPromises()
     expect(clientDelete).toHaveBeenCalledWith('/test-sets/5/items/1')
 
     wrapper.vm.items = [
-      { id: 1, sortOrder: 0, sqlText: 'SELECT 1', executionMode: 'STATEMENT', weight: 1 },
-      { id: 2, sortOrder: 1, sqlText: 'SELECT 2', executionMode: 'STATEMENT', weight: 1 }
+      { id: 1, sortOrder: 0, name: 'SELECT 1', sqlText: 'SELECT 1', executionMode: 'STATEMENT', weight: 1 },
+      { id: 2, sortOrder: 1, name: 'SELECT 2', sqlText: 'SELECT 2', executionMode: 'STATEMENT', weight: 1 }
     ]
     clientPut.mockResolvedValueOnce({ data: [] })
     await wrapper.vm.moveItem({ id: 1 }, 1)
@@ -257,5 +222,21 @@ describe('TestSets view', () => {
     expect(clientPut).toHaveBeenCalledWith('/test-sets/5/items/reorder', {
       itemIds: [2, 1]
     })
+  })
+
+  // Covers opening the SQL Lib page from the selected test-set item.
+  it('navigates to sql lib from the selected item detail action', async () => {
+    const wrapper = shallowMount(TestSets, {
+      global: {
+        stubs,
+        directives: {
+          loading: () => {}
+        }
+      }
+    })
+    await flushPromises()
+
+    wrapper.vm.openSelectedInSqlLib()
+    expect(push).toHaveBeenCalledWith('/sql-lib')
   })
 })

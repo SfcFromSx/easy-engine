@@ -65,7 +65,7 @@ class BenchmarkExecutionServiceTest {
         });
     }
 
-    // Covers BenchmarkExecutionService#startRun when global templates exist.
+    // Covers BenchmarkExecutionService#startRun when SQL Lib entries exist.
     @Test
     void shouldStartRunWhenTemplatesExist() {
         BenchmarkJob job = baseJob();
@@ -103,11 +103,11 @@ class BenchmarkExecutionServiceTest {
 
         IllegalStateException error = assertThrows(IllegalStateException.class, () -> service.startRun(7L));
 
-        assertEquals("所选测试集为空或不存在，请先导入 Excel", error.getMessage());
+        assertEquals("所选测试集为空或不存在，请先从 SQL Lib 选择 SQL", error.getMessage());
         verify(runRepository, never()).save(any(BenchmarkRun.class));
     }
 
-    // Covers BenchmarkExecutionService#startRun empty global-template rejection.
+    // Covers BenchmarkExecutionService#startRun empty SQL-Lib rejection.
     @Test
     void shouldRejectStartWhenNoTemplatesExist() {
         when(jobRepository.findById(7L)).thenReturn(Optional.of(baseJob()));
@@ -115,7 +115,7 @@ class BenchmarkExecutionServiceTest {
 
         IllegalStateException error = assertThrows(IllegalStateException.class, () -> service.startRun(7L));
 
-        assertEquals("未绑定测试集且全局 SQL 模板为空，请导入测试集或维护模板", error.getMessage());
+        assertEquals("未绑定测试集且 SQL Lib 为空，请先维护 SQL Lib 或关联测试集", error.getMessage());
         verify(runRepository, never()).save(any(BenchmarkRun.class));
     }
 

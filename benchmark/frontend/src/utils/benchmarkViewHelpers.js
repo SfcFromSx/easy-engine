@@ -26,7 +26,7 @@ export function strategyTagType(strategy) {
 }
 
 export function getTestSetName(testSets, id) {
-  if (!id) return 'Default (Templates)'
+  if (!id) return 'Default (SQL Lib)'
   const testSet = testSets.find((item) => item.id === id)
   return testSet ? testSet.name : `ID: ${id}`
 }
@@ -60,7 +60,7 @@ export function filterJobs(
     const matchesDataSource = !selectedDataSourceId || String(job.dataSourceId || '') === selectedDataSourceId
     const matchesStrategy = !selectedStrategy || String(job.strategy || '') === selectedStrategy
     const matchesTestSet = !selectedTestSetFilter
-      || (selectedTestSetFilter === '__templates__' && !job.testSetId)
+      || (selectedTestSetFilter === '__sql_lib__' && !job.testSetId)
       || String(job.testSetId || '') === selectedTestSetFilter
     return matchesKeyword && matchesDataSource && matchesStrategy && matchesTestSet
   })

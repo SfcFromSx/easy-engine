@@ -238,6 +238,33 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Suggested next step: Keep the archived `QUERY-CACHE-001` entry and its task commit aligned, and let `CONFIG-REVIEW-001` remain the active follow-up task in `tasks.md`.
 - Human decision: pending
 
+### INBOX-20260402-025
+- Area: Harness audit trail
+- Related task(s): `BENCH-UX-010`
+- Summary: `tasks.md` was updated on 2026-04-02 to intake a human-requested benchmark SQL Lib workflow task so the schema, API, UI, and ledger changes can follow the repo's required task lifecycle.
+- Evidence: Active ledger row and task section for `BENCH-UX-010` were added to `tasks.md` before implementation began.
+- Impact/Risk: Without an explicit audit note, later recovery or review could miss why the active ledger changed during this session.
+- Suggested next step: Keep the task ledger, archive, and eventual commit aligned when `BENCH-UX-010` closes.
+- Human decision: pending
+
+### INBOX-20260402-026
+- Area: Harness audit trail
+- Related task(s): `BENCH-UX-010`
+- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-02 to archive the completion of `BENCH-UX-010`, while preserving the separately active `CONFIG-REVIEW-001` task in the current ledger.
+- Evidence: The active ledger row and section for `BENCH-UX-010` were removed from `tasks.md`, its full progress log and done signal were archived under `tasks-done.md`, and the closeout is included in the task's single commit.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger change as ad hoc bookkeeping instead of the required task finalization workflow.
+- Suggested next step: Keep the archived `BENCH-UX-010` entry and its task commit aligned, and let `CONFIG-REVIEW-001` remain the active follow-up task in `tasks.md`.
+- Human decision: pending
+
+### INBOX-20260402-027
+- Area: Harness audit trail
+- Related task(s): `QUERY-BUG-002`
+- Summary: `tasks.md` was updated on 2026-04-02 to intake a human-requested query bugfix task so the leading-comment query detection fix can follow the repo's required task lifecycle.
+- Evidence: Active ledger row and task section for `QUERY-BUG-002` were added to `tasks.md` before implementation began.
+- Impact/Risk: Without an explicit audit note, later recovery or review could miss why the active ledger changed during this session.
+- Suggested next step: Keep the task ledger, archive, and eventual commit aligned when `QUERY-BUG-002` closes.
+- Human decision: pending
+
 ## Template
 
 ```md

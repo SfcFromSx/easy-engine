@@ -1,13 +1,15 @@
 import { flushPromises, shallowMount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { clientGet } = vi.hoisted(() => ({
-  clientGet: vi.fn()
+const { clientGet, clientPost } = vi.hoisted(() => ({
+  clientGet: vi.fn(),
+  clientPost: vi.fn()
 }))
 
 vi.mock('../src/api/client', () => ({
   default: {
-    get: clientGet
+    get: clientGet,
+    post: clientPost
   }
 }))
 
@@ -35,15 +37,18 @@ const stubs = {
   'el-col': true,
   'el-input-number': true,
   'el-tag': true,
+  'el-upload': true,
   DebuggerDialog: true,
   Plus: true,
   Search: true,
-  Play: true
+  Play: true,
+  UploadCloud: true
 }
 
 describe('Templates view', () => {
   beforeEach(() => {
     clientGet.mockReset()
+    clientPost.mockReset()
     clientGet.mockResolvedValue({
       data: {
         content: [],
@@ -52,7 +57,7 @@ describe('Templates view', () => {
     })
   })
 
-  // Covers Templates.vue:load and Templates.vue:handleSearch request parameter shaping.
+  // Covers Templates.vue SQL Lib list filtering request shaping.
   it('sends keyword and execution mode filters when reloading templates', async () => {
     const wrapper = shallowMount(Templates, {
       global: {
@@ -64,27 +69,56 @@ describe('Templates view', () => {
     })
     await flushPromises()
 
-    expect(clientGet).toHaveBeenCalledWith('/templates', {
+    expect(clientGet).toHaveBeenCalledWith('/sql-lib', {
       params: {
         page: 0,
         size: 10,
         keyword: undefined,
-        executionMode: undefined
+        executionMode: undefined,
+        sourceFilename: undefined
       }
     })
 
     wrapper.vm.searchKeyword = 'prepared'
     wrapper.vm.executionModeFilter = 'PREPARED_STATEMENT'
+    wrapper.vm.sourceFilenameFilter = 'batch.sql'
     wrapper.vm.handleSearch()
     await flushPromises()
 
-    expect(clientGet).toHaveBeenLastCalledWith('/templates', {
+    expect(clientGet).toHaveBeenLastCalledWith('/sql-lib', {
       params: {
         page: 0,
         size: 10,
         keyword: 'prepared',
-        executionMode: 'PREPARED_STATEMENT'
+        executionMode: 'PREPARED_STATEMENT',
+        sourceFilename: 'batch.sql'
       }
     })
+  })
+
+  // Covers Templates.vue upload flow hitting the SQL Lib upload endpoint.
+  it('uploads selected files into sql lib', async () => {
+    clientPost.mockResolvedValueOnce({ data: { count: 2 } })
+    const wrapper = shallowMount(Templates, {
+      global: {
+        stubs,
+        directives: {
+          loading: () => {}
+        }
+      }
+    })
+    await flushPromises()
+
+    wrapper.vm.handleUploadFileChange({
+      raw: new Blob(['sql']),
+      name: 'library.sql'
+    })
+
+    await wrapper.vm.uploadSelectedFile()
+    await flushPromises()
+
+    expect(clientPost).toHaveBeenCalledTimes(1)
+    expect(clientPost.mock.calls[0][0]).toBe('/sql-lib/upload')
+    expect(clientPost.mock.calls[0][1].get('file')).toBeTruthy()
   })
 })
