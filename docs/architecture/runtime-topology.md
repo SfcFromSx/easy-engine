@@ -51,6 +51,6 @@ flowchart LR
 - `benchmark` connects to `query` using the standard Apache Kylin JDBC driver (`jdbc:kylin://localhost:8092/<project>`).
 - `query` fetches datasource configurations from `manager` on startup. It falls back to static config if manager is unreachable.
 - `query` writes execution trace records directly to MySQL; no Redis trace queue is used.
-- `query` should keep serving traffic if Redis is unavailable by degrading to direct datasource execution.
+- `query` should keep serving traffic if Redis is unavailable by degrading to direct datasource execution, and result-cache writes are scheduled asynchronously as best-effort work.
 - `manager` should not bring down the runtime when Calcite parsing has transient failures.
 - The root harness should run from the repository root, not from individual submodules.

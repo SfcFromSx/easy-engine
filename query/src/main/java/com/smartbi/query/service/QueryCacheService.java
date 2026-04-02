@@ -6,26 +6,43 @@ import com.smartbi.query.api.dto.SqlResponseStubDto;
 import com.smartbi.query.cache.CachePolicy;
 import com.smartbi.query.config.QueryProperties;
 import com.smartbi.query.integration.QueryCacheStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.concurrent.Executor;
 
 @Service
 public class QueryCacheService {
+
+    private static final Logger log = LoggerFactory.getLogger(QueryCacheService.class);
 
     private final QueryCacheStore cacheStore;
     private final QueryProperties queryProperties;
     private final CachePolicy cachePolicy;
     private final ObjectMapper objectMapper;
+    private final Executor cacheWriteExecutor;
 
+    @Autowired
     public QueryCacheService(QueryCacheStore cacheStore,
                              QueryProperties queryProperties,
-                             ObjectMapper objectMapper) {
+                             ObjectMapper objectMapper,
+                             @Qualifier("queryCacheWriteExecutor") Executor cacheWriteExecutor) {
         this.cacheStore = cacheStore;
         this.queryProperties = queryProperties;
         this.objectMapper = objectMapper;
+        this.cacheWriteExecutor = cacheWriteExecutor;
         this.cachePolicy = new CachePolicy(queryProperties.getCache());
+    }
+
+    QueryCacheService(QueryCacheStore cacheStore,
+                      QueryProperties queryProperties,
+                      ObjectMapper objectMapper) {
+        this(cacheStore, queryProperties, objectMapper, Runnable::run);
     }
 
     public CachePolicy getCachePolicy() {
@@ -53,8 +70,11 @@ public class QueryCacheService {
             if (json.getBytes(StandardCharsets.UTF_8).length > queryProperties.getCache().getMaxCacheSizeBytes()) {
                 return;
             }
-            cacheStore.set(buildKey(parsed, paramFingerprint, datasourceName), json, effectiveTtl(parsed));
-        } catch (Exception ignored) {
+            final String key = buildKey(parsed, paramFingerprint, datasourceName);
+            final int ttl = effectiveTtl(parsed);
+            cacheWriteExecutor.execute(() -> cacheStore.set(key, json, ttl));
+        } catch (Exception ex) {
+            log.warn("Skipping async cache write for datasource {}: {}", datasourceName, ex.getMessage());
         }
     }
 

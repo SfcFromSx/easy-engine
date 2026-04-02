@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| QUERY-CACHE-001 | MAKE REDIS RESULT CACHE WRITES ASYNCHRONOUS | query | `query` now schedules Redis result-cache writes on a dedicated background executor instead of blocking the request thread, preserves best-effort cache failure handling, documents the async cache contract, and passes focused plus full reactor query validation. |
 | QUERY-ARCH-003 | EXTRACT SHARED ANALYZE MODULE FOR ROUTING AND SQL ANALYSIS | platform | Added the shared `analyze` Maven module and root reactor, switched query routing to `YH_TARGET_ENGINE`-only analysis-backed rewrites, added manager query-routing-context APIs plus shared parse/rewrite delegation, updated architecture/module docs, and verified the new analyzer, full query suite, and focused manager slice through reactor builds. |
 | CONFIG-PROFILE-001 | UNIFY MODULE ENV CONFIG INTO DEV TEST PRO PROFILES | platform | `manager`, `query`, and `benchmark` now centralize environment settings in `application-dev.yml`, `application-test.yml`, and `application-pro.yml`; code/tests/scripts/POM defaults no longer own env config; profile-driven DB init works for `dev` and `test`; backend tests pass; frontend builds pass; and the new profile-governance rule is recorded in `docs/operations/best-practices.md` with follow-up audit task `CONFIG-REVIEW-001`. |
 | TEST-CONFIG-001 | AUDIT TESTS FOR HARD-CODED CONNECTION FIXTURES | tests | Benchmark and query tests now load datasource and credential fixtures from classpath test property files/helpers instead of inline literals, focused benchmark/query validation passes, and the targeted hard-coded-fixture audit scan is clean. |
@@ -74,6 +75,30 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+
+### QUERY-CACHE-001: MAKE REDIS RESULT CACHE WRITES ASYNCHRONOUS
+
+- **Status**: done
+- **Updated**: 2026-04-02
+- **Progress log**:
+  - **2026-04-02 — intake**
+    - Human requested verification that query-result saves to Redis do not block the main execution path. Investigation confirmed the current path is synchronous: `QueryExecutionService` calls `QueryCacheService#put(...)` inline after datasource execution, and `RedisQueryCacheStore#set(...)` performs a direct `StringRedisTemplate` write on that same thread. Scope for this task: make Redis-backed result-cache writes asynchronous while preserving cache-hit behavior, best-effort failure swallowing, and focused regression coverage.
+  - **2026-04-02 — implementation**
+    - Files changed: `query/src/main/java/com/smartbi/query/service/QueryCacheService.java`, `query/src/main/java/com/smartbi/query/config/QueryInfrastructureConfig.java`, `query/src/test/java/com/smartbi/query/service/QueryCacheServiceTest.java`, `docs/modules/query.md`, `docs/architecture/overview.md`, `docs/architecture/runtime-topology.md`.
+    - Commands run: `rg`, `sed`, `git diff`.
+    - Result: Added a dedicated query cache-write executor, changed `QueryCacheService#put(...)` to serialize and enqueue Redis writes instead of performing them inline, preserved best-effort failure swallowing by logging and skipping rejected async writes, and added regression coverage for deferred execution plus executor rejection fallback.
+  - **2026-04-02 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: The cache layer exposed only a synchronous `set(...)` API, and `QueryExecutionService` invoked it directly on the request thread after each cacheable datasource execution, so Redis latency could extend end-to-end query latency even though cache persistence is a best-effort side effect.
+    - Cure: Introduced a dedicated background executor for cache writes, moved the Redis `SET` handoff into `QueryCacheService`, and covered both deferred execution and rejection handling so query responses no longer wait on result-cache persistence.
+    - Generalization: This task tightened an existing best-effort cache behavior but did not introduce a new repo-wide coding rule, so no `best-practices.md` update was needed.
+  - **2026-04-02 — verification**
+    - Validation status: approved
+    - Evidence: Focused cache/query tests passed with `mvn -q -pl analyze,query -am -DfailIfNoTests=false -Dtest=QueryCacheServiceTest,QueryExecutionServiceTest,RedisQueryCacheStoreTest test`; full query-module reactor validation also passed with `mvn -q -pl analyze,query -am test`.
+    - Next action: none
+    - Escalation: none
+  - **2026-04-02 — doc-garden**
+    - Updated `docs/modules/query.md`, `docs/architecture/overview.md`, and `docs/architecture/runtime-topology.md` so the cache contract now states that Redis reads remain synchronous while result persistence is scheduled asynchronously as best-effort work.
 
 ### QUERY-ARCH-003: EXTRACT SHARED ANALYZE MODULE FOR ROUTING AND SQL ANALYSIS
 

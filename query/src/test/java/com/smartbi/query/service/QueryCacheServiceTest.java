@@ -8,8 +8,13 @@ import com.smartbi.query.parsing.SqlCommentParser;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -111,6 +116,44 @@ class QueryCacheServiceTest {
         assertNull(service.tryGet(parsed, "", "default"));
     }
 
+    // Covers QueryCacheService#put async-dispatch branch.
+    @Test
+    void shouldDeferCacheWritesToExecutor() {
+        QueryProperties properties = new QueryProperties();
+        MapCacheStore store = new MapCacheStore();
+        DeferredExecutor executor = new DeferredExecutor();
+        QueryCacheService service = new QueryCacheService(store, properties, new ObjectMapper(), executor);
+
+        SqlResponseStubDto response = new SqlResponseStubDto();
+        response.setCube("default");
+        response.setResults(java.util.Collections.singletonList(new String[]{"alpha"}));
+
+        service.put(SqlCommentParser.parse("SELECT * FROM sales"), "", "default", response);
+
+        assertNull(store.lastKey());
+        executor.runNext();
+        assertNotNull(store.lastKey());
+        assertEquals(300, store.ttlForLastSet());
+    }
+
+    // Covers QueryCacheService#put executor-rejection fallback branch.
+    @Test
+    void shouldSwallowRejectedAsyncCacheWrites() {
+        QueryProperties properties = new QueryProperties();
+        MapCacheStore store = new MapCacheStore();
+        QueryCacheService service = new QueryCacheService(store, properties, new ObjectMapper(),
+                command -> {
+                    throw new RejectedExecutionException("queue full");
+                });
+
+        SqlResponseStubDto response = new SqlResponseStubDto();
+        response.setCube("default");
+        response.setResults(java.util.Collections.singletonList(new String[]{"alpha"}));
+
+        assertDoesNotThrow(() -> service.put(SqlCommentParser.parse("SELECT * FROM sales"), "", "default", response));
+        assertNull(store.lastKey());
+    }
+
     private static class MapCacheStore implements QueryCacheStore {
         private final Map<String, String> values = new HashMap<String, String>();
         private String lastKey;
@@ -138,6 +181,22 @@ class QueryCacheServiceTest {
 
         private int ttlForLastSet() {
             return lastTtl;
+        }
+    }
+
+    private static class DeferredExecutor implements Executor {
+        private final Queue<Runnable> tasks = new LinkedList<Runnable>();
+
+        @Override
+        public void execute(Runnable command) {
+            tasks.add(command);
+        }
+
+        private void runNext() {
+            Runnable task = tasks.poll();
+            if (task != null) {
+                task.run();
+            }
         }
     }
 }
