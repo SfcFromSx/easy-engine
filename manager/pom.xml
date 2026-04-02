@@ -19,10 +19,14 @@
 
     <properties>
         <java.version>1.8</java.version>
-        <calcite.version>1.26.0</calcite.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>com.smartbi</groupId>
+            <artifactId>analyze</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -43,11 +47,6 @@
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.calcite</groupId>
-            <artifactId>calcite-core</artifactId>
-            <version>${calcite.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -1,11 +1,11 @@
 package com.smartbi.engine.web;
 
 import com.smartbi.engine.accel.AccelerationService;
+import com.smartbi.analyze.parse.ParseOutcome;
 import com.smartbi.engine.domain.AccelerationStatus;
 import com.smartbi.engine.domain.AccelerationTable;
 import com.smartbi.engine.jdbc.JdbcSqlAdvisorService;
 import com.smartbi.engine.jdbc.dto.SqlRewriteRequest;
-import com.smartbi.engine.parse.ParseOutcome;
 import com.smartbi.engine.parse.SqlParseService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

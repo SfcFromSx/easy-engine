@@ -1,7 +1,7 @@
 package com.smartbi.query.cache;
 
+import com.smartbi.analyze.sql.ParsedSql;
 import com.smartbi.query.config.QueryProperties;
-import com.smartbi.query.parsing.SqlCommentParser;
 
 import java.util.regex.Pattern;
 
@@ -29,7 +29,7 @@ public class CachePolicy {
                 || normalized.startsWith("explain");
     }
 
-    public boolean shouldBypassCacheBeforeLookup(SqlCommentParser.ParsedSql parsed) {
+    public boolean shouldBypassCacheBeforeLookup(ParsedSql parsed) {
         return cacheProperties.isSafeModeEnabled()
                 && parsed != null
                 && parsed.cleanSql != null

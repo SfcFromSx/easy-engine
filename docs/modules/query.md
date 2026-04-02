@@ -1,13 +1,13 @@
 # Query Module
 
-`query` is the Easy Engine query execution service. It accepts read-only query traffic via the standard Apache Kylin JDBC protocol, parses comments and preserved metadata, routes to the selected datasource, manages Redis-backed result cache, and writes trace records directly to MySQL.
+`query` is the Easy Engine query execution service. It accepts read-only query traffic via the standard Apache Kylin JDBC protocol, uses the shared `analyze` module to parse comments and preserved metadata, routes to the selected datasource, manages Redis-backed result cache, and writes trace records directly to MySQL.
 
 ## Responsibilities
 
 - Serve `POST /kylin/api/query`.
 - Preserve compatibility with `PreparedQueryRequest` and `SQLResponseStub` expectations.
 - Define the routing, caching, preserved metadata, and trace semantics that adapter layers must preserve.
-- Prefer preserved routing metadata such as `YH_TARGET_ENGINE` over driver-consumed engine hints.
+- Route only by preserved routing metadata such as `YH_TARGET_ENGINE`; driver-style `engine` hints are stripped and ignored.
 - Publish trace payloads with explicit `executionMode` values so downstream operators can distinguish `STATEMENT` from `PREPARED_STATEMENT` without SQL-text inspection.
 - Publish a dedicated `parameterPayload` field for failed prepared executions, derived from the submitted `params` DTOs as readable JSON text so operators can debug bindings without stack-trace scraping or `rawPayload` inspection.
 
@@ -41,7 +41,7 @@
 
 `query` owns:
 
-- routing precedence across preserved metadata, surviving driver hints, and datasource fallback
+- routing precedence across preserved metadata and datasource fallback
 - cache semantics for deciding hits, misses, and datasource execution
 - preserved metadata handling that must remain visible after any adapter handoff
 - trace and execution metadata contracts such as `executionMode` and failed-prepared `parameterPayload`
@@ -73,8 +73,10 @@
 Query-side routing precedence is:
 
 1. preserved metadata comments such as `YH_TARGET_ENGINE`
-2. driver-style engine hints that still reach `query`
-3. the default datasource fallback
+2. the default datasource fallback
+
+- `query` rewrites executable SQL to start with a normalized `/* YH_TARGET_ENGINE=... */` comment.
+- Active acceleration matches can add `cache-table=<schema>.<table>` to that leading comment, while phase 1 keeps the SQL body unchanged.
 
 - The standard benchmark path is `benchmark (Kylin JDBC) -> query`.
 - Trino datasource configs should use `type=trino`, `driverClass=io.trino.jdbc.TrinoDriver`, and a normal Trino JDBC URL such as `jdbc:trino://host:8080/catalog/schema`.
@@ -100,8 +102,10 @@ development instead of relying on code-level defaults.
 ## Verify
 
 ```bash
-mvn -q -f query/pom.xml test
+mvn -q -pl analyze,query -am test
 ```
+
+Because `query` now depends on the shared `analyze` module, reactor builds from the repo root are the reliable verification path.
 
 ## Related Docs
 

@@ -23,11 +23,12 @@ Base service: `manager`
 | `POST` | `/api/v1/parse/preview` | `Implemented` | Parse and preview SQL structure | Calcite-backed analysis for plain `SELECT` shapes; complex roots still return limited metadata. |
 | `GET` | `/api/v1/acceleration-tables` | `Implemented` | List acceleration tables | Sorted by updated time; supports `keyword`, `status`, `schemaName`, and `source` filters. |
 | `GET` | `/api/v1/query-datasources` | `Implemented` | List query datasource configs | Returns the full datasource catalog; manager UI filters this list client-side by keyword, type, and default/custom scope. |
+| `GET` | `/api/v1/query-routing-context` | `Implemented` | Return query routing context | Returns datasource configs plus active acceleration rules for `query`'s in-process analyzer cache. |
 | `POST` | `/api/v1/acceleration-tables` | `Implemented` | Create manual acceleration table definition | Saves draft metadata. |
 | `POST` | `/api/v1/acceleration-tables/from-pattern` | `Implemented` | Create draft from pattern stats | Generates draft DDL, refresh SQL, and a fixed cron scaffold that operators should review before activation. |
 | `PATCH` | `/api/v1/acceleration-tables/{id}/status` | `Implemented` | Change acceleration status | Activation executes the stored DDL and refresh SQL as-is. |
 | `GET` | `/api/v1/traces` | `Implemented` | Page trace history | Supports pagination plus `fingerprint`, `datasource`, `sourceFlag`, `cacheHit`, `parseStatus`, and `sqlKeyword` filters; returns `executionMode` and optional `parameterPayload` for failed prepared traces. |
-| `POST` | `/api/v1/jdbc/sql-rewrite` | `Implemented` | Ask manager for JDBC rewrite advice | Best-effort advisory path that prepends a hint when an active acceleration table's `refreshSql` contains the incoming query text. |
+| `POST` | `/api/v1/jdbc/sql-rewrite` | `Implemented` | Ask manager for JDBC rewrite advice | Best-effort advisory path that emits `YH_TARGET_ENGINE`-based leading comments and adds `cache-table` when an active acceleration rule matches. |
 | `GET` | `/api/v1/acceleration-tables/{id}` | `Planned` | Table detail | Not exposed today. |
 | `PUT` | `/api/v1/acceleration-tables/{id}` | `Implemented` | Update acceleration definition | Updates draft metadata and preserves the existing status/source. |
 | `DELETE` | `/api/v1/acceleration-tables/{id}` | `Implemented` | Delete acceleration definition | Returns `204 No Content` on success. |

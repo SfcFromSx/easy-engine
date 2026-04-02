@@ -44,9 +44,9 @@ class ManagerConfigClientTest {
         ManagerConfigClient client = new ManagerConfigClient(new RestTemplateBuilder(), properties);
         MockRestServiceServer server = bind(client);
 
-        server.expect(requestTo(MANAGER_URL + "/api/v1/query-datasources"))
-                .andRespond(withSuccess("[{\"name\":\"default\",\"type\":\"h2\",\"jdbcUrl\":\"" + DATASOURCE_URL
-                                + "\",\"driverClass\":\"" + DRIVER_CLASS + "\"}]",
+        server.expect(requestTo(MANAGER_URL + "/api/v1/query-routing-context"))
+                .andRespond(withSuccess("{\"datasources\":[{\"name\":\"default\",\"type\":\"h2\",\"jdbcUrl\":\"" + DATASOURCE_URL
+                                + "\",\"driverClass\":\"" + DRIVER_CLASS + "\"}],\"accelerationRules\":[]}",
                         MediaType.APPLICATION_JSON));
 
         List<ManagerConfigClient.ManagerDatasourceConfig> configs = client.fetchDatasourceConfigs();
@@ -64,7 +64,7 @@ class ManagerConfigClientTest {
         ManagerConfigClient client = new ManagerConfigClient(new RestTemplateBuilder(), properties);
         MockRestServiceServer server = bind(client);
 
-        server.expect(requestTo(MANAGER_URL + "/api/v1/query-datasources"))
+        server.expect(requestTo(MANAGER_URL + "/api/v1/query-routing-context"))
                 .andRespond(withNoContent());
 
         assertTrue(client.fetchDatasourceConfigs().isEmpty());
@@ -79,8 +79,8 @@ class ManagerConfigClientTest {
         ManagerConfigClient client = new ManagerConfigClient(new RestTemplateBuilder(), properties);
         MockRestServiceServer server = bind(client);
 
-        server.expect(requestTo(MANAGER_URL + "/api/v1/query-datasources"))
-                .andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
+        server.expect(requestTo(MANAGER_URL + "/api/v1/query-routing-context"))
+                .andRespond(withSuccess("{\"datasources\":[],\"accelerationRules\":[]}", MediaType.APPLICATION_JSON));
 
         assertTrue(client.fetchDatasourceConfigs().isEmpty());
         server.verify();
@@ -94,12 +94,12 @@ class ManagerConfigClientTest {
         ManagerConfigClient client = new ManagerConfigClient(new RestTemplateBuilder(), properties);
         MockRestServiceServer server = bind(client);
 
-        server.expect(requestTo(MANAGER_URL + "/api/v1/query-datasources"))
+        server.expect(requestTo(MANAGER_URL + "/api/v1/query-routing-context"))
                 .andRespond(withServerError());
 
         IllegalStateException exception = assertThrows(IllegalStateException.class, client::fetchDatasourceConfigs);
 
-        assertTrue(exception.getMessage().contains(MANAGER_URL + "/api/v1/query-datasources"));
+        assertTrue(exception.getMessage().contains(MANAGER_URL + "/api/v1/query-routing-context"));
         server.verify();
     }
 

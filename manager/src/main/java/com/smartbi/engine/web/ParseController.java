@@ -1,6 +1,6 @@
 package com.smartbi.engine.web;
 
-import com.smartbi.engine.parse.ParseOutcome;
+import com.smartbi.analyze.parse.ParseOutcome;
 import com.smartbi.engine.parse.SqlParseService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

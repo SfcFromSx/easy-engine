@@ -1,20 +1,21 @@
 # Manager Module
 
-`manager` is the Easy Engine control plane. It reads query trace history from the shared metadata database, stores execution history, parses SQL structure, maintains pattern statistics, and manages acceleration metadata.
+`manager` is the Easy Engine control plane. It reads query trace history from the shared metadata database, stores execution history, uses the shared `analyze` module for SQL structure analysis and advisory rewrite logic, maintains pattern statistics, and manages acceleration metadata.
 
 ## Responsibilities
 
 - Read execution records from MySQL.
 - Persist control-plane records to MySQL.
-- Parse SQL with Apache Calcite.
+- Parse SQL through the shared `analyze` module's Calcite-backed analyzer.
 - Maintain SQL fingerprint and pattern statistics.
-- Expose stats, trace, pattern, parse-preview, and acceleration APIs.
+- Expose stats, trace, pattern, parse-preview, query-routing-context, JDBC rewrite, and acceleration APIs.
 
 ## Operator Notes
 
 - The dashboard plus the traces, patterns, and acceleration views now share the same page-header, filter-bar, table-shell, and card styling so operators see one consistent control-plane layout across the main manager routes.
 - On screens at or below 960px wide, the traces, patterns, and acceleration list views switch from dense desktop tables to stacked record cards to preserve readable controls, SQL snippets, and row actions on smaller devices.
 - The datasource catalog now exposes client-side filters for keyword, datasource type, and default/custom scope after the full datasource list is fetched from `/api/v1/query-datasources`.
+- `query` now consumes `/api/v1/query-routing-context` to refresh datasource and active-acceleration routing context without adding a fourth runtime service.
 - The traces, patterns, and acceleration list views expose route-backed filters so reload, bookmark, and back/forward navigation preserve the active list conditions.
 - Applying or clearing trace, pattern, or acceleration filters resets the current page to page 1 before reloading the existing `/traces`, `/patterns/top`, or `/acceleration-tables` data with the corresponding request parameters.
 - `/api/v1/traces` supports practical operator filters for fingerprint, datasource name, source flag, cache state, parse status, and SQL keyword matches on top of pagination.
@@ -29,7 +30,7 @@
 
 ## Current Review Notes
 
-- `POST /api/v1/jdbc/sql-rewrite` is a best-effort advisory hook, not a semantic SQL rewriter. Today it only checks whether an ACTIVE acceleration table's `refreshSql` contains the incoming query text and, on a match, prepends a hint comment while leaving the query text itself unchanged.
+- `POST /api/v1/jdbc/sql-rewrite` is a best-effort advisory hook, not a semantic SQL rewriter. It now emits `YH_TARGET_ENGINE`-based leading comments, strips legacy `engine` hints, and adds `cache-table` when an ACTIVE acceleration rule matches, while still leaving the SQL body unchanged.
 - `POST /api/v1/acceleration-tables/from-pattern` creates draft scaffolding only. The generated DDL, refresh SQL, and fixed `0 30 2 * * ?` cron are operator-editable starting points and should not be treated as production-safe physical design or scheduling guidance, especially on the default MySQL runtime.
 - `POST /api/v1/parse/preview` extracts table, group-by, and aggregate metadata reliably for plain `SELECT` statements and `ORDER BY` wrappers around a `SELECT`. Complex shapes such as CTE roots, `UNION` roots, and non-`SELECT` statements currently return the parsed `rootKind` plus a stringified SQL shape, but they do not provide complete lineage or aggregate coverage.
 
@@ -52,10 +53,12 @@ Runtime settings now live in `application-dev.yml`, `application-test.yml`, and
 ## Verify
 
 ```bash
-mvn -q -f manager/pom.xml test
+mvn -q -pl analyze,manager -am test -Dspring.mvc.pathmatch.matching-strategy=ant_path_matcher
 npm --prefix manager/frontend run test
 npm --prefix manager/frontend run build
 ```
+
+Because `manager` now depends on the shared `analyze` module, reactor builds from the repo root are the reliable verification path.
 
 ## Related Docs
 

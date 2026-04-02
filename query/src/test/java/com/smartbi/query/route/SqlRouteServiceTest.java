@@ -25,10 +25,10 @@ class SqlRouteServiceTest {
 
         assertEquals("default", routed.datasourceName);
         assertEquals("h2", routed.datasourceType);
-        assertEquals("SELECT * FROM SALES", routed.executionSql);
+        assertEquals("/* YH_TARGET_ENGINE=default */\nSELECT * FROM SALES", routed.executionSql);
     }
 
-    // Covers SqlRouteService#routeAndRewrite preserved-metadata precedence over engine hints.
+    // Covers SqlRouteService#routeAndRewrite preserved-metadata precedence with engine hints ignored.
     @Test
     void shouldPreferYhTargetEngineOverDriverEngineHint() {
         SqlRouteService service = new SqlRouteService(registry(managerConfigs("default", "h2", true, "presto_local", "PRESTO", false)));
@@ -38,6 +38,7 @@ class SqlRouteServiceTest {
 
         assertEquals("presto_local", routed.datasourceName);
         assertEquals("PRESTO", routed.datasourceType);
+        assertEquals("/* YH_TARGET_ENGINE=presto_local */\nSELECT * FROM SALES", routed.executionSql);
     }
 
     // Covers SqlRouteService#routeAndRewrite unknown-datasource fallback branch.
@@ -50,6 +51,7 @@ class SqlRouteServiceTest {
 
         assertEquals("default", routed.datasourceName);
         assertEquals("h2", routed.datasourceType);
+        assertEquals("/* YH_TARGET_ENGINE=default */\nSELECT * FROM SALES", routed.executionSql);
     }
 
     // Covers SqlRouteService#routeAndRewrite adapter lookup for normalized datasource types.
@@ -60,7 +62,7 @@ class SqlRouteServiceTest {
         RoutedSql routed = service.routeAndRewrite("SELECT * FROM SALES", SqlCommentParser.parse("SELECT * FROM SALES"));
 
         assertEquals("PRESTO", routed.datasourceType);
-        assertEquals("SELECT * FROM SALES", routed.executionSql);
+        assertEquals("/* YH_TARGET_ENGINE=default */\nSELECT * FROM SALES", routed.executionSql);
     }
 
     // Covers SqlRouteService#routeAndRewrite explicit Trino adapter lookup.
@@ -72,7 +74,7 @@ class SqlRouteServiceTest {
 
         assertEquals("trino_local", routed.datasourceName);
         assertEquals("TRINO", routed.datasourceType);
-        assertEquals("SELECT * FROM NATION", routed.executionSql);
+        assertEquals("/* YH_TARGET_ENGINE=trino_local */\nSELECT * FROM NATION", routed.executionSql);
     }
 
     // Covers SqlRouteService#routeAndRewrite parsed-null fallback branch.
@@ -83,7 +85,7 @@ class SqlRouteServiceTest {
         RoutedSql routed = service.routeAndRewrite("SELECT * FROM SALES", null);
 
         assertEquals("default", routed.datasourceName);
-        assertEquals("SELECT * FROM SALES", routed.executionSql);
+        assertEquals("/* YH_TARGET_ENGINE=default */\nSELECT * FROM SALES", routed.executionSql);
     }
 
     private static ManagedDataSourceRegistry registry(List<ManagerConfigClient.ManagerDatasourceConfig> configs) {

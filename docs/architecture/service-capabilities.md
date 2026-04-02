@@ -16,7 +16,8 @@ This file summarizes the current functional surface of the Easy Engine services.
 | Accept query requests | `Implemented` | `POST /kylin/api/query` is the supported public interface. |
 | Execute read-only SQL on the default datasource | `Implemented` | Statement execution is direct; prepared execution stays supported, with Kylin-routed prepared requests literalized inside `query` before execution. |
 | Reject non-query SQL | `Implemented` | Non-query statements return an exception-style response. |
-| Route queries by preserved metadata or engine hint | `Implemented` | `YH_TARGET_ENGINE` takes precedence, then `engine`, then default datasource. |
+| Route queries by preserved metadata | `Implemented` | `YH_TARGET_ENGINE` is the only routing hint; executable SQL is normalized with a leading `YH_TARGET_ENGINE` comment and otherwise falls back to the default datasource. |
+| Consume shared analyze module for routing and SQL parsing | `Implemented` | `query` uses the shared `analyze` jar for comment parsing, routing rewrite analysis, and dialect-adapter hooks. |
 | Redis-backed query cache | `Implemented` | Includes datasource isolation, TTL, cache key override, and bypass semantics. |
 | Prepared-parameter cache fingerprinting | `Implemented` | Prepared inputs participate in cache identity. |
 | Trace writing to MySQL | `Implemented` | Query execution writes trace records directly to MySQL with `executionMode` and an optional failed-prepared `parameterPayload`. |
@@ -32,12 +33,13 @@ This file summarizes the current functional surface of the Easy Engine services.
 |---|---|---|
 | Read trace records from MySQL | `Implemented` | Manager reads `SqlExecutionRecord` rows written directly by `query`. |
 | Persist trace history to MySQL | `Implemented` | Raw payloads and normalized execution records are stored, including `executionMode` and optional `parameterPayload`. |
-| Parse SQL structure with Calcite | `Implemented` | Preview and ingestion-time parsing are both present. |
+| Parse SQL structure with shared Calcite analyzer | `Implemented` | Preview and ingestion-time parsing both delegate to the shared `analyze` module. |
 | Maintain SQL fingerprint and pattern statistics | `Implemented` | Pattern stats are upserted during ingestion. |
 | Expose trace history API | `Implemented` | Paginated trace browsing is available, including `executionMode` and optional `parameterPayload` for failed prepared traces. |
 | Expose stats summary API | `Implemented` | Summary counts for traces, parse status, and patterns are available. |
 | Expose top-pattern API | `Implemented` | Used for acceleration suggestions. |
-| JDBC-side SQL rewrite advisory API | `Implemented` | Returns advice, does not execute SQL. |
+| Expose query routing context API | `Implemented` | Returns datasource configs plus active acceleration rules for `query`. |
+| JDBC-side SQL rewrite advisory API | `Implemented` | Returns shared-analyze rewrite advice, does not execute SQL. |
 | Manual acceleration table definition | `Implemented` | Manual create flow exists. |
 | Acceleration table recommendation from patterns | `Implemented` | Can generate drafts from pattern stats. |
 | Activate acceleration table by executing DDL and refresh SQL | `Implemented` | Activation runs DDL and refresh once. |
@@ -73,5 +75,6 @@ This file summarizes the current functional surface of the Easy Engine services.
 |---|---|---|
 | Query-only boundary for `query` | `Implemented` | Query serves execution only. |
 | Trace contract between `query` and `manager` | `Implemented` | Query writes directly to MySQL; manager reads from the same DB. |
+| Shared `analyze` module without a fourth service | `Implemented` | Runtime topology stays at three services while `query` and `manager` share in-process SQL analysis code. |
 | Benchmark path via Kylin JDBC to query | `Implemented` | Standard path is `benchmark (Kylin JDBC) -> query`. |
 | Full scheduler platform in manager | `Partial` | Architecture expects more than the current codebase exposes. |

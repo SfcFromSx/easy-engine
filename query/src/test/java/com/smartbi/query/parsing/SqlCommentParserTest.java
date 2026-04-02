@@ -21,7 +21,7 @@ class SqlCommentParserTest {
         assertTrue(normalize(parsed.cleanSql).contains("SELECT * FROM sales"));
         assertTrue(parsed.executionSql.contains("YH_QUERYID=abc123"));
         assertFalse(parsed.executionSql.contains("engine=presto_local"));
-        assertEquals("presto_local", parsed.metadata.engine);
+        assertFalse(parsed.metadata.extraMetadata.containsKey("ENGINE"));
         assertEquals(Integer.valueOf(60), parsed.metadata.cacheTtl);
         assertEquals("abc123", parsed.metadata.queryId);
     }

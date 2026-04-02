@@ -2,11 +2,10 @@ package com.smartbi.engine.trace;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartbi.analyze.parse.ParseOutcome;
 import com.smartbi.engine.domain.ParseStatus;
 import com.smartbi.engine.domain.SqlExecutionRecord;
 import com.smartbi.engine.domain.SqlPatternStats;
-import com.smartbi.engine.parse.ParseOutcome;
-import com.smartbi.engine.parse.QuerySignature;
 import com.smartbi.engine.parse.SqlParseService;
 import com.smartbi.engine.repo.SqlExecutionRecordRepository;
 import com.smartbi.engine.repo.SqlPatternStatsRepository;
@@ -63,8 +62,8 @@ public class TraceIngestionService {
                 row.setSqlFingerprint(fp);
 
                 ParseOutcome outcome = sqlParseService.analyze(sqlForParse);
-                row.setParseStatus(outcome.getStatus());
-                if (outcome.getStatus() == ParseStatus.OK && outcome.getSignature() != null) {
+                row.setParseStatus(ParseStatus.valueOf(outcome.getStatus().name()));
+                if (ParseStatus.OK.name().equals(outcome.getStatus().name()) && outcome.getSignature() != null) {
                     row.setSignatureJson(objectMapper.writeValueAsString(outcome.getSignature()));
                 } else {
                     row.setParseError(outcome.getErrorMessage());

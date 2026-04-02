@@ -193,6 +193,33 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Suggested next step: Keep the archived `CONFIG-PROFILE-001` entry and its commit aligned, and let `CONFIG-REVIEW-001` remain the active follow-up.
 - Human decision: pending
 
+### INBOX-20260402-020
+- Area: Harness audit trail
+- Related task(s): `QUERY-ARCH-003`
+- Summary: `tasks.md` was updated on 2026-04-02 to intake a human-requested shared `analyze` extraction task so the cross-module build, query, and manager changes can follow the repo's required task lifecycle.
+- Evidence: Active ledger row and task section for `QUERY-ARCH-003` were added to `tasks.md` before implementation began.
+- Impact/Risk: Without an explicit audit note, later recovery or review could miss why the active ledger changed during this session.
+- Suggested next step: Keep the task ledger, archive, and eventual commit aligned when `QUERY-ARCH-003` closes.
+- Human decision: pending
+
+### INBOX-20260402-021
+- Area: Harness validation-command drift
+- Related task(s): `QUERY-ARCH-003`
+- Summary: The shared `analyze` module means the module-local validation commands in `.agent/config.json` for `query` and `manager` are now stale, because standalone `mvn -q -f query/pom.xml test` and `mvn -q -f manager/pom.xml test` no longer resolve the sibling artifact without a reactor build or a prior local install.
+- Evidence: During `QUERY-ARCH-003` verification on 2026-04-02, `mvn -q -pl query -am test` and `mvn -q -pl manager -am ... test` passed, while standalone `mvn -q -f query/pom.xml test` and `mvn -q -f manager/pom.xml ... test` failed dependency resolution for `com.smartbi:analyze:1.0.0-SNAPSHOT`.
+- Impact/Risk: Harness automation and humans following the existing validation matrix can get false-negative failures even when the code is healthy, because the documented and automated commands no longer match the repo's build topology.
+- Suggested next step: Open a harness-policy task to update `.agent/config.json`, the validation matrix, and any related automation to use reactor builds for modules that now depend on `analyze`.
+- Human decision: pending
+
+### INBOX-20260402-022
+- Area: Harness audit trail
+- Related task(s): `QUERY-ARCH-003`
+- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-02 to archive the completion of `QUERY-ARCH-003`, while preserving the separately active `CONFIG-REVIEW-001` task in the current ledger.
+- Evidence: The active ledger row and section for `QUERY-ARCH-003` were removed from `tasks.md`, its full progress log and done signal were archived under `tasks-done.md`, and the closeout is included in the task's single commit.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger change as ad hoc bookkeeping instead of the required task finalization workflow.
+- Suggested next step: Keep the archived `QUERY-ARCH-003` entry and its task commit aligned, and let `CONFIG-REVIEW-001` remain the active follow-up task in `tasks.md`.
+- Human decision: pending
+
 ## Template
 
 ```md

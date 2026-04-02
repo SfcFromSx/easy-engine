@@ -29,27 +29,40 @@ public class ManagerConfigClient {
     }
 
     public List<ManagerDatasourceConfig> fetchDatasourceConfigs() {
+        ManagerRoutingContext routingContext = fetchRoutingContext();
+        return routingContext == null || routingContext.getDatasources() == null
+                ? Collections.<ManagerDatasourceConfig>emptyList()
+                : routingContext.getDatasources();
+    }
+
+    public ManagerRoutingContext fetchRoutingContext() {
         String managerUrl = queryProperties.getManagerUrl();
         if (!StringUtils.hasText(managerUrl)) {
-            return Collections.emptyList();
+            return new ManagerRoutingContext();
         }
         String baseUrl = managerUrl.trim();
         if (baseUrl.endsWith("/")) {
             baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
         }
-        String url = baseUrl + "/api/v1/query-datasources";
+        String url = baseUrl + "/api/v1/query-routing-context";
         try {
-            ResponseEntity<ManagerDatasourceConfig[]> response = restTemplate.getForEntity(
+            ResponseEntity<ManagerRoutingContext> response = restTemplate.getForEntity(
                     url,
-                    ManagerDatasourceConfig[].class);
-            ManagerDatasourceConfig[] body = response.getBody();
-            if (body == null || body.length == 0) {
-                log.warn("Manager datasource config endpoint returned no rows: {}", url);
-                return Collections.emptyList();
+                    ManagerRoutingContext.class);
+            ManagerRoutingContext body = response.getBody();
+            if (body == null) {
+                log.warn("Manager routing context endpoint returned no payload: {}", url);
+                return new ManagerRoutingContext();
             }
-            return Arrays.asList(body);
+            if (body.getDatasources() == null) {
+                body.setDatasources(Collections.<ManagerDatasourceConfig>emptyList());
+            }
+            if (body.getAccelerationRules() == null) {
+                body.setAccelerationRules(Collections.<ManagerAccelerationRule>emptyList());
+            }
+            return body;
         } catch (RestClientException ex) {
-            throw new IllegalStateException("Unable to load datasource configs from " + url, ex);
+            throw new IllegalStateException("Unable to load routing context from " + url, ex);
         }
     }
 
@@ -144,6 +157,68 @@ public class ManagerConfigClient {
 
         public void setIsDefault(Boolean isDefault) {
             this.isDefault = isDefault;
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class ManagerAccelerationRule {
+        private String name;
+        private String schemaName;
+        private String tableName;
+        private String refreshSql;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getSchemaName() {
+            return schemaName;
+        }
+
+        public void setSchemaName(String schemaName) {
+            this.schemaName = schemaName;
+        }
+
+        public String getTableName() {
+            return tableName;
+        }
+
+        public void setTableName(String tableName) {
+            this.tableName = tableName;
+        }
+
+        public String getRefreshSql() {
+            return refreshSql;
+        }
+
+        public void setRefreshSql(String refreshSql) {
+            this.refreshSql = refreshSql;
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class ManagerRoutingContext {
+        private List<ManagerDatasourceConfig> datasources = Collections.emptyList();
+        private List<ManagerAccelerationRule> accelerationRules = Collections.emptyList();
+
+        public List<ManagerDatasourceConfig> getDatasources() {
+            return datasources;
+        }
+
+        public void setDatasources(List<ManagerDatasourceConfig> datasources) {
+            this.datasources = datasources;
+        }
+
+        public List<ManagerAccelerationRule> getAccelerationRules() {
+            return accelerationRules;
+        }
+
+        public void setAccelerationRules(List<ManagerAccelerationRule> accelerationRules) {
+            this.accelerationRules = accelerationRules;
         }
     }
 }

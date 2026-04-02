@@ -1,7 +1,7 @@
 package com.smartbi.query.service;
 
+import com.smartbi.analyze.sql.SqlMetadata;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.smartbi.query.parsing.SqlMetadata;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class TracePayload {

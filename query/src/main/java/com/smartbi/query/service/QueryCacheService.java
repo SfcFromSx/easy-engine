@@ -1,11 +1,11 @@
 package com.smartbi.query.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartbi.analyze.sql.ParsedSql;
 import com.smartbi.query.api.dto.SqlResponseStubDto;
 import com.smartbi.query.cache.CachePolicy;
 import com.smartbi.query.config.QueryProperties;
 import com.smartbi.query.integration.QueryCacheStore;
-import com.smartbi.query.parsing.SqlCommentParser;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -32,7 +32,7 @@ public class QueryCacheService {
         return cachePolicy;
     }
 
-    public SqlResponseStubDto tryGet(SqlCommentParser.ParsedSql parsed, String paramFingerprint, String datasourceName) {
+    public SqlResponseStubDto tryGet(ParsedSql parsed, String paramFingerprint, String datasourceName) {
         String value = cacheStore.get(buildKey(parsed, paramFingerprint, datasourceName));
         if (value == null) {
             return null;
@@ -44,7 +44,7 @@ public class QueryCacheService {
         }
     }
 
-    public void put(SqlCommentParser.ParsedSql parsed,
+    public void put(ParsedSql parsed,
                     String paramFingerprint,
                     String datasourceName,
                     SqlResponseStubDto response) {
@@ -58,14 +58,14 @@ public class QueryCacheService {
         }
     }
 
-    public int effectiveTtl(SqlCommentParser.ParsedSql parsed) {
+    public int effectiveTtl(ParsedSql parsed) {
         if (parsed != null && parsed.metadata != null && parsed.metadata.cacheTtl != null && parsed.metadata.cacheTtl > 0) {
             return parsed.metadata.cacheTtl;
         }
         return queryProperties.getCache().getDefaultTtlSeconds();
     }
 
-    public String buildKey(SqlCommentParser.ParsedSql parsed, String paramFingerprint, String datasourceName) {
+    public String buildKey(ParsedSql parsed, String paramFingerprint, String datasourceName) {
         String effectiveDsName = queryProperties.getCache().isDatasourceIsolationEnabled() ? datasourceName : "shared";
         if (parsed != null && parsed.metadata != null && parsed.metadata.cacheKey != null) {
             return queryProperties.getCache().getKeyPrefix() + effectiveDsName + ":" + parsed.metadata.cacheKey;

@@ -1,6 +1,7 @@
 package com.smartbi.engine.parse;
 
-import com.smartbi.engine.domain.ParseStatus;
+import com.smartbi.analyze.parse.ParseOutcome;
+import com.smartbi.analyze.parse.ParseOutcomeStatus;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -13,7 +14,7 @@ class SqlParseServiceTest {
     // Covers SqlParseService#analyze select branch.
     void parsesSimpleSelect() {
         ParseOutcome out = service.analyze("SELECT a, count(*) FROM t1 GROUP BY a");
-        assertEquals(ParseStatus.OK, out.getStatus());
+        assertEquals(ParseOutcomeStatus.OK, out.getStatus());
         assertNotNull(out.getSignature());
         assertFalse(out.getSignature().getTables().isEmpty());
         assertFalse(out.getSignature().getSelectItems().isEmpty());
@@ -23,7 +24,7 @@ class SqlParseServiceTest {
     // Covers SqlParseService#analyze skipped branch.
     void skippedOnEmpty() {
         ParseOutcome out = service.analyze("   ");
-        assertEquals(ParseStatus.SKIPPED, out.getStatus());
+        assertEquals(ParseOutcomeStatus.SKIPPED, out.getStatus());
     }
 
     @Test
@@ -31,7 +32,7 @@ class SqlParseServiceTest {
     void parsesOrderByQueryAndKeepsRootKind() {
         ParseOutcome out = service.analyze("SELECT city FROM sales ORDER BY city");
 
-        assertEquals(ParseStatus.OK, out.getStatus());
+        assertEquals(ParseOutcomeStatus.OK, out.getStatus());
         assertEquals("ORDER_BY", out.getSignature().getRootKind());
         assertFalse(out.getSignature().getSelectItems().isEmpty());
     }
@@ -44,7 +45,7 @@ class SqlParseServiceTest {
                         "FROM (SELECT region FROM sales) nested_sales " +
                         "GROUP BY region");
 
-        assertEquals(ParseStatus.OK, out.getStatus());
+        assertEquals(ParseOutcomeStatus.OK, out.getStatus());
         assertEquals("SELECT", out.getSignature().getRootKind());
         assertEquals(java.util.Arrays.asList("sales"), out.getSignature().getTables());
         assertTrue(out.getSignature().getAggregates().isEmpty());
@@ -61,7 +62,7 @@ class SqlParseServiceTest {
                         ") " +
                         "SELECT region FROM regional_sales");
 
-        assertEquals(ParseStatus.OK, out.getStatus());
+        assertEquals(ParseOutcomeStatus.OK, out.getStatus());
         assertEquals("WITH", out.getSignature().getRootKind());
         assertTrue(out.getSignature().getTables().isEmpty());
         assertTrue(out.getSignature().getAggregates().isEmpty());
@@ -72,7 +73,7 @@ class SqlParseServiceTest {
     void unionQueryKeepsRootKindButDoesNotCollectBranchTables() {
         ParseOutcome out = service.analyze("SELECT city FROM sales UNION SELECT city FROM archive_sales");
 
-        assertEquals(ParseStatus.OK, out.getStatus());
+        assertEquals(ParseOutcomeStatus.OK, out.getStatus());
         assertEquals("UNION", out.getSignature().getRootKind());
         assertTrue(out.getSignature().getTables().isEmpty());
     }
@@ -82,7 +83,7 @@ class SqlParseServiceTest {
     void nonSelectStatementKeepsRootKindWithoutLineage() {
         ParseOutcome out = service.analyze("INSERT INTO summary_table SELECT city FROM sales");
 
-        assertEquals(ParseStatus.OK, out.getStatus());
+        assertEquals(ParseOutcomeStatus.OK, out.getStatus());
         assertEquals("INSERT", out.getSignature().getRootKind());
         assertTrue(out.getSignature().getTables().isEmpty());
     }
@@ -92,7 +93,7 @@ class SqlParseServiceTest {
     void returnsErrorForInvalidSql() {
         ParseOutcome out = service.analyze("SELECT FROM");
 
-        assertEquals(ParseStatus.ERROR, out.getStatus());
+        assertEquals(ParseOutcomeStatus.ERROR, out.getStatus());
         assertNotNull(out.getErrorMessage());
     }
 }

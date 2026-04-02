@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| QUERY-ARCH-003 | EXTRACT SHARED ANALYZE MODULE FOR ROUTING AND SQL ANALYSIS | platform | Added the shared `analyze` Maven module and root reactor, switched query routing to `YH_TARGET_ENGINE`-only analysis-backed rewrites, added manager query-routing-context APIs plus shared parse/rewrite delegation, updated architecture/module docs, and verified the new analyzer, full query suite, and focused manager slice through reactor builds. |
 | CONFIG-PROFILE-001 | UNIFY MODULE ENV CONFIG INTO DEV TEST PRO PROFILES | platform | `manager`, `query`, and `benchmark` now centralize environment settings in `application-dev.yml`, `application-test.yml`, and `application-pro.yml`; code/tests/scripts/POM defaults no longer own env config; profile-driven DB init works for `dev` and `test`; backend tests pass; frontend builds pass; and the new profile-governance rule is recorded in `docs/operations/best-practices.md` with follow-up audit task `CONFIG-REVIEW-001`. |
 | TEST-CONFIG-001 | AUDIT TESTS FOR HARD-CODED CONNECTION FIXTURES | tests | Benchmark and query tests now load datasource and credential fixtures from classpath test property files/helpers instead of inline literals, focused benchmark/query validation passes, and the targeted hard-coded-fixture audit scan is clean. |
 | MGR-DB-001 | REVIEW MODULE TABLE PREFIXES AND PREFIX MANAGER TABLES | manager | Manager-owned database tables now consistently use the `manager_` prefix, existing schemas upgrade through `V9__prefix_manager_tables.sql` plus a Flyway history-table handoff, focused manager Flyway regression tests pass, and `npm --prefix manager/frontend run build` passes while the stock manager Maven test command remains blocked by the separately logged `EngineConfig` path-pattern drift. |
@@ -73,6 +74,30 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+
+### QUERY-ARCH-003: EXTRACT SHARED ANALYZE MODULE FOR ROUTING AND SQL ANALYSIS
+
+- **Status**: done
+- **Updated**: 2026-04-02
+- **Progress log**:
+  - **2026-04-02 — intake**
+    - Human requested implementation of the shared `analyze` extraction plan: add a new Maven jar module plus root aggregator, move shared SQL parsing/routing/Calcite analysis into that module, switch runtime routing to `YH_TARGET_ENGINE` only, add manager query-routing context APIs for query consumption, and keep non-routing execution semantics unchanged.
+  - **2026-04-02 — implementation**
+    - Files changed: root build wiring in `pom.xml`, `analyze/pom.xml`, `query/pom.xml`, and `manager/pom.xml`; new shared analyzer sources/tests under `analyze/src/main/java` and `analyze/src/test/java`; query integration in `query/src/main/java/com/smartbi/query/{config,cache,datasource,parsing,route,service}` plus related tests; manager integration in `manager/src/main/java/com/smartbi/engine/{parse,trace,jdbc,web}` plus related tests; docs in `docs/architecture/{overview,http-interfaces,service-capabilities}.md`, `docs/modules/{query,manager}.md`, and `doc-CN/architecture-overview.md`.
+    - Commands run: `rg`, `sed`, `git diff`, `mvn -q -pl analyze,query,manager -am -DskipTests compile`.
+    - Result: Added the shared `analyze` jar and root Maven reactor, moved SQL comment parsing/routing/dialect hooks and Calcite structure analysis into that module, rewired `query` to use cached manager routing context with `YH_TARGET_ENGINE`-only routing plus normalized leading comments, rewired manager parse/JDBC advisory paths to the shared analyzer, and added `GET /api/v1/query-routing-context`.
+  - **2026-04-02 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: SQL analysis responsibilities had drifted across `query` and `manager`, with duplicated parsing contracts, a deprecated `engine` routing hint still influencing behavior, and no shared route-analysis surface for acceleration-aware comment rewriting.
+    - Cure: Extracted the shared SQL-analysis logic into `analyze`, made `YH_TARGET_ENGINE` the sole routing signal, normalized executable SQL comments in `query`, and turned manager parse/rewrite entrypoints into thin shared-analyzer wrappers.
+    - Generalization: This task changed architecture/build ownership directly; no new `docs/operations/best-practices.md` rule was added.
+  - **2026-04-02 — verification**
+    - Validation status: approved with harness follow-up
+    - Evidence: `mvn -q -pl analyze test` passed; `mvn -q -pl query -am test` passed; `mvn -q -pl manager -am -DfailIfNoTests=false -Dspring.mvc.pathmatch.matching-strategy=ant_path_matcher -Dtest=SqlParseServiceTest,JdbcSqlAdvisorServiceTest,ManagerControllerWebTest,QueryRoutingContextControllerTest test` passed.
+    - Next action: none for product code; harness validation-command drift is tracked separately.
+    - Escalation: INBOX-20260402-021
+  - **2026-04-02 — doc-garden**
+    - Updated architecture and module docs to describe the shared `analyze` module, the new `/api/v1/query-routing-context` API, `YH_TARGET_ENGINE`-only routing semantics, and the reactor-based verification path; refreshed the configured Chinese architecture mirror.
 
 ### CONFIG-PROFILE-001: UNIFY MODULE ENV CONFIG INTO DEV TEST PRO PROFILES
 

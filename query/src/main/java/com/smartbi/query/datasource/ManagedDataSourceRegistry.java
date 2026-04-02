@@ -1,5 +1,6 @@
 package com.smartbi.query.datasource;
 
+import com.smartbi.analyze.route.DatasourceDescriptor;
 import com.smartbi.query.config.ManagerConfigClient;
 import com.smartbi.query.config.QueryProperties;
 import com.zaxxer.hikari.HikariConfig;
@@ -15,6 +16,7 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -44,6 +46,18 @@ public class ManagedDataSourceRegistry implements AutoCloseable {
             definition = definitions.get(defaultName);
         }
         return definition;
+    }
+
+    public List<DatasourceDescriptor> snapshotDescriptors() {
+        List<DatasourceDescriptor> descriptors = new ArrayList<DatasourceDescriptor>(definitions.size());
+        for (Map.Entry<String, DataSourceDefinition> entry : definitions.entrySet()) {
+            descriptors.add(new DatasourceDescriptor(
+                    entry.getKey(),
+                    entry.getValue() == null ? null : entry.getValue().getType(),
+                    entry.getKey().equals(defaultName)
+            ));
+        }
+        return descriptors;
     }
 
     public Connection getConnection(String name) throws SQLException {

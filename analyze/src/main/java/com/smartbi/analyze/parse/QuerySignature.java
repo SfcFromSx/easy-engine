@@ -1,17 +1,14 @@
-package com.smartbi.engine.parse;
+package com.smartbi.analyze.parse;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Structured summary extracted from SQL via Calcite (serializable to JSON).
- */
 public class QuerySignature {
 
-    private List<String> tables = new ArrayList<>();
-    private List<String> groupBy = new ArrayList<>();
-    private List<String> selectItems = new ArrayList<>();
-    private List<String> aggregates = new ArrayList<>();
+    private List<String> tables = new ArrayList<String>();
+    private List<String> groupBy = new ArrayList<String>();
+    private List<String> selectItems = new ArrayList<String>();
+    private List<String> aggregates = new ArrayList<String>();
     private String rootKind;
 
     public List<String> getTables() {

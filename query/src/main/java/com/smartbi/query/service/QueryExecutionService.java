@@ -1,5 +1,7 @@
 package com.smartbi.query.service;
 
+import com.smartbi.analyze.sql.ParsedSql;
+import com.smartbi.analyze.sql.SqlCommentParser;
 import com.smartbi.query.api.dto.PreparedQueryRequestDto;
 import com.smartbi.query.api.dto.SqlResponseStubDto;
 import com.smartbi.query.api.dto.StatementParameterDto;
@@ -7,7 +9,6 @@ import com.smartbi.query.cache.CachePolicy;
 import com.smartbi.query.cache.PreparedParameterSupport;
 import com.smartbi.query.config.QueryProperties;
 import com.smartbi.query.datasource.ManagedDataSourceRegistry;
-import com.smartbi.query.parsing.SqlCommentParser;
 import com.smartbi.query.route.RoutedSql;
 import com.smartbi.query.route.SqlRouteService;
 import org.springframework.stereotype.Service;
@@ -60,7 +61,7 @@ public class QueryExecutionService {
         }
 
         CachePolicy cachePolicy = queryCacheService.getCachePolicy();
-        SqlCommentParser.ParsedSql parsed = SqlCommentParser.safeParse(originalSql);
+        ParsedSql parsed = SqlCommentParser.safeParse(originalSql);
 
         if (!StringUtils.hasText(parsed.cleanSql)) {
             return invalidRequestResponse(startedAt, null, parsed, params, executionMode,
@@ -129,7 +130,7 @@ public class QueryExecutionService {
 
     private SqlResponseStubDto invalidRequestResponse(long startedAt,
                                                       RoutedSql routed,
-                                                      SqlCommentParser.ParsedSql parsed,
+                                                      ParsedSql parsed,
                                                       List<StatementParameterDto> params,
                                                       String executionMode,
                                                       String message) {

@@ -1,10 +1,10 @@
 package com.smartbi.query.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartbi.analyze.sql.ParsedSql;
 import com.smartbi.query.api.dto.StatementParameterDto;
 import com.smartbi.query.config.QueryProperties;
 import com.smartbi.query.integration.TraceWriter;
-import com.smartbi.query.parsing.SqlCommentParser;
 import com.smartbi.query.route.RoutedSql;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +33,7 @@ public class TraceReportingService {
     }
 
     public void report(RoutedSql routed,
-                       SqlCommentParser.ParsedSql parsed,
+                       ParsedSql parsed,
                        String paramFingerprint,
                        List<StatementParameterDto> params,
                        String executionMode,
