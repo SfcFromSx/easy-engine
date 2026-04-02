@@ -258,6 +258,15 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Suggested next step: Keep the archived `QUERY-BUG-002` entry and its task commit aligned, and let `CONFIG-REVIEW-001` remain the active follow-up task in `tasks.md`.
 - Human decision: pending
 
+### INBOX-20260402-031
+- Area: Harness audit trail
+- Related task(s): `QUERY-TRINO-002`
+- Summary: `tasks.md` was updated on 2026-04-02 to intake a human-requested local Trino runtime and E2E validation task so the compose, config, and test changes can follow the repo's required task lifecycle.
+- Evidence: Active ledger row and task section for `QUERY-TRINO-002` were added to `tasks.md` before implementation began.
+- Impact/Risk: Without an explicit audit note, later recovery or review could miss why the active ledger changed during this session.
+- Suggested next step: Keep the task ledger, archive, and eventual commit aligned when `QUERY-TRINO-002` closes.
+- Human decision: pending
+
 ### INBOX-20260402-029
 - Area: Harness audit trail
 - Related task(s): `QUERY-BUG-003`

@@ -22,7 +22,17 @@ Completed task history lives in [tasks-done.md](/Users/sfc/Documents/projects/en
 
 | ID | Title | Module | Status | Updated | Dependencies |
 |----|-------|--------|--------|---------|--------------|
+| QUERY-TRINO-002 | ADD LOCAL TRINO SERVICE AND E2E COVERAGE | query | in_progress | 2026-04-02 | none |
 | CONFIG-REVIEW-001 | AUDIT REPO FOR PROFILE-YAML-ONLY ENV CONFIG COMPLIANCE | platform | todo | 2026-04-02 | none |
+
+### QUERY-TRINO-002: ADD LOCAL TRINO SERVICE AND E2E COVERAGE
+
+- **Status**: in_progress
+- **Updated**: 2026-04-02
+- **Progress log**:
+  - **2026-04-02 — intake**
+    - Human requested a runnable local Trino Docker service because `query` already supports `type=trino` but the repo had no matching compose service to validate it end-to-end.
+    - Scope for this task: add the local Trino runtime wiring, point local config/docs/tests at it, and add automated coverage that proves `query` can route real requests through the new local Trino target.
 
 ### CONFIG-REVIEW-001: AUDIT REPO FOR PROFILE-YAML-ONLY ENV CONFIG COMPLIANCE
 
