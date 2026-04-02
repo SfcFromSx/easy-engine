@@ -23,6 +23,15 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Suggested next step: Keep `tasks.md`, `tasks-done.md`, and Git history as the canonical audit trail, grandfather the known legacy missing-commit IDs in the audit script, and enforce the stricter rules for all new completions.
 - Human decision: pending
 
+### INBOX-20260402-001
+- Area: Benchmark validation drift
+- Related task(s): `BENCH-CONFIG-001`
+- Summary: The standard benchmark backend validation command currently fails for reasons unrelated to the preflight-config task: Spring MVC rejects the benchmark SPA forward pattern in `WebConfig`, and Docker-backed coverage is still unavailable in this environment.
+- Evidence: `mvn -q -f benchmark/pom.xml test` failed on 2026-04-02 with `PatternParseException: Invalid mapping pattern detected: /**/{path:[^\\.]*}` from `benchmark/src/main/java/com/smartbi/benchmark/config/WebConfig.java`, plus Testcontainers reported `Could not find a valid Docker environment`.
+- Impact/Risk: Benchmark tasks cannot rely on the module's default Maven test command as a clean verification signal, so unrelated suite drift can mask task-local regressions.
+- Suggested next step: Open a dedicated benchmark validation task to fix or isolate the SPA route mapping for test startup and decide how Docker-dependent coverage should run locally versus CI.
+- Human decision: pending
+
 ## Template
 
 ```md

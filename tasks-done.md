@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| BENCH-CONFIG-001 | EXTERNALIZE BENCHMARK PREFLIGHT DATASOURCE PROBE SETTINGS | benchmark | `BenchmarkPreflightProperties` no longer embeds Kylin/Presto probe defaults in Java, `benchmark.preflight.*` can be overridden from environment-backed config, task-local preflight tests pass, and unrelated benchmark-suite drift is logged in `INBOX-20260402-001`. |
 | task-ui-integration-001 | 整合前端静态资源及 SPA 路由支持 | manager, benchmark | `manager/src/.../EngineConfig.java`, `benchmark/src/.../WebConfig.java`, `doc-CN/quickstart.md` updated; SPA route forwarding implemented for bundled assets. |
 | task-ui-integration-001 | 整合前端静态资源及 SPA 路由支持 | manager, benchmark | `manager/src/.../EngineConfig.java`, `benchmark/src/.../WebConfig.java`, `doc-CN/quickstart.md` updated; SPA route forwarding implemented for bundled assets. |
 | DOC-CN-003 | ADD MYSQL TABLE OVERVIEW TO QUICKSTART | docs | `doc-CN/quickstart.md` updated with MySQL table inventory for Manager and Benchmark modules. |
@@ -65,22 +66,46 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
 
+### BENCH-CONFIG-001: EXTERNALIZE BENCHMARK PREFLIGHT DATASOURCE PROBE SETTINGS
+
+- **Status**: done
+- **Updated**: 2026-04-02
+- **Progress log**:
+  - **2026-04-02 — intake**
+    - Task created from human-reported issue: remove hard-coded datasource/probe info from `BenchmarkPreflightProperties`, keep benchmark preflight configurable, and finish the full task workflow in one session.
+  - **2026-04-02 — implementation**
+    - Files changed: `benchmark/src/main/java/com/smartbi/benchmark/config/BenchmarkPreflightProperties.java`, `benchmark/src/main/resources/application.yml`, `benchmark/src/test/java/com/smartbi/benchmark/config/BenchmarkPreflightPropertiesTest.java`, `benchmark/src/test/java/com/smartbi/benchmark/web/PreflightControllerTest.java`, `docs/modules/benchmark.md`, `docs/operations/best-practices.md`, `INBOX.md`.
+    - Commands run: `rg`, `sed`, `git diff`.
+    - Result: Removed Java-level hard-coded preflight probe URLs and credentials, moved the active values to configuration with environment-variable override support, and added regression coverage so direct POJO construction no longer hides embedded datasource details.
+  - **2026-04-02 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: `BenchmarkPreflightProperties` carried environment-specific probe URLs and credentials as Java field defaults, so the class itself encoded datasource connection details instead of remaining a pure configuration binding.
+    - Cure: Removed the Java defaults, required tests to set probe credentials explicitly, and documented/env-exposed the configuration contract in Spring YAML.
+    - Generalization: "Keep environment-specific endpoints, usernames, and passwords out of Java `@ConfigurationProperties` defaults. Bind them from Spring configuration instead." (added to `docs/operations/best-practices.md`)
+  - **2026-04-02 — verification**
+    - Validation status: approved
+    - Evidence: `mvn -q -f benchmark/pom.xml -Dtest=BenchmarkPreflightPropertiesTest,PreflightControllerTest test` passed; `npm --prefix benchmark/frontend run build` passed; `mvn -q -f benchmark/pom.xml test` was also executed but still fails for unrelated benchmark-suite drift (`PatternParseException` from `benchmark/src/main/java/com/smartbi/benchmark/config/WebConfig.java` and missing Docker/Testcontainers support), which is logged in `INBOX-20260402-001`.
+    - Next action: none
+    - Escalation: INBOX-20260402-001
+  - **2026-04-02 — doc-garden**
+    - Updated `docs/modules/benchmark.md` to describe the externalized benchmark preflight configuration contract and environment-variable override points.
+
 ### BENCH-COMPAT-001: FIX JAVA 8 COMPATIBILITY (PATH.OF, LIST.OF)
+
+- **Status**: done
+- **Updated**: 2026-04-01
+- **Progress log**:
+  - **2026-04-01 — implementation**
+    - Files changed: `JdbcDriverRegistry.java`, `JdbcDriverUploadIntegrationTest.java`, `TraceIngestionTest.java`, `TraceControllerTest.java`, `SqlParseServiceTest.java`.
+    - Commands run: `grep`, `mvn test`.
+    - Result: Implemented by replacing `Path.of`, `List.of`, and `Files.writeString` with Java 8 compatible alternatives (`Paths.get`, `Arrays.asList`, `Files.write`).
+  - **2026-04-01 — verification**
+    - Validation status: approved
+    - Evidence: `mvn -q -f benchmark/pom.xml test` and `mvn -q -f manager/pom.xml test` passed successfully.
+    - Next action: none
+    - Escalation: none
  
- - **Status**: done
- - **Updated**: 2026-04-01
- - **Progress log**:
-   - **2026-04-01 — implementation**
-     - Files changed: `JdbcDriverRegistry.java`, `JdbcDriverUploadIntegrationTest.java`, `TraceIngestionTest.java`, `TraceControllerTest.java`, `SqlParseServiceTest.java`.
-     - Commands run: `grep`, `mvn test`.
-     - Result: Implemented by replacing `Path.of`, `List.of`, and `Files.writeString` with Java 8 compatible alternatives (`Paths.get`, `Arrays.asList`, `Files.write`).
-   - **2026-04-01 — verification**
-     - Validation status: approved
-     - Evidence: `mvn -q -f benchmark/pom.xml test` and `mvn -q -f manager/pom.xml test` passed successfully.
-     - Next action: none
-     - Escalation: none
- 
- ### BENCH-UX-009: IMPROVE BENCHMARK TEST-SET AUTHORING WORKFLOW
+### BENCH-UX-009: IMPROVE BENCHMARK TEST-SET AUTHORING WORKFLOW
 
 - **Status**: done
 - **Updated**: 2026-03-31

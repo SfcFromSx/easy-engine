@@ -24,6 +24,8 @@ class PreflightControllerTest {
         RestTemplate restTemplate = mock(RestTemplate.class);
         BenchmarkPreflightProperties props = new BenchmarkPreflightProperties();
         props.setKylinAuthUrl("http://kylin/auth");
+        props.setKylinUser("ADMIN");
+        props.setKylinPassword("KYLIN");
         props.setPrestoInfoUrl("http://presto/info");
         PreflightController controller = new PreflightController(restTemplate, props);
         when(restTemplate.exchange(eq("http://kylin/auth"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
@@ -43,6 +45,8 @@ class PreflightControllerTest {
         RestTemplate restTemplate = mock(RestTemplate.class);
         BenchmarkPreflightProperties props = new BenchmarkPreflightProperties();
         props.setKylinAuthUrl("http://kylin/auth");
+        props.setKylinUser("ADMIN");
+        props.setKylinPassword("KYLIN");
         props.setPrestoInfoUrl("http://presto/info");
         PreflightController controller = new PreflightController(restTemplate, props);
         when(restTemplate.exchange(eq("http://kylin/auth"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))

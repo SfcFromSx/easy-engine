@@ -6,13 +6,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class BenchmarkPreflightProperties {
 
     /**
-     * Kylin REST 认证探测（与 docker-compose 默认一致）。
+     * Kylin REST 认证探测。
+     * 具体地址与凭据必须由外部配置提供，不能在 Java 代码中硬编码。
      */
-    private String kylinAuthUrl = "http://127.0.0.1:17070/kylin/api/user/authentication";
-    private String kylinUser = "ADMIN";
-    private String kylinPassword = "KYLIN";
+    private String kylinAuthUrl;
+    private String kylinUser;
+    private String kylinPassword;
 
-    private String prestoInfoUrl = "http://127.0.0.1:18081/v1/info";
+    private String prestoInfoUrl;
 
     public String getKylinAuthUrl() {
         return kylinAuthUrl;
