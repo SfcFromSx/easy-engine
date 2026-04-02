@@ -92,12 +92,12 @@ public class KylinJdbcE2ETest extends E2ETestBase {
         waitFor(5_000, "JDBC trace in MySQL", () -> {
             try {
                 return countMysqlRows(
-                    "SELECT count(*) FROM sql_execution_record WHERE original_sql LIKE '%jdbc_trace_probe%'") > 0;
+                    "SELECT count(*) FROM manager_sql_execution_record WHERE original_sql LIKE '%jdbc_trace_probe%'") > 0;
             } catch (Exception e) { return false; }
         });
 
         int rows = countMysqlRows(
-            "SELECT count(*) FROM sql_execution_record WHERE original_sql LIKE '%jdbc_trace_probe%'");
+            "SELECT count(*) FROM manager_sql_execution_record WHERE original_sql LIKE '%jdbc_trace_probe%'");
         assertThat(rows).isGreaterThan(0);
     }
 

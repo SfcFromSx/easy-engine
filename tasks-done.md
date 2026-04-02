@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| QUERY-TRINO-002 | ADD LOCAL TRINO SERVICE AND E2E COVERAGE | query | Trino service added to `docker-compose.yml`, seeded in `manager`, and verified with `TrinoRoutingE2ETest` passing 5/5 cases. Fixed repo-wide table name prefixing drift for `manager_sql_execution_record`. |
 | QUERY-BUG-003 | MAKE CLEAN SQL INDEPENDENT OF COMMENT VALUES | query | `cleanSql` now strips all SQL comments regardless of their contents, `executionSql` still preserves pass-through downstream comments, query docs/test matrix now describe the split contract explicitly, and the focused plus full `analyze`/`query` reactor validations pass. |
 | QUERY-BUG-002 | ACCEPT QUERY SQL AFTER LEADING OPTIMIZER COMMENTS | query | `query` now treats leading SQL comments, including `/*+ ... */` optimizer hints, as ignorable when detecting read-only query verbs, preserves non-query rejection for commented write statements, updates the query contract docs, and passes focused plus full reactor query validation. |
 | BENCH-UX-010 | REPLACE SQL TEMPLATES WITH SQL LIB REFERENCE WORKFLOW | benchmark | Benchmark now uses SQL Lib as the reusable SQL source of truth, SQL file import moved into `/api/v1/sql-lib/upload` with filename/upload-time metadata and `.xlsx/.xls/.et/.csv/.txt/.sql` support, test sets now store ordered SQL Lib references instead of inline SQL payloads, and benchmark backend/frontend validation passed. |
@@ -78,6 +79,30 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+### QUERY-TRINO-002: ADD LOCAL TRINO SERVICE AND E2E COVERAGE
+
+- **Status**: done
+- **Updated**: 2026-04-02
+- **Progress log**:
+  - **2026-04-02 — intake**
+    - Human requested a runnable local Trino Docker service because `query` already supports `type=trino` but the repo had no matching compose service to validate it end-to-end.
+    - Scope for this task: add the local Trino runtime wiring, point local config/docs/tests at it, and add automated coverage that proves `query` can route real requests through the new local Trino target.
+  - **2026-04-02 — implementation**
+    - Added Trino service to `docker-compose.yml` (olap profile).
+    - Seeded `trino_local` into `manager` via Flyway migration `V10`.
+    - Added Trino JDBC driver to `tests/pom.xml` and updated `E2EConfig.java`.
+    - Created `TrinoConnectivityTest.java` (query module) and `TrinoRoutingE2ETest.java` (tests module).
+    - Fixed table name drifting (`sql_execution_record` -> `manager_sql_execution_record`) in both `query` entities and all `tests` module SQL queries.
+    - Updated `quickstart.md`.
+  - **2026-04-02 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: E2E tests and `query` module entities were not updated after the `V9` table prefixing migration.
+    - Cure: Mass-updated hardcoded table name strings across the repository.
+    - Generalization: "Always audit dependent modules and test suites when performing non-automated database schema migrations."
+  - **2026-04-02 — verification**
+    - Validation status: approved
+    - Evidence: `TrinoRoutingE2ETest` passed with green output (5/5 tests). Manual `curl` confirmed correct routing to Trino and trace recording in MySQL.
+
 
 ### QUERY-BUG-003: MAKE CLEAN SQL INDEPENDENT OF COMMENT VALUES
 

@@ -71,13 +71,13 @@ public class CacheE2ETest extends E2ETestBase {
         waitFor(5_000, "cache_hit trace in MySQL", () -> {
             try {
                 return countMysqlRows(
-                    "SELECT count(*) FROM sql_execution_record WHERE cache_hit = true AND original_sql = ?",
+                    "SELECT count(*) FROM manager_sql_execution_record WHERE cache_hit = true AND original_sql = ?",
                     sql) > 0;
             } catch (Exception e) { return false; }
         });
 
         int hits = countMysqlRows(
-            "SELECT count(*) FROM sql_execution_record WHERE cache_hit = true AND original_sql = ?", sql);
+            "SELECT count(*) FROM manager_sql_execution_record WHERE cache_hit = true AND original_sql = ?", sql);
         assertThat(hits).isGreaterThanOrEqualTo(1);
     }
 

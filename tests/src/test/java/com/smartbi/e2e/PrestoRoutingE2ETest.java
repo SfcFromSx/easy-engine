@@ -48,7 +48,7 @@ public class PrestoRoutingE2ETest extends E2ETestBase {
         waitFor(5_000, "presto trace in MySQL", () -> {
             try {
                 return countMysqlRows(
-                    "SELECT count(*) FROM sql_execution_record WHERE datasource_name = ?",
+                    "SELECT count(*) FROM manager_sql_execution_record WHERE datasource_name = ?",
                     E2EConfig.PRESTO_DS_NAME) > 0;
             } catch (Exception e) { return false; }
         });
@@ -56,7 +56,7 @@ public class PrestoRoutingE2ETest extends E2ETestBase {
         try (java.sql.Connection c = mysqlConnection();
              ResultSet rs = queryMysql(c,
                  "SELECT datasource_name, success, execution_mode "
-               + "FROM sql_execution_record WHERE datasource_name = ? "
+               + "FROM manager_sql_execution_record WHERE datasource_name = ? "
                + "ORDER BY received_at DESC LIMIT 1",
                  E2EConfig.PRESTO_DS_NAME)) {
             assertThat(rs.next()).isTrue();
@@ -141,13 +141,13 @@ public class PrestoRoutingE2ETest extends E2ETestBase {
         waitFor(5_000, "fallback trace in MySQL", () -> {
             try {
                 return countMysqlRows(
-                    "SELECT count(*) FROM sql_execution_record WHERE original_sql LIKE '%fallback_probe%'") > 0;
+                    "SELECT count(*) FROM manager_sql_execution_record WHERE original_sql LIKE '%fallback_probe%'") > 0;
             } catch (Exception e) { return false; }
         });
 
         try (java.sql.Connection c = mysqlConnection();
              ResultSet rs = queryMysql(c,
-                 "SELECT datasource_name FROM sql_execution_record "
+                 "SELECT datasource_name FROM manager_sql_execution_record "
                + "WHERE original_sql LIKE '%fallback_probe%' ORDER BY received_at DESC LIMIT 1")) {
             assertThat(rs.next()).isTrue();
             // Should have fallen back to the default datasource, not the nonexistent one

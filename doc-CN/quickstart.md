@@ -19,6 +19,9 @@ Easy Engine 使用 Docker Compose 来管理共享的中间件。
 ```bash
 # 启动 MySQL (元数据库) 和 Redis (缓存)
 docker compose up -d mysql redis
+
+# (可选) 启动 OLAP 引擎 (Kylin, Presto, Trino)
+docker compose --profile olap up -d
 ```
 
 > [!NOTE]
@@ -29,16 +32,24 @@ docker compose up -d mysql redis
 
 ## 3. 数据库初始化与配置
 
-### 数据库表创建
-Easy Engine 使用 **Flyway** 进行自动化的数据库迁移。
-- **无需手动执行 SQL 脚本**: 当后端服务（如 `manager` 或 `benchmark`）启动时，它们会自动检测并应用 `src/main/resources/db/migration` 下的 `.sql` 脚本。
-- **查看脚本**: 您可以在各个模块的 `src/main/resources/db/migration` 目录下找到 DDL 和种子数据脚本。
+### 数据库表创建与初始化
+为了保证环境可控，Easy Engine 的元数据库表结构创建和种子数据导入**不再**随 Java 服务启动而自动执行。
+
+您需要先运行初始化脚本来配置 schema：
+
+```bash
+# 初始化元数据库 (默认会为 manager 和 benchmark 模块执行 Flyway 迁移)
+bash scripts/init-db.sh dev
+```
+
+- **脚本说明**: `scripts/init-db.sh` 会根据指定的 profile（如 `dev`）加载对应的数据库连接配置，并显式执行 Flyway 迁移。
+- **查看脚本**: 您可以在 `scripts/init-db.sh` 中查看逻辑，并在各个模块的 `src/main/resources/db/migration` 目录下找到 DDL 和种子数据。
 
 ### 3.1 MySQL 表结构概览
-系统启动后，Flyway 会在 `engine_db` 中创建以下主要表结构，按模块分类如下：
+执行上述初始化脚本后，`engine_db` 中会创建以下主要表结构：
 
 #### Manager (管理模块)
-- `manager_query_datasource_config`: 存储各个查询引擎（如 Kylin, Presto）的连接配置。
+- `manager_query_datasource_config`: 存储各个查询引擎（如 Kylin, Presto, Trino）的连接配置。
 - `manager_sql_execution_record`: 存储从 Query 服务摄取的原始 SQL 执行轨迹（Traces）。
 - `manager_sql_pattern_stats`: 存储经过脱敏和聚合后的 SQL 特征统计信息。
 - `manager_acceleration_table`: 存储建议或已创建的加速表（物化视图）元数据。
@@ -123,7 +134,7 @@ npm --prefix benchmark/frontend run dev
 
 ## 6. 后续步骤：配置数据源
 
-系统启动后，您通常需要添加实际的计算引擎（如 Kylin 或 Presto）作为数据源：
+系统启动后，您通常需要添加实际的计算引擎（如 Kylin, Presto 或 Trino）作为数据源：
 
 1.  **访问 UI**: 打开浏览器访问 Benchmark UI (默认 `http://localhost:5174`)。
 2.  **上传驱动**: 在 "Data Sources" -> "Upload Driver" 页面上传对应的 JDBC 驱动 JAR 包。

@@ -27,12 +27,12 @@ public class MysqlInfraE2ETest extends E2ETestBase {
 
     @Test
     @Order(2)
-    @DisplayName("sql_execution_record table exists with required columns")
+    @DisplayName("manager_sql_execution_record table exists with required columns")
     void testSqlExecutionRecordSchema() throws SQLException {
         try (Connection c = mysqlConnection()) {
             DatabaseMetaData meta = c.getMetaData();
             // MySQL uses catalog for database name, schema is typically null
-            ResultSet cols = meta.getColumns("engine_db", null, "sql_execution_record", null);
+            ResultSet cols = meta.getColumns("engine_db", null, "manager_sql_execution_record", null);
             java.util.Set<String> colNames = new java.util.HashSet<>();
             while (cols.next()) colNames.add(cols.getString("COLUMN_NAME").toLowerCase());
             assertThat(colNames).contains(
@@ -44,11 +44,11 @@ public class MysqlInfraE2ETest extends E2ETestBase {
 
     @Test
     @Order(3)
-    @DisplayName("sql_pattern_stats table exists with required columns")
+    @DisplayName("manager_sql_pattern_stats table exists with required columns")
     void testSqlPatternStatsSchema() throws SQLException {
         try (Connection c = mysqlConnection()) {
             DatabaseMetaData meta = c.getMetaData();
-            ResultSet cols = meta.getColumns("engine_db", null, "sql_pattern_stats", null);
+            ResultSet cols = meta.getColumns("engine_db", null, "manager_sql_pattern_stats", null);
             java.util.Set<String> colNames = new java.util.HashSet<>();
             while (cols.next()) colNames.add(cols.getString("COLUMN_NAME").toLowerCase());
             assertThat(colNames).contains(
@@ -59,11 +59,11 @@ public class MysqlInfraE2ETest extends E2ETestBase {
 
     @Test
     @Order(4)
-    @DisplayName("acceleration_table table exists with required columns")
+    @DisplayName("manager_acceleration_table table exists with required columns")
     void testAccelerationTableSchema() throws SQLException {
         try (Connection c = mysqlConnection()) {
             DatabaseMetaData meta = c.getMetaData();
-            ResultSet cols = meta.getColumns("engine_db", null, "acceleration_table", null);
+            ResultSet cols = meta.getColumns("engine_db", null, "manager_acceleration_table", null);
             java.util.Set<String> colNames = new java.util.HashSet<>();
             while (cols.next()) colNames.add(cols.getString("COLUMN_NAME").toLowerCase());
             assertThat(colNames).contains("id", "name", "schema_name", "status", "source");
@@ -72,11 +72,11 @@ public class MysqlInfraE2ETest extends E2ETestBase {
 
     @Test
     @Order(5)
-    @DisplayName("query_datasource_config table exists with required columns")
+    @DisplayName("manager_query_datasource_config table exists with required columns")
     void testQueryDatasourceConfigSchema() throws SQLException {
         try (Connection c = mysqlConnection()) {
             DatabaseMetaData meta = c.getMetaData();
-            ResultSet cols = meta.getColumns("engine_db", null, "query_datasource_config", null);
+            ResultSet cols = meta.getColumns("engine_db", null, "manager_query_datasource_config", null);
             java.util.Set<String> colNames = new java.util.HashSet<>();
             while (cols.next()) colNames.add(cols.getString("COLUMN_NAME").toLowerCase());
             assertThat(colNames).contains(
@@ -108,10 +108,10 @@ public class MysqlInfraE2ETest extends E2ETestBase {
 
     @Test
     @Order(7)
-    @DisplayName("query_datasource_config is seeded with default Kylin datasource")
+    @DisplayName("manager_query_datasource_config is seeded with default Kylin datasource")
     void testDatasourceConfigSeeded() throws SQLException {
         int rows = countMysqlRows(
-            "SELECT count(*) FROM query_datasource_config WHERE name = 'default'");
+            "SELECT count(*) FROM manager_query_datasource_config WHERE name = 'default'");
         assertThat(rows).isGreaterThanOrEqualTo(1);
     }
 }

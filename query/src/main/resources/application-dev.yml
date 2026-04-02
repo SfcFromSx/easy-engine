@@ -59,7 +59,7 @@ engine:
           name: trino_local
           type: trino
           driver-class: io.trino.jdbc.TrinoDriver
-          jdbc-url: jdbc:trino://localhost:8080/tpch/tiny
+          jdbc-url: jdbc:trino://localhost:18080/tpch/tiny
           username: admin
           password:
           max-pool-size: 4

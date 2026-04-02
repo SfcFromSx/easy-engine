@@ -31,7 +31,7 @@ public class TraceRecordE2ETest extends E2ETestBase {
         waitFor(5_000, "trace row in MySQL", () -> {
             try {
                 return countMysqlRows(
-                    "SELECT count(*) FROM sql_execution_record WHERE original_sql = ?",
+                    "SELECT count(*) FROM manager_sql_execution_record WHERE original_sql = ?",
                     UNIQUE_SQL) > 0;
             } catch (Exception e) { return false; }
         });
@@ -39,7 +39,7 @@ public class TraceRecordE2ETest extends E2ETestBase {
         try (Connection c = mysqlConnection();
              ResultSet rs = queryMysql(c,
                  "SELECT datasource_name, execution_mode, success, duration_ms "
-               + "FROM sql_execution_record WHERE original_sql = ? LIMIT 1",
+               + "FROM manager_sql_execution_record WHERE original_sql = ? LIMIT 1",
                  UNIQUE_SQL)) {
             assertThat(rs.next()).isTrue();
             assertThat(rs.getString("datasource_name")).isNotBlank();
@@ -60,13 +60,13 @@ public class TraceRecordE2ETest extends E2ETestBase {
         waitFor(5_000, "prepared trace row in MySQL", () -> {
             try {
                 return countMysqlRows(
-                    "SELECT count(*) FROM sql_execution_record WHERE execution_mode = 'PREPARED_STATEMENT'") > 0;
+                    "SELECT count(*) FROM manager_sql_execution_record WHERE execution_mode = 'PREPARED_STATEMENT'") > 0;
             } catch (Exception e) { return false; }
         });
 
         try (Connection c = mysqlConnection();
              ResultSet rs = queryMysql(c,
-                 "SELECT execution_mode FROM sql_execution_record "
+                 "SELECT execution_mode FROM manager_sql_execution_record "
                + "WHERE execution_mode = 'PREPARED_STATEMENT' ORDER BY received_at DESC LIMIT 1")) {
             assertThat(rs.next()).isTrue();
             assertThat(rs.getString("execution_mode")).isEqualTo("PREPARED_STATEMENT");
@@ -83,14 +83,14 @@ public class TraceRecordE2ETest extends E2ETestBase {
         waitFor(5_000, "failed trace row in MySQL", () -> {
             try {
                 return countMysqlRows(
-                    "SELECT count(*) FROM sql_execution_record WHERE success = false AND original_sql = ?",
+                    "SELECT count(*) FROM manager_sql_execution_record WHERE success = false AND original_sql = ?",
                     badSql) > 0;
             } catch (Exception e) { return false; }
         });
 
         try (Connection c = mysqlConnection();
              ResultSet rs = queryMysql(c,
-                 "SELECT success, error_message FROM sql_execution_record WHERE original_sql = ? LIMIT 1",
+                 "SELECT success, error_message FROM manager_sql_execution_record WHERE original_sql = ? LIMIT 1",
                  badSql)) {
             assertThat(rs.next()).isTrue();
             assertThat(rs.getBoolean("success")).isFalse();
@@ -107,14 +107,14 @@ public class TraceRecordE2ETest extends E2ETestBase {
         waitFor(5_000, "presto trace in MySQL", () -> {
             try {
                 return countMysqlRows(
-                    "SELECT count(*) FROM sql_execution_record WHERE datasource_name = ?",
+                    "SELECT count(*) FROM manager_sql_execution_record WHERE datasource_name = ?",
                     E2EConfig.PRESTO_DS_NAME) > 0;
             } catch (Exception e) { return false; }
         });
 
         try (Connection c = mysqlConnection();
              ResultSet rs = queryMysql(c,
-                 "SELECT datasource_name FROM sql_execution_record "
+                 "SELECT datasource_name FROM manager_sql_execution_record "
                + "WHERE datasource_name = ? ORDER BY received_at DESC LIMIT 1",
                  E2EConfig.PRESTO_DS_NAME)) {
             assertThat(rs.next()).isTrue();
@@ -147,7 +147,7 @@ public class TraceRecordE2ETest extends E2ETestBase {
         String sql = "SELECT 1 AS pattern_probe";
         // get baseline
         int before = countMysqlRows(
-            "SELECT coalesce(sum(execution_count),0) FROM sql_pattern_stats WHERE clean_sql_sample = ?", sql);
+            "SELECT coalesce(sum(execution_count),0) FROM manager_sql_pattern_stats WHERE clean_sql_sample = ?", sql);
         // execute twice more
         querySpec().body(statementRequest(sql)).post("/kylin/api/query");
         querySpec().body(statementRequest(sql)).post("/kylin/api/query");
@@ -155,13 +155,13 @@ public class TraceRecordE2ETest extends E2ETestBase {
         waitFor(10_000, "pattern stats updated", () -> {
             try {
                 return countMysqlRows(
-                    "SELECT coalesce(sum(execution_count),0) FROM sql_pattern_stats WHERE clean_sql_sample = ?",
+                    "SELECT coalesce(sum(execution_count),0) FROM manager_sql_pattern_stats WHERE clean_sql_sample = ?",
                     sql) > before;
             } catch (Exception e) { return false; }
         });
 
         int after = countMysqlRows(
-            "SELECT coalesce(sum(execution_count),0) FROM sql_pattern_stats WHERE clean_sql_sample = ?", sql);
+            "SELECT coalesce(sum(execution_count),0) FROM manager_sql_pattern_stats WHERE clean_sql_sample = ?", sql);
         assertThat(after).isGreaterThan(before);
     }
 }

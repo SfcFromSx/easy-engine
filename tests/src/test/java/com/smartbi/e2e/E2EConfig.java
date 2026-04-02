@@ -37,6 +37,10 @@ public final class E2EConfig {
     public static final String PRESTO_JDBC_URL = prop("e2e.presto.url", "jdbc:presto://localhost:18081/tpch/tiny");
     public static final String PRESTO_DS_NAME  = "presto_local";
 
+    // Trino
+    public static final String TRINO_JDBC_URL = prop("e2e.trino.url", "jdbc:trino://localhost:18080/tpch/tiny");
+    public static final String TRINO_DS_NAME  = "trino_local";
+
     // Auth header for query service (ADMIN:KYLIN base64)
     public static final String QUERY_AUTH_HEADER = "Basic QURNSU46S1lMSU4="; // ADMIN:KYLIN
 
