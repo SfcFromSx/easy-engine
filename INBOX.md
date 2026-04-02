@@ -23,14 +23,6 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Suggested next step: Keep `tasks.md`, `tasks-done.md`, and Git history as the canonical audit trail, grandfather the known legacy missing-commit IDs in the audit script, and enforce the stricter rules for all new completions.
 - Human decision: pending
 
-### INBOX-20260402-001
-- Area: Benchmark validation drift
-- Related task(s): `BENCH-CONFIG-001`
-- Summary: The standard benchmark backend validation command currently fails for reasons unrelated to the preflight-config task: Spring MVC rejects the benchmark SPA forward pattern in `WebConfig`, and Docker-backed coverage is still unavailable in this environment.
-- Evidence: `mvn -q -f benchmark/pom.xml test` failed on 2026-04-02 with `PatternParseException: Invalid mapping pattern detected: /**/{path:[^\\.]*}` from `benchmark/src/main/java/com/smartbi/benchmark/config/WebConfig.java`, plus Testcontainers reported `Could not find a valid Docker environment`.
-- Impact/Risk: Benchmark tasks cannot rely on the module's default Maven test command as a clean verification signal, so unrelated suite drift can mask task-local regressions.
-- Suggested next step: Open a dedicated benchmark validation task to fix or isolate the SPA route mapping for test startup and decide how Docker-dependent coverage should run locally versus CI.
-- Human decision: pending
 
 ### INBOX-20260402-002
 - Area: Harness audit trail
@@ -113,14 +105,6 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Suggested next step: Keep the task ledger, archive, and eventual commit aligned when `TEST-CONFIG-001` closes.
 - Human decision: pending
 
-### INBOX-20260402-011
-- Area: Manager and benchmark validation drift
-- Related task(s): `ARCH-015`
-- Summary: Focused verification for the DB-init workflow change still ran into unrelated Spring MVC path-pattern failures in both `manager` and `benchmark`, and benchmark Flyway coverage remains Docker-dependent in this environment.
-- Evidence: `mvn -q -f manager/pom.xml -Dtest=ManagerDashboardBootstrapIntegrationTest,DatasourceConfigFlywayIntegrationTest test` failed on 2026-04-02 with `PatternParseException: Invalid mapping pattern detected: /**/{path:[^\\.]*}` while creating the MVC view-controller mapping; `mvn -q -f benchmark/pom.xml -Dtest=BenchmarkFlywaySeedTest,BenchmarkSmokeTest test` hit the same SPA route-pattern failure in `benchmark` web-context tests, and `mvn -q -f benchmark/pom.xml -Dtest=BenchmarkFlywaySeedTest test` only exits cleanly through the existing Docker-less Testcontainers skip path.
-- Impact/Risk: Manager and benchmark web-context validation remain noisy for work unrelated to this task, which makes it harder to use those focused Maven tests as clean signals when verifying future runtime/config changes.
-- Suggested next step: Open a dedicated task to replace the invalid SPA forward mapping (or switch matching strategy explicitly) across both modules and decide how Docker-backed Flyway coverage should run locally versus CI.
-- Human decision: pending
 
 ### INBOX-20260402-012
 - Area: Harness audit trail
