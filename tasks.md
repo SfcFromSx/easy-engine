@@ -22,15 +22,6 @@ Completed task history lives in [tasks-done.md](/Users/sfc/Documents/projects/en
 
 | ID | Title | Module | Status | Updated | Dependencies |
 |----|-------|--------|--------|---------|--------------|
-| TEST-CONFIG-001 | AUDIT TESTS FOR HARD-CODED CONNECTION FIXTURES | tests | todo | 2026-04-02 | none |
-
-### TEST-CONFIG-001: AUDIT TESTS FOR HARD-CODED CONNECTION FIXTURES
-
-- **Status**: todo
-- **Updated**: 2026-04-02
-- **Progress log**:
-  - **2026-04-02 — intake**
-    - Follow-up review task created automatically from `BENCH-TEST-002` after exporting a new best-practice rule: audit existing tests for inline datasource URLs, probe endpoints, usernames, passwords, or similar connection fixtures and move them into test-owned config where appropriate.
 
 ## Archive
 

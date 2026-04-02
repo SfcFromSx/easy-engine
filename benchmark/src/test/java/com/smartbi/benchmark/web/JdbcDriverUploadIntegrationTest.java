@@ -2,11 +2,13 @@ package com.smartbi.benchmark.web;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import javax.tools.JavaCompiler;
@@ -30,15 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(properties = {
-        "spring.datasource.url=jdbc:h2:mem:benchmarkdriverupload;MODE=MySQL;DB_CLOSE_DELAY=-1",
-        "spring.datasource.driver-class-name=org.h2.Driver",
-        "spring.datasource.username=sa",
-        "spring.datasource.password=",
-        "spring.jpa.hibernate.ddl-auto=create-drop",
-        "spring.flyway.enabled=false",
-        "benchmark.jdbc.driver-dir=${user.dir}/target/test-drivers/uploaded"
-})
+@SpringBootTest
+@TestPropertySource(locations = "classpath:jdbc-driver-upload-integration-test.properties")
 @AutoConfigureMockMvc
 class JdbcDriverUploadIntegrationTest {
 
@@ -49,6 +44,21 @@ class JdbcDriverUploadIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Value("${benchmark.jdbc-upload.test-datasource.name}")
+    private String datasourceName;
+
+    @Value("${benchmark.jdbc-upload.test-datasource.driver-class}")
+    private String datasourceDriverClass;
+
+    @Value("${benchmark.jdbc-upload.test-datasource.jdbc-url}")
+    private String datasourceJdbcUrl;
+
+    @Value("${benchmark.jdbc-upload.test-datasource.jdbc-user}")
+    private String datasourceJdbcUser;
+
+    @Value("${benchmark.jdbc-upload.test-datasource.jdbc-password:}")
+    private String datasourceJdbcPassword;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -81,19 +91,21 @@ class JdbcDriverUploadIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0]").value("uploaded-h2-driver.jar"));
 
-        String dsJson = "{"
-                + "\"name\":\"uploaded-driver\","
-                + "\"driverClass\":\"com.example.uploaded.UploadedH2Driver\","
-                + "\"jdbcUrl\":\"jdbc:h2:mem:uploadeddriver;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE\","
-                + "\"jdbcUser\":\"sa\","
-                + "\"jdbcPassword\":\"\""
-                + "}";
-
         mockMvc.perform(post("/api/v1/datasources/test")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(dsJson))
+                        .content(datasourceJson()))
                 .andExpect(status().isOk())
                 .andExpect(content().string("SUCCESS"));
+    }
+
+    private String datasourceJson() {
+        return "{"
+                + "\"name\":\"" + datasourceName + "\","
+                + "\"driverClass\":\"" + datasourceDriverClass + "\","
+                + "\"jdbcUrl\":\"" + datasourceJdbcUrl + "\","
+                + "\"jdbcUser\":\"" + datasourceJdbcUser + "\","
+                + "\"jdbcPassword\":\"" + datasourceJdbcPassword + "\""
+                + "}";
     }
 
     private Path buildUploadedDriverJar() throws Exception {

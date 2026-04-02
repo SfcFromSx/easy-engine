@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| TEST-CONFIG-001 | AUDIT TESTS FOR HARD-CODED CONNECTION FIXTURES | tests | Benchmark and query tests now load datasource and credential fixtures from classpath test property files/helpers instead of inline literals, focused benchmark/query validation passes, and the targeted hard-coded-fixture audit scan is clean. |
 | ARCH-015 | SEPARATE DATABASE INITIALIZATION FROM SERVICE STARTUP | platform | `manager` and `benchmark` no longer run Flyway automatically on startup, `scripts/init-db.sh` now initializes the shared MySQL schema explicitly, the local-development docs were updated to require that step, and both modules still compile. |
 | QUERY-TRINO-001 | ADD TRINO DATASOURCE SUPPORT | query | `query` now bundles the Trino JDBC driver, routes `type=trino` datasource configs without SQL rewrites, exposes a `trino_local` fallback example, documents the Trino config contract, and `mvn -q -f query/pom.xml test` passes. |
 | QUERY-REVIEW-002 | AUDIT QUERY COMPATIBILITY INPUT VALIDATION | query | `query` now accepts empty `/kylin/api/query` bodies through the same compatibility exception payload as blank SQL, rejects unsupported top-level request shapes on the query endpoint, keeps the request docs/test matrix aligned, and `mvn -q -f query/pom.xml test` passes. |
@@ -116,6 +117,32 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
     - Escalation: none
   - **2026-04-02 — doc-garden**
     - Updated `docs/modules/query.md` so the prepared-parameter contract now explicitly includes Trino in the non-Kylin JDBC path and the routing notes document the expected `type`, driver class, and JDBC URL shape for Trino datasource configs. No additional architecture or local-development drift was required for this task.
+
+### TEST-CONFIG-001: AUDIT TESTS FOR HARD-CODED CONNECTION FIXTURES
+
+- **Status**: done
+- **Updated**: 2026-04-02
+- **Progress log**:
+  - **2026-04-02 — intake**
+    - Follow-up review task created automatically from `BENCH-TEST-002` after exporting a new best-practice rule: audit existing tests for inline datasource URLs, probe endpoints, usernames, passwords, or similar connection fixtures and move them into test-owned config where appropriate.
+  - **2026-04-02 — investigation**
+    - Human requested a project-wide review against the newest applicable best-practice. The latest rule added to `docs/operations/best-practices.md` by `QUERY-BUG-001` was already reviewed and closed by `QUERY-REVIEW-002`, so this still-open task became the active follow-up for the remaining unresolved best-practice drift.
+    - Initial audit found clear remaining violations in benchmark/query tests where datasource URLs, usernames, passwords, and related request payload fixtures were embedded directly in `@SpringBootTest(properties = ...)`, setup methods, helper builders, or inline JSON bodies instead of test-owned config.
+  - **2026-04-02 — implementation**
+    - Files changed: `benchmark/src/test/java/com/smartbi/benchmark/run/BenchmarkAsyncRunnerExecutionModeIntegrationTest.java`, `benchmark/src/test/java/com/smartbi/benchmark/web/BenchmarkSmokeTest.java`, `benchmark/src/test/java/com/smartbi/benchmark/web/DataSourceControllerTest.java`, `benchmark/src/test/java/com/smartbi/benchmark/web/JdbcDriverUploadIntegrationTest.java`, `benchmark/src/test/java/com/smartbi/benchmark/web/RunControllerContextTest.java`, `benchmark/src/test/java/com/smartbi/benchmark/support/BenchmarkTestFixtures.java`, `benchmark/src/test/resources/benchmark-async-runner-execution-mode-integration-test.properties`, `benchmark/src/test/resources/benchmark-smoke-test.properties`, `benchmark/src/test/resources/benchmark-test-fixtures.properties`, `benchmark/src/test/resources/jdbc-driver-upload-integration-test.properties`, `benchmark/src/test/resources/run-controller-context-test.properties`, `query/src/test/java/com/smartbi/query/config/ManagerConfigClientTest.java`, `query/src/test/java/com/smartbi/query/datasource/ManagedDataSourceRegistryTest.java`, `query/src/test/java/com/smartbi/query/route/SqlRouteServiceTest.java`, `query/src/test/java/com/smartbi/query/service/QueryResultMapperTest.java`, `query/src/test/java/com/smartbi/query/trace/QueryTracePersistenceIntegrationTest.java`, `query/src/test/java/com/smartbi/query/web/QueryWebIntegrationTest.java`, `query/src/test/java/com/smartbi/query/support/QueryTestFixtures.java`, `query/src/test/resources/query-test-fixtures.properties`, `query/src/test/resources/query-trace-persistence-integration-test.properties`, `query/src/test/resources/query-web-integration-test.properties`.
+    - Commands run: `rg`, `sed`, `git diff`.
+    - Result: Moved benchmark/query datasource and credential fixtures out of inline test code into dedicated classpath property files plus small test-fixture loaders, updated Spring integration tests to use `@TestPropertySource`, and isolated the known benchmark SPA route-pattern drift behind test-only matching-strategy config so the touched benchmark tests could still validate cleanly.
+  - **2026-04-02 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: Test connection details had drifted into inline annotation properties, setup methods, and request payload builders over time, so changing fixtures still required Java edits instead of isolated test-config updates.
+    - Cure: Centralized datasource URLs, usernames, passwords, and related request fixture values in classpath test property files, added tiny fixture loaders for non-Spring tests, and used test-only property overrides where needed so focused validation could exercise the fixture cleanup without touching production runtime behavior.
+    - Generalization: Existing rule from `BENCH-TEST-002` already covers this case; no new `docs/operations/best-practices.md` entry was needed.
+  - **2026-04-02 — verification**
+    - Validation status: approved
+    - Evidence: `mvn -q -f query/pom.xml -Dtest=QueryWebIntegrationTest,QueryTracePersistenceIntegrationTest,QueryResultMapperTest,ManagerConfigClientTest,ManagedDataSourceRegistryTest,SqlRouteServiceTest test` passed; `mvn -q -f benchmark/pom.xml -Dtest=BenchmarkSmokeTest,JdbcDriverUploadIntegrationTest,RunControllerContextTest,BenchmarkAsyncRunnerExecutionModeIntegrationTest,DataSourceControllerTest test` passed; `rg -n '@SpringBootTest\([^\)]*properties\s*=\s*\{|DriverManager\.getConnection\("|setManagerUrl\("http://localhost:8090|setJdbcUrl\("jdbc:|"jdbcUrl":"jdbc:' benchmark/src/test manager/src/test query/src/test tests/src/test --glob '!**/target/**'` returned no matches.
+    - Next action: none
+    - Escalation: none
+
 
 ### QUERY-REVIEW-002: AUDIT QUERY COMPATIBILITY INPUT VALIDATION
 

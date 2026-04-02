@@ -4,6 +4,7 @@ import com.smartbi.benchmark.domain.BenchmarkDataSource;
 import com.smartbi.benchmark.jdbc.JdbcDriverRegistry;
 import com.smartbi.benchmark.repo.BenchmarkDataSourceRepository;
 import com.smartbi.benchmark.repo.BenchmarkJobRepository;
+import com.smartbi.benchmark.support.BenchmarkTestFixtures;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
@@ -19,6 +20,11 @@ import static org.mockito.Mockito.when;
 
 class DataSourceControllerTest {
 
+    private static final String UPDATE_JDBC_URL = BenchmarkTestFixtures.get("benchmark.test.datasource.update.jdbc-url");
+    private static final String UPDATE_JDBC_USER = BenchmarkTestFixtures.get("benchmark.test.datasource.update.jdbc-user");
+    private static final String UPDATE_JDBC_PASSWORD = BenchmarkTestFixtures.get("benchmark.test.datasource.update.jdbc-password");
+    private static final String UPDATE_DRIVER_CLASS = BenchmarkTestFixtures.get("benchmark.test.datasource.update.driver-class");
+
     // Covers DataSourceController#update editable field propagation.
     @Test
     void shouldUpdateEditableDatasourceFields() {
@@ -33,10 +39,10 @@ class DataSourceControllerTest {
         existing.setName("old");
         BenchmarkDataSource payload = new BenchmarkDataSource();
         payload.setName("new");
-        payload.setJdbcUrl("jdbc:h2:mem:new");
-        payload.setJdbcUser("sa");
-        payload.setJdbcPassword("pw");
-        payload.setDriverClass("org.h2.Driver");
+        payload.setJdbcUrl(UPDATE_JDBC_URL);
+        payload.setJdbcUser(UPDATE_JDBC_USER);
+        payload.setJdbcPassword(UPDATE_JDBC_PASSWORD);
+        payload.setDriverClass(UPDATE_DRIVER_CLASS);
         when(repository.findById(8L)).thenReturn(Optional.of(existing));
         when(repository.save(existing)).thenReturn(existing);
 
@@ -44,10 +50,10 @@ class DataSourceControllerTest {
 
         assertSame(existing, saved);
         assertEquals("new", existing.getName());
-        assertEquals("jdbc:h2:mem:new", existing.getJdbcUrl());
-        assertEquals("sa", existing.getJdbcUser());
-        assertEquals("pw", existing.getJdbcPassword());
-        assertEquals("org.h2.Driver", existing.getDriverClass());
+        assertEquals(UPDATE_JDBC_URL, existing.getJdbcUrl());
+        assertEquals(UPDATE_JDBC_USER, existing.getJdbcUser());
+        assertEquals(UPDATE_JDBC_PASSWORD, existing.getJdbcPassword());
+        assertEquals(UPDATE_DRIVER_CLASS, existing.getDriverClass());
     }
 
     // Covers DataSourceController#remove guard when a datasource is still referenced by jobs.

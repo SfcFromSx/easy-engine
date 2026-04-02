@@ -2,6 +2,7 @@ package com.smartbi.query.datasource;
 
 import com.smartbi.query.config.ManagerConfigClient;
 import com.smartbi.query.config.QueryProperties;
+import com.smartbi.query.support.QueryTestFixtures;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -91,10 +92,10 @@ class ManagedDataSourceRegistryTest {
         QueryProperties.NamedDatasource unnamed = new QueryProperties.NamedDatasource();
         unnamed.setName(" ");
         unnamed.setType("presto");
-        unnamed.setDriverClass("org.h2.Driver");
-        unnamed.setJdbcUrl("jdbc:h2:mem:keyed_named");
-        unnamed.setUsername("sa");
-        unnamed.setPassword("");
+        unnamed.setDriverClass(QueryTestFixtures.get("query.test.registry.shared.driver-class"));
+        unnamed.setJdbcUrl(QueryTestFixtures.get("query.test.registry.keyed.jdbc-url"));
+        unnamed.setUsername(QueryTestFixtures.get("query.test.registry.shared.username"));
+        unnamed.setPassword(QueryTestFixtures.get("query.test.registry.shared.password"));
         queryProperties.getDatasource().getNamed().put("keyed_name", unnamed);
 
         ManagedDataSourceRegistry registry = new ManagedDataSourceRegistry(
@@ -164,24 +165,24 @@ class ManagedDataSourceRegistryTest {
 
     private static QueryProperties fallbackProperties() {
         QueryProperties queryProperties = new QueryProperties();
-        queryProperties.setManagerUrl("http://localhost:8090");
+        queryProperties.setManagerUrl(QueryTestFixtures.get("query.test.manager-url"));
 
         QueryProperties.NamedDatasource defaultDatasource = queryProperties.getDatasource().getDefault();
-        defaultDatasource.setName("default");
-        defaultDatasource.setType("h2");
-        defaultDatasource.setDriverClass("org.h2.Driver");
-        defaultDatasource.setJdbcUrl("jdbc:h2:mem:fallback_default");
-        defaultDatasource.setUsername("sa");
-        defaultDatasource.setPassword("");
+        defaultDatasource.setName(QueryTestFixtures.get("query.test.registry.default.name"));
+        defaultDatasource.setType(QueryTestFixtures.get("query.test.registry.default.type"));
+        defaultDatasource.setDriverClass(QueryTestFixtures.get("query.test.registry.default.driver-class"));
+        defaultDatasource.setJdbcUrl(QueryTestFixtures.get("query.test.registry.default.jdbc-url"));
+        defaultDatasource.setUsername(QueryTestFixtures.get("query.test.registry.default.username"));
+        defaultDatasource.setPassword(QueryTestFixtures.get("query.test.registry.default.password"));
 
         QueryProperties.NamedDatasource prestoDatasource = new QueryProperties.NamedDatasource();
-        prestoDatasource.setName("presto_local");
-        prestoDatasource.setType("presto");
-        prestoDatasource.setDriverClass("org.h2.Driver");
-        prestoDatasource.setJdbcUrl("jdbc:h2:mem:fallback_presto");
-        prestoDatasource.setUsername("sa");
-        prestoDatasource.setPassword("");
-        queryProperties.getDatasource().getNamed().put("presto_local", prestoDatasource);
+        prestoDatasource.setName(QueryTestFixtures.get("query.test.registry.presto.name"));
+        prestoDatasource.setType(QueryTestFixtures.get("query.test.registry.presto.type"));
+        prestoDatasource.setDriverClass(QueryTestFixtures.get("query.test.registry.presto.driver-class"));
+        prestoDatasource.setJdbcUrl(QueryTestFixtures.get("query.test.registry.presto.jdbc-url"));
+        prestoDatasource.setUsername(QueryTestFixtures.get("query.test.registry.presto.username"));
+        prestoDatasource.setPassword(QueryTestFixtures.get("query.test.registry.presto.password"));
+        queryProperties.getDatasource().getNamed().put(prestoDatasource.getName(), prestoDatasource);
 
         return queryProperties;
     }
@@ -197,10 +198,10 @@ class ManagedDataSourceRegistryTest {
         ManagerConfigClient.ManagerDatasourceConfig config = new ManagerConfigClient.ManagerDatasourceConfig();
         config.setName(name);
         config.setType(type);
-        config.setDriverClass("org.h2.Driver");
-        config.setJdbcUrl("jdbc:h2:mem:" + name);
-        config.setUsername("sa");
-        config.setPassword("");
+        config.setDriverClass(QueryTestFixtures.get("query.test.registry.shared.driver-class"));
+        config.setJdbcUrl(QueryTestFixtures.get("query.test.registry.manager.jdbc-url-prefix") + name);
+        config.setUsername(QueryTestFixtures.get("query.test.registry.shared.username"));
+        config.setPassword(QueryTestFixtures.get("query.test.registry.shared.password"));
         config.setMaxPoolSize(Integer.valueOf(4));
         config.setMinIdle(Integer.valueOf(1));
         config.setConnectionTimeoutMs(Long.valueOf(10000L));

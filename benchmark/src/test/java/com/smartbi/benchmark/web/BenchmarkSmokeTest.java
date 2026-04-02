@@ -1,43 +1,53 @@
 package com.smartbi.benchmark.web;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(properties = {
-    "spring.datasource.url=jdbc:h2:mem:benchmarktest;MODE=MySQL;DB_CLOSE_DELAY=-1",
-    "spring.datasource.driver-class-name=org.h2.Driver",
-    "spring.datasource.username=sa",
-    "spring.datasource.password=",
-    "spring.jpa.hibernate.ddl-auto=create-drop",
-    "spring.flyway.enabled=false"
-})
+@SpringBootTest
+@TestPropertySource(locations = "classpath:benchmark-smoke-test.properties")
 @AutoConfigureMockMvc
 class BenchmarkSmokeTest {
 
     @Autowired
     private MockMvc mockMvc;
 
+    @Value("${benchmark.smoke.test-datasource.name}")
+    private String datasourceName;
+
+    @Value("${benchmark.smoke.test-datasource.type}")
+    private String datasourceType;
+
+    @Value("${benchmark.smoke.test-datasource.driver-class}")
+    private String datasourceDriverClass;
+
+    @Value("${benchmark.smoke.test-datasource.jdbc-url}")
+    private String datasourceJdbcUrl;
+
+    @Value("${benchmark.smoke.test-datasource.jdbc-user}")
+    private String datasourceJdbcUser;
+
+    @Value("${benchmark.smoke.test-datasource.jdbc-password:}")
+    private String datasourceJdbcPassword;
+
     // Covers DataSourceController#create and #list through the HTTP API.
     @Test
     void shouldManageDatasource() throws Exception {
-        String dsJson = "{\"name\":\"test_ds\",\"type\":\"h2\",\"driverClass\":\"org.h2.Driver\",\"jdbcUrl\":\"jdbc:h2:mem:test\",\"jdbcUser\":\"sa\",\"jdbcPassword\":\"\"}";
         mockMvc.perform(post("/api/v1/datasources")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(dsJson))
+                        .content(datasourceJson()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("test_ds"));
+                .andExpect(jsonPath("$.name").value(datasourceName));
 
         mockMvc.perform(get("/api/v1/datasources"))
                 .andExpect(status().isOk())
@@ -53,5 +63,16 @@ class BenchmarkSmokeTest {
                         .content(templateJson))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("T1"));
+    }
+
+    private String datasourceJson() {
+        return "{"
+                + "\"name\":\"" + datasourceName + "\","
+                + "\"type\":\"" + datasourceType + "\","
+                + "\"driverClass\":\"" + datasourceDriverClass + "\","
+                + "\"jdbcUrl\":\"" + datasourceJdbcUrl + "\","
+                + "\"jdbcUser\":\"" + datasourceJdbcUser + "\","
+                + "\"jdbcPassword\":\"" + datasourceJdbcPassword + "\""
+                + "}";
     }
 }

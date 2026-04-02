@@ -134,3 +134,21 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Suggested next step:
 - Human decision: pending
 ```
+
+### INBOX-20260402-010
+- Area: Harness audit trail
+- Related task(s): `TEST-CONFIG-001`
+- Summary: `tasks.md` was updated on 2026-04-02 to start the existing project-wide test-fixture audit task instead of creating a duplicate task for the same best-practice follow-up.
+- Evidence: `TEST-CONFIG-001` is now marked `in_progress`, and its progress log records that the remaining project-wide best-practice drift is inline test connection fixtures in benchmark/query tests.
+- Impact/Risk: Without an explicit audit note, later recovery or review could misread the ledger change as ad hoc bookkeeping instead of the required task workflow.
+- Suggested next step: Keep the task ledger, archive, and eventual commit aligned when `TEST-CONFIG-001` closes.
+- Human decision: pending
+
+### INBOX-20260402-014
+- Area: Harness audit trail
+- Related task(s): `TEST-CONFIG-001`
+- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-02 to archive the completion of `TEST-CONFIG-001` in the canonical task ledger.
+- Evidence: The active ledger row for `TEST-CONFIG-001` was removed from `tasks.md`, its full progress log was archived under `tasks-done.md`, and the closeout will be included in the task's single commit.
+- Impact/Risk: Without an explicit inbox note, later recovery or review could misread the harness-document edits as ad hoc bookkeeping instead of the required task workflow.
+- Suggested next step: Keep the ledger archive and task commit aligned for `TEST-CONFIG-001` closeout.
+- Human decision: pending

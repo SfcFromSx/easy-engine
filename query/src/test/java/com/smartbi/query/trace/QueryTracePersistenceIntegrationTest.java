@@ -11,14 +11,18 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
@@ -29,28 +33,27 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(
-        classes = EngineQueryApplication.class,
-        properties = {
-                "spring.datasource.url=jdbc:h2:mem:trace_persistence;MODE=MySQL;DB_CLOSE_DELAY=-1",
-                "spring.datasource.username=sa",
-                "spring.datasource.password=",
-                "spring.datasource.driver-class-name=org.h2.Driver",
-                "spring.jpa.hibernate.ddl-auto=create-drop",
-                "engine.query.datasource.default.name=default",
-                "engine.query.datasource.default.type=h2",
-                "engine.query.datasource.default.driver-class=org.h2.Driver",
-                "engine.query.datasource.default.jdbc-url=jdbc:h2:mem:trace_query;MODE=MySQL;DB_CLOSE_DELAY=-1",
-                "engine.query.datasource.default.username=sa",
-                "engine.query.datasource.default.password=",
-                "engine.query.manager-url=",
-                "engine.query.auth.username=ADMIN",
-                "engine.query.auth.password=KYLIN"
-        }
-)
+@SpringBootTest(classes = EngineQueryApplication.class)
+@TestPropertySource(locations = "classpath:query-trace-persistence-integration-test.properties")
 @AutoConfigureMockMvc
 @Import(QueryTracePersistenceIntegrationTest.CacheOnlyTestConfiguration.class)
 class QueryTracePersistenceIntegrationTest {
+
+    private static final String H2_DRIVER_CLASS = "org.h2.Driver";
+    private static final String QUERY_ENDPOINT = "/kylin/api/query";
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String BASIC_PREFIX = "Basic ";
+    private static final String AUTH_SEPARATOR = ":";
+    private static final String TRACE_QUERY_BODY =
+            "{\"sql\":\"SELECT NAME FROM SALES ORDER BY ID\",\"project\":\"demo\"}";
+    private static final String SALES_DROP_SQL = "DROP TABLE IF EXISTS SALES";
+    private static final String SALES_CREATE_SQL = "CREATE TABLE SALES (ID INT PRIMARY KEY, NAME VARCHAR(32))";
+    private static final String SALES_INSERT_SQL =
+            "INSERT INTO SALES (ID, NAME) VALUES (1, 'alpha'), (2, 'beta')";
+    private static final String DEFAULT_DATASOURCE_NAME = "default";
+    private static final String STATEMENT_EXECUTION_MODE = "STATEMENT";
+    private static final String RAW_PAYLOAD_DATASOURCE_FRAGMENT = "\"datasourceName\":\"default\"";
+    private static final String CLEAN_SQL_SAMPLE = "SELECT NAME FROM SALES ORDER BY ID";
 
     @Autowired
     private MockMvc mockMvc;
@@ -61,47 +64,61 @@ class QueryTracePersistenceIntegrationTest {
     @Autowired
     private SqlPatternStatsRepository patternStatsRepository;
 
+    @Value("${engine.query.datasource.default.jdbc-url}")
+    private String defaultJdbcUrl;
+
+    @Value("${engine.query.datasource.default.username}")
+    private String defaultJdbcUser;
+
+    @Value("${engine.query.datasource.default.password:}")
+    private String defaultJdbcPassword;
+
+    @Value("${engine.query.auth.username}")
+    private String authUsername;
+
+    @Value("${engine.query.auth.password}")
+    private String authPassword;
+
     @BeforeEach
     void setUp() throws Exception {
         recordRepository.deleteAll();
         patternStatsRepository.deleteAll();
 
-        Class.forName("org.h2.Driver");
-        try (Connection connection = DriverManager.getConnection("jdbc:h2:mem:trace_query;MODE=MySQL;DB_CLOSE_DELAY=-1", "sa", "");
+        Class.forName(H2_DRIVER_CLASS);
+        try (Connection connection = DriverManager.getConnection(defaultJdbcUrl, defaultJdbcUser, defaultJdbcPassword);
              Statement statement = connection.createStatement()) {
-            statement.execute("DROP TABLE IF EXISTS SALES");
-            statement.execute("CREATE TABLE SALES (ID INT PRIMARY KEY, NAME VARCHAR(32))");
-            statement.execute("INSERT INTO SALES (ID, NAME) VALUES (1, 'alpha'), (2, 'beta')");
+            statement.execute(SALES_DROP_SQL);
+            statement.execute(SALES_CREATE_SQL);
+            statement.execute(SALES_INSERT_SQL);
         }
     }
 
     // Covers JdbcTraceWriter#publish and JdbcTraceWriter#upsertPatternStats through the persisted HTTP trace path.
     @Test
     void shouldPersistTraceRowsDirectlyToTraceDatabase() throws Exception {
-        String body = "{\"sql\":\"SELECT NAME FROM SALES ORDER BY ID\",\"project\":\"demo\"}";
-
-        mockMvc.perform(post("/kylin/api/query")
-                        .header("Authorization", authHeader())
-                        .contentType("application/json")
-                        .content(body))
+        mockMvc.perform(post(QUERY_ENDPOINT)
+                        .header(AUTHORIZATION_HEADER, authHeader())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(TRACE_QUERY_BODY))
                 .andExpect(status().isOk());
 
         Assertions.assertEquals(1, recordRepository.count());
         SqlExecutionRecord record = recordRepository.findAll().get(0);
-        Assertions.assertEquals("default", record.getDatasourceName());
-        Assertions.assertEquals("STATEMENT", record.getExecutionMode());
+        Assertions.assertEquals(DEFAULT_DATASOURCE_NAME, record.getDatasourceName());
+        Assertions.assertEquals(STATEMENT_EXECUTION_MODE, record.getExecutionMode());
         Assertions.assertEquals(ParseStatus.OK, record.getParseStatus());
         Assertions.assertNotNull(record.getSqlFingerprint());
-        Assertions.assertTrue(record.getRawPayload().contains("\"datasourceName\":\"default\""));
+        Assertions.assertTrue(record.getRawPayload().contains(RAW_PAYLOAD_DATASOURCE_FRAGMENT));
 
         Optional<SqlPatternStats> stats = patternStatsRepository.findBySqlFingerprint(record.getSqlFingerprint());
         Assertions.assertTrue(stats.isPresent());
         Assertions.assertEquals(1L, stats.get().getExecutionCount());
-        Assertions.assertEquals("SELECT NAME FROM SALES ORDER BY ID", stats.get().getCleanSqlSample());
+        Assertions.assertEquals(CLEAN_SQL_SAMPLE, stats.get().getCleanSqlSample());
     }
 
-    private static String authHeader() {
-        return "Basic " + Base64.getEncoder().encodeToString("ADMIN:KYLIN".getBytes());
+    private String authHeader() {
+        String credentials = authUsername + AUTH_SEPARATOR + authPassword;
+        return BASIC_PREFIX + Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
     }
 
     @TestConfiguration

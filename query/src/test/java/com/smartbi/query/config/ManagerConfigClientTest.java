@@ -1,5 +1,6 @@
 package com.smartbi.query.config;
 
+import com.smartbi.query.support.QueryTestFixtures;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.MediaType;
@@ -20,6 +21,10 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 class ManagerConfigClientTest {
 
+    private static final String MANAGER_URL = QueryTestFixtures.get("query.test.manager-url");
+    private static final String DATASOURCE_URL = QueryTestFixtures.get("query.test.manager-response.default-jdbc-url");
+    private static final String DRIVER_CLASS = QueryTestFixtures.get("query.test.manager-response.default-driver-class");
+
     // Covers ManagerConfigClient#fetchDatasourceConfigs blank-manager-url fallback branch.
     @Test
     void shouldReturnEmptyListWhenManagerUrlIsBlank() {
@@ -35,12 +40,13 @@ class ManagerConfigClientTest {
     @Test
     void shouldTrimTrailingSlashAndMapDatasourceConfigs() {
         QueryProperties properties = new QueryProperties();
-        properties.setManagerUrl("http://localhost:8090/");
+        properties.setManagerUrl(MANAGER_URL + "/");
         ManagerConfigClient client = new ManagerConfigClient(new RestTemplateBuilder(), properties);
         MockRestServiceServer server = bind(client);
 
-        server.expect(requestTo("http://localhost:8090/api/v1/query-datasources"))
-                .andRespond(withSuccess("[{\"name\":\"default\",\"type\":\"h2\",\"jdbcUrl\":\"jdbc:h2:mem:test\",\"driverClass\":\"org.h2.Driver\"}]",
+        server.expect(requestTo(MANAGER_URL + "/api/v1/query-datasources"))
+                .andRespond(withSuccess("[{\"name\":\"default\",\"type\":\"h2\",\"jdbcUrl\":\"" + DATASOURCE_URL
+                                + "\",\"driverClass\":\"" + DRIVER_CLASS + "\"}]",
                         MediaType.APPLICATION_JSON));
 
         List<ManagerConfigClient.ManagerDatasourceConfig> configs = client.fetchDatasourceConfigs();
@@ -57,7 +63,7 @@ class ManagerConfigClientTest {
         ManagerConfigClient client = new ManagerConfigClient(new RestTemplateBuilder(), properties);
         MockRestServiceServer server = bind(client);
 
-        server.expect(requestTo("http://localhost:8090/api/v1/query-datasources"))
+        server.expect(requestTo(MANAGER_URL + "/api/v1/query-datasources"))
                 .andRespond(withNoContent());
 
         assertTrue(client.fetchDatasourceConfigs().isEmpty());
@@ -71,7 +77,7 @@ class ManagerConfigClientTest {
         ManagerConfigClient client = new ManagerConfigClient(new RestTemplateBuilder(), properties);
         MockRestServiceServer server = bind(client);
 
-        server.expect(requestTo("http://localhost:8090/api/v1/query-datasources"))
+        server.expect(requestTo(MANAGER_URL + "/api/v1/query-datasources"))
                 .andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));
 
         assertTrue(client.fetchDatasourceConfigs().isEmpty());
@@ -85,12 +91,12 @@ class ManagerConfigClientTest {
         ManagerConfigClient client = new ManagerConfigClient(new RestTemplateBuilder(), properties);
         MockRestServiceServer server = bind(client);
 
-        server.expect(requestTo("http://localhost:8090/api/v1/query-datasources"))
+        server.expect(requestTo(MANAGER_URL + "/api/v1/query-datasources"))
                 .andRespond(withServerError());
 
         IllegalStateException exception = assertThrows(IllegalStateException.class, client::fetchDatasourceConfigs);
 
-        assertTrue(exception.getMessage().contains("http://localhost:8090/api/v1/query-datasources"));
+        assertTrue(exception.getMessage().contains(MANAGER_URL + "/api/v1/query-datasources"));
         server.verify();
     }
 

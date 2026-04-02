@@ -20,10 +20,12 @@ import com.smartbi.benchmark.repo.SqlTemplateRepository;
 import com.smartbi.benchmark.report.BenchmarkRunReportService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.charset.StandardCharsets;
@@ -39,23 +41,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(
-        classes = BenchmarkApplication.class,
-        properties = {
-                "spring.datasource.url=jdbc:h2:mem:benchmarkrunnermeta;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-                "spring.datasource.driver-class-name=org.h2.Driver",
-                "spring.datasource.username=sa",
-                "spring.datasource.password=",
-                "spring.jpa.hibernate.ddl-auto=create-drop",
-                "spring.flyway.enabled=false"
-        }
-)
+@SpringBootTest(classes = BenchmarkApplication.class)
+@TestPropertySource(locations = "classpath:benchmark-async-runner-execution-mode-integration-test.properties")
 @AutoConfigureMockMvc
 class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
 
     private static final ObjectMapper JSON = new ObjectMapper();
-    private static final String TARGET_JDBC_URL =
-            "jdbc:h2:mem:benchmarkrunnerexec;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
 
     @Autowired
     private BenchmarkJobRepository jobRepository;
@@ -84,6 +75,18 @@ class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Value("${benchmark.async-runner.target.driver-class}")
+    private String targetDriverClass;
+
+    @Value("${benchmark.async-runner.target.jdbc-url}")
+    private String targetJdbcUrl;
+
+    @Value("${benchmark.async-runner.target.jdbc-user}")
+    private String targetJdbcUser;
+
+    @Value("${benchmark.async-runner.target.jdbc-password:}")
+    private String targetJdbcPassword;
+
     private BenchmarkAsyncRunner runner;
 
     @BeforeEach
@@ -106,8 +109,8 @@ class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
                 driverRegistry
         );
 
-        Class.forName("org.h2.Driver");
-        try (Connection connection = DriverManager.getConnection(TARGET_JDBC_URL, "sa", "");
+        Class.forName(targetDriverClass);
+        try (Connection connection = DriverManager.getConnection(targetJdbcUrl, targetJdbcUser, targetJdbcPassword);
              Statement statement = connection.createStatement()) {
             statement.execute("DROP TABLE IF EXISTS SALES");
             statement.execute("CREATE TABLE SALES (ID INT PRIMARY KEY, NAME VARCHAR(32))");
@@ -120,10 +123,10 @@ class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
     void shouldPersistMixedExecutionModeSummaryFromTestSetSources() throws Exception {
         BenchmarkDataSource dataSource = new BenchmarkDataSource();
         dataSource.setName("runner-ds");
-        dataSource.setDriverClass("org.h2.Driver");
-        dataSource.setJdbcUrl(TARGET_JDBC_URL);
-        dataSource.setJdbcUser("sa");
-        dataSource.setJdbcPassword("");
+        dataSource.setDriverClass(targetDriverClass);
+        dataSource.setJdbcUrl(targetJdbcUrl);
+        dataSource.setJdbcUser(targetJdbcUser);
+        dataSource.setJdbcPassword(targetJdbcPassword);
         dataSource = dataSourceRepository.save(dataSource);
 
         BenchmarkTestSet testSet = new BenchmarkTestSet();
@@ -213,10 +216,10 @@ class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
     void shouldRetainSeparateFailureGroupsForRoutedAndPreparedFailures() throws Exception {
         BenchmarkDataSource dataSource = new BenchmarkDataSource();
         dataSource.setName("runner-ds");
-        dataSource.setDriverClass("org.h2.Driver");
-        dataSource.setJdbcUrl(TARGET_JDBC_URL);
-        dataSource.setJdbcUser("sa");
-        dataSource.setJdbcPassword("");
+        dataSource.setDriverClass(targetDriverClass);
+        dataSource.setJdbcUrl(targetJdbcUrl);
+        dataSource.setJdbcUser(targetJdbcUser);
+        dataSource.setJdbcPassword(targetJdbcPassword);
         dataSource = dataSourceRepository.save(dataSource);
 
         BenchmarkTestSet testSet = new BenchmarkTestSet();

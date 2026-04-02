@@ -4,6 +4,7 @@ import com.smartbi.query.config.ManagerConfigClient;
 import com.smartbi.query.config.QueryProperties;
 import com.smartbi.query.datasource.ManagedDataSourceRegistry;
 import com.smartbi.query.parsing.SqlCommentParser;
+import com.smartbi.query.support.QueryTestFixtures;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 
@@ -87,7 +88,7 @@ class SqlRouteServiceTest {
 
     private static ManagedDataSourceRegistry registry(List<ManagerConfigClient.ManagerDatasourceConfig> configs) {
         QueryProperties properties = new QueryProperties();
-        properties.setManagerUrl("http://localhost:8090");
+        properties.setManagerUrl(QueryTestFixtures.get("query.test.manager-url"));
         return new ManagedDataSourceRegistry(properties, new StubManagerConfigClient(configs));
     }
 
@@ -98,10 +99,10 @@ class SqlRouteServiceTest {
             ManagerConfigClient.ManagerDatasourceConfig config = new ManagerConfigClient.ManagerDatasourceConfig();
             config.setName((String) values[i]);
             config.setType((String) values[i + 1]);
-            config.setDriverClass("org.h2.Driver");
-            config.setJdbcUrl("jdbc:h2:mem:" + values[i]);
-            config.setUsername("sa");
-            config.setPassword("");
+            config.setDriverClass(QueryTestFixtures.get("query.test.registry.shared.driver-class"));
+            config.setJdbcUrl(QueryTestFixtures.get("query.test.registry.manager.jdbc-url-prefix") + values[i]);
+            config.setUsername(QueryTestFixtures.get("query.test.registry.shared.username"));
+            config.setPassword(QueryTestFixtures.get("query.test.registry.shared.password"));
             config.setIsDefault((Boolean) values[i + 2]);
             configs.add(config);
         }
