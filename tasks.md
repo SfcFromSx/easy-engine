@@ -22,7 +22,16 @@ Completed task history lives in [tasks-done.md](/Users/sfc/Documents/projects/en
 
 | ID | Title | Module | Status | Updated | Dependencies |
 |----|-------|--------|--------|---------|--------------|
+| QUERY-REVIEW-002 | AUDIT QUERY COMPATIBILITY INPUT VALIDATION | query | todo | 2026-04-02 | none |
 | TEST-CONFIG-001 | AUDIT TESTS FOR HARD-CODED CONNECTION FIXTURES | tests | todo | 2026-04-02 | none |
+
+### QUERY-REVIEW-002: AUDIT QUERY COMPATIBILITY INPUT VALIDATION
+
+- **Status**: todo
+- **Updated**: 2026-04-02
+- **Progress log**:
+  - **2026-04-02 — intake**
+    - Follow-up review task created automatically from `QUERY-BUG-001` after exporting a new best-practice rule: audit the remaining query compatibility/shim entrypoints for missing blank or unsupported request validation and apply the same early-rejection pattern where needed.
 
 ### TEST-CONFIG-001: AUDIT TESTS FOR HARD-CODED CONNECTION FIXTURES
 

@@ -10,3 +10,4 @@ The foreman updates this document dynamically whenever a task resolving a bug or
 
 - Keep environment-specific endpoints, usernames, and passwords out of Java `@ConfigurationProperties` defaults. Bind them from Spring configuration instead so operators can override them without code changes and tests must set them explicitly.
 - Keep datasource, probe endpoint, and credential fixtures for tests in test-owned property files or test property sources instead of hard-coding them inside test methods.
+- Validate compatibility-shim request envelopes before routing, cache, or datasource work. Reject blank or unsupported requests through the module's established error contract instead of letting them fall through to downstream execution logic.

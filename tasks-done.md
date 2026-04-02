@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| QUERY-BUG-001 | REJECT NON-QUERY REQUESTS AT QUERY BOUNDARY | query | `query` now rejects blank and non-query SQL before cache/datasource work while preserving the compatibility exception payload contract, the request docs are updated, `mvn -q -f query/pom.xml test` passes, and broader compatibility-input review is tracked in `QUERY-REVIEW-002`. |
 | BENCH-TEST-002 | EXTERNALIZE PREFLIGHT CONTROLLER TEST FIXTURES | benchmark | `PreflightControllerTest` now loads its probe fixture values from `benchmark/src/test/resources/preflight-controller-test.properties` instead of inline literals, the focused benchmark validation passes, and the broader audit follow-up is tracked in `TEST-CONFIG-001`. |
 | BENCH-CONFIG-001 | EXTERNALIZE BENCHMARK PREFLIGHT DATASOURCE PROBE SETTINGS | benchmark | `BenchmarkPreflightProperties` no longer embeds Kylin/Presto probe defaults in Java, `benchmark.preflight.*` can be overridden from environment-backed config, task-local preflight tests pass, and unrelated benchmark-suite drift is logged in `INBOX-20260402-001`. |
 | task-ui-integration-001 | 整合前端静态资源及 SPA 路由支持 | manager, benchmark | `manager/src/.../EngineConfig.java`, `benchmark/src/.../WebConfig.java`, `doc-CN/quickstart.md` updated; SPA route forwarding implemented for bundled assets. |
@@ -66,6 +67,30 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+
+### QUERY-BUG-001: REJECT NON-QUERY REQUESTS AT QUERY BOUNDARY
+
+- **Status**: done
+- **Updated**: 2026-04-02
+- **Progress log**:
+  - **2026-04-02 — intake**
+    - Task created from the human-reported issue: `query` must only accept supported query requests on `/kylin/api/query`, reject unsupported request shapes/types with the normal exception response path, and record any broader optimization follow-up in the active ledger.
+  - **2026-04-02 — implementation**
+    - Files changed: `query/src/main/java/com/smartbi/query/service/QueryExecutionService.java`, `query/src/test/java/com/smartbi/query/service/QueryExecutionServiceTest.java`, `query/src/test/java/com/smartbi/query/web/QueryWebIntegrationTest.java`.
+    - Commands run: `rg`, `sed`, `javap`, `git diff`.
+    - Result: Added an early blank/non-query request guard ahead of cache and datasource work, kept the Kylin-compatible exception response behavior, and added regression tests for both service and HTTP paths.
+  - **2026-04-02 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: `QueryExecutionService` only rejected unsupported SQL after routing and cache setup work had already started, and blank SQL had no explicit compatibility guard at all.
+    - Cure: Validate the parsed SQL envelope before downstream work, return the normal exception payload for blank or unsupported requests, and document the request contract explicitly.
+    - Generalization: "Validate compatibility-shim request envelopes before routing, cache, or datasource work. Reject blank or unsupported requests through the module's established error contract instead of letting them fall through to downstream execution logic." (added to `docs/operations/best-practices.md`)
+  - **2026-04-02 — verification**
+    - Validation status: approved
+    - Evidence: `mvn -q -f query/pom.xml test` passed, including the new blank-request regressions in `QueryExecutionServiceTest` and `QueryWebIntegrationTest`; `python3 scripts/task_audit.py --check` was also run during closeout and still fails for unrelated legacy governance drift because `BENCH-UX-007` has no matching task-id commit subject.
+    - Next action: none
+    - Escalation: INBOX-20260402-006
+  - **2026-04-02 — doc-garden**
+    - Updated `docs/modules/query.md` and `docs/architecture/http-interfaces.md` to describe blank/non-query rejection behavior, and created follow-up review task `QUERY-REVIEW-002` for broader compatibility-input auditing.
 
 ### BENCH-TEST-002: EXTERNALIZE PREFLIGHT CONTROLLER TEST FIXTURES
 

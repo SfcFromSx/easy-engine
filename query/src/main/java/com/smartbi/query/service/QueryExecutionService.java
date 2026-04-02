@@ -52,9 +52,21 @@ public class QueryExecutionService {
         String originalSql = request == null ? null : request.getSql();
         List<StatementParameterDto> params = request == null ? null : request.getParams();
         String executionMode = resolveExecutionMode(params);
-        SqlCommentParser.ParsedSql parsed = SqlCommentParser.safeParse(originalSql);
-        RoutedSql routed = sqlRouteService.routeAndRewrite(originalSql, parsed);
         CachePolicy cachePolicy = queryCacheService.getCachePolicy();
+        SqlCommentParser.ParsedSql parsed = SqlCommentParser.safeParse(originalSql);
+
+        if (!StringUtils.hasText(parsed.cleanSql)) {
+            return invalidRequestResponse(startedAt, null, parsed, params, executionMode,
+                    "Query request must include SQL");
+        }
+
+        RoutedSql routed = sqlRouteService.routeAndRewrite(originalSql, parsed);
+
+        if (!cachePolicy.isQuerySql(parsed.cleanSql)) {
+            return invalidRequestResponse(startedAt, routed, parsed, params, executionMode,
+                    "Only query SQL is supported by engine-query");
+        }
+
         String paramFingerprint = PreparedParameterSupport.fingerprint(
                 params,
                 routed.executionSql,
@@ -65,15 +77,6 @@ public class QueryExecutionService {
                 params,
                 queryProperties.getCache().isPreparedSqlEnabled(),
                 cachePolicy);
-
-        if (!cachePolicy.isQuerySql(parsed.cleanSql)) {
-            long durationMs = elapsedMs(startedAt);
-            SqlResponseStubDto response = queryResultMapper.exceptionResponse(routed.datasourceName, durationMs,
-                    "Only query SQL is supported by engine-query");
-            traceReportingService.report(routed, parsed, paramFingerprint, params, executionMode, false, false,
-                    durationMs, response.getExceptionMessage());
-            return response;
-        }
 
         boolean skipLookup = parsed.metadata.noCache || parsed.metadata.cacheRefresh || cachePolicy.shouldBypassCacheBeforeLookup(parsed);
         if (!skipLookup && parameterCacheable) {
@@ -115,6 +118,22 @@ public class QueryExecutionService {
                     durationMs, ex.getMessage());
             return response;
         }
+    }
+
+    private SqlResponseStubDto invalidRequestResponse(long startedAt,
+                                                      RoutedSql routed,
+                                                      SqlCommentParser.ParsedSql parsed,
+                                                      List<StatementParameterDto> params,
+                                                      String executionMode,
+                                                      String message) {
+        long durationMs = elapsedMs(startedAt);
+        String cube = routed == null ? managedDataSourceRegistry.getDefaultName() : routed.datasourceName;
+        SqlResponseStubDto response = queryResultMapper.exceptionResponse(cube, durationMs, message);
+        if (routed != null) {
+            traceReportingService.report(routed, parsed, null, params, executionMode, false, false,
+                    durationMs, response.getExceptionMessage());
+        }
+        return response;
     }
 
     private SqlResponseStubDto executeAgainstDatasource(Connection connection,

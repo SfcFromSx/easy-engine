@@ -129,6 +129,20 @@ class QueryWebIntegrationTest {
                 .andExpect(jsonPath("$.exceptionMessage").exists());
     }
 
+    // Covers QueryExecutionService#execute blank-request rejection through the HTTP path.
+    @Test
+    void shouldReturnKylinStyleExceptionPayloadForBlankSql() throws Exception {
+        String body = "{\"sql\":\"   \",\"project\":\"demo\"}";
+
+        mockMvc.perform(post("/kylin/api/query")
+                        .header("Authorization", authHeader())
+                        .contentType("application/json")
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isException").value(true))
+                .andExpect(jsonPath("$.exceptionMessage").value("Query request must include SQL"));
+    }
+
     // Covers QueryExecutionService#resolveExecutionMode and TraceReportingService#report statement traces through the HTTP path.
     @Test
     void shouldPublishStatementExecutionModeInTracePayload() throws Exception {

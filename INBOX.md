@@ -50,6 +50,33 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Suggested next step: Schedule `TEST-CONFIG-001` and convert remaining inline test connection fixtures to test-owned config where appropriate.
 - Human decision: pending
 
+### INBOX-20260402-004
+- Area: Harness audit trail
+- Related task(s): `QUERY-BUG-001`
+- Summary: `tasks.md` was updated on 2026-04-02 to intake a human-requested query-boundary hardening task so the work can follow the repo's single-task audit trail and completion workflow.
+- Evidence: Active ledger row and task section for `QUERY-BUG-001` were added to `tasks.md` before implementation began.
+- Impact/Risk: Without an explicit audit note, later recovery or review could miss why the active ledger changed during the session.
+- Suggested next step: Keep the task ledger, archive, and eventual commit aligned when `QUERY-BUG-001` closes.
+- Human decision: pending
+
+### INBOX-20260402-005
+- Area: Query request validation governance
+- Related task(s): `QUERY-BUG-001`, `QUERY-REVIEW-002`
+- Summary: `QUERY-BUG-001` exported a new compatibility-validation rule to `docs/operations/best-practices.md`, and a follow-up review task was added so the rest of the query compatibility surface can be checked for the same early-rejection pattern.
+- Evidence: `docs/operations/best-practices.md` now requires compatibility shims to validate blank/unsupported requests before routing/cache/datasource work, and `tasks.md` now includes `QUERY-REVIEW-002` to audit the remaining query entrypoints against that rule.
+- Impact/Risk: Similar delayed validation may still exist in other compatibility/shim paths, which can waste downstream work or blur the intended error contract.
+- Suggested next step: Schedule `QUERY-REVIEW-002` and apply the same validation pattern anywhere else the query shim still lets unsupported request envelopes travel too far.
+- Human decision: pending
+
+### INBOX-20260402-006
+- Area: Harness audit trail
+- Related task(s): `QUERY-BUG-001`, `BENCH-UX-007`
+- Summary: Running `scripts/task_audit.py --check` during `QUERY-BUG-001` closeout revealed unrelated governance drift: `BENCH-UX-007` still has a `tasks-done.md` entry with no matching task-id commit subject in Git history.
+- Evidence: `python3 scripts/task_audit.py --check` on 2026-04-02 reported `BENCH-UX-007: tasks-done.md entry has no git commit subject containing the task id`; the same run also flagged the in-progress `QUERY-BUG-001` row before its commit existed.
+- Impact/Risk: The repo-level task audit cannot return green after unrelated query work until the older `BENCH-UX-007` audit trail is reconciled or explicitly grandfathered.
+- Suggested next step: Decide whether `BENCH-UX-007` should be grandfathered into the audit script like the other legacy gaps in `INBOX-20260331-001` or whether a recoverable task-id commit link still exists and should be restored.
+- Human decision: pending
+
 ## Template
 
 ```md

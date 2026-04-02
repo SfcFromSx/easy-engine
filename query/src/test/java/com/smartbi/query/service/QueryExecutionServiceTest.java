@@ -30,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -225,6 +226,34 @@ class QueryExecutionServiceTest {
         verify(registry, never()).getConnection(any());
         verify(traceReportingService).report(eq(routed), any(), eq(null), eq(null), eq("STATEMENT"), eq(false), eq(false), anyLong(),
                 eq("Only query SQL is supported by engine-query"));
+    }
+
+    // Covers QueryExecutionService#execute blank-request rejection before routing or cache work.
+    @Test
+    void shouldRejectBlankQueryRequestsBeforeRouting() throws Exception {
+        QueryCacheService cacheService = spy(new QueryCacheService(new MapCacheStore(), new QueryProperties(), new ObjectMapper()));
+        SqlRouteService routeService = mock(SqlRouteService.class);
+        ManagedDataSourceRegistry registry = mock(ManagedDataSourceRegistry.class);
+        QueryResultMapper mapper = mock(QueryResultMapper.class);
+        TraceReportingService traceReportingService = mock(TraceReportingService.class);
+        QueryExecutionService service = new QueryExecutionService(cacheService, routeService, registry, mapper, traceReportingService, new QueryProperties());
+        PreparedQueryRequestDto request = request("   ");
+        SqlResponseStubDto response = new SqlResponseStubDto();
+        String message = "Query request must include SQL";
+        response.setIsException(true);
+        response.setExceptionMessage(message);
+
+        when(registry.getDefaultName()).thenReturn("default");
+        when(mapper.exceptionResponse(eq("default"), anyLong(), eq(message))).thenReturn(response);
+
+        SqlResponseStubDto actual = service.execute(request);
+
+        assertTrue(actual.getIsException());
+        assertEquals(message, actual.getExceptionMessage());
+        verify(routeService, never()).routeAndRewrite(any(), any());
+        verify(cacheService, never()).tryGet(any(), any(), any());
+        verify(cacheService, never()).put(any(), any(), any(), any());
+        verify(traceReportingService, never()).report(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyLong(), any());
     }
 
     // Covers QueryExecutionService#execute cache-hit branch.

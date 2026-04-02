@@ -22,6 +22,7 @@
 ## Request Contract
 
 - `sql` and `params` are the authoritative request inputs.
+- `sql` must resolve to a supported read-only query shape after comment stripping; blank or non-query requests are rejected with the normal exception payload and do not reach datasource execution.
 - `project` is accepted for client compatibility but is not used for routing or execution.
 - `acceptPartial` is accepted but ignored; the current service always returns `partial = false`.
 - `backdoorToggles` is accepted but ignored; there is no query-side implementation behind that compatibility field today.
