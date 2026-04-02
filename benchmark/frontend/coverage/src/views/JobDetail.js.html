@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">28.57% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>24/84</span>
+                <span class='fraction'>0/84</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/0</span>
+                <span class='fraction'>0/1</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">28.57% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>24/84</span>
+                <span class='fraction'>0/84</span>
             </div>
         
             
@@ -147,28 +147,7 @@
 <a name='L82'></a><a href='#L82'>82</a>
 <a name='L83'></a><a href='#L83'>83</a>
 <a name='L84'></a><a href='#L84'>84</a>
-<a name='L85'></a><a href='#L85'>85</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<a name='L85'></a><a href='#L85'>85</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -229,30 +208,51 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { computed, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { FileJson } from 'lucide-vue-next'
-import { Setting, DataLine, Clock, VideoPlay } from '@element-plus/icons-vue'
-import client from '../api/client'
-import { API_ENDPOINTS, JOB_BY_ID, RUN_START } from '../api/endpoints'
-import PerformanceCharts from '../components/PerformanceCharts.vue'
-import { buildTrendData, strategyTagType } from '../utils/benchmarkViewHelpers'
-&nbsp;
-&nbsp;
-export default {
-  __name: 'JobDetail',
-  components: {
-    FileJson,
-    Setting,
-    DataLine,
-    Clock,
-    VideoPlay,
-    PerformanceCharts
-  },
-<span class="fstat-no" title="function not covered" >  setup(__props, { expose: __expose }) {</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >import { computed, onMounted, ref } from 'vue'</span></span></span>
+<span class="cstat-no" title="statement not covered" >import { useRoute, useRouter } from 'vue-router'</span>
+<span class="cstat-no" title="statement not covered" >import { ElMessage, ElMessageBox } from 'element-plus'</span>
+<span class="cstat-no" title="statement not covered" >import { FileJson } from 'lucide-vue-next'</span>
+<span class="cstat-no" title="statement not covered" >import { Setting, DataLine, Clock, VideoPlay } from '@element-plus/icons-vue'</span>
+<span class="cstat-no" title="statement not covered" >import client from '../api/client'</span>
+<span class="cstat-no" title="statement not covered" >import { API_ENDPOINTS, JOB_BY_ID, RUN_START } from '../api/endpoints'</span>
+<span class="cstat-no" title="statement not covered" >import PerformanceCharts from '../components/PerformanceCharts.vue'</span>
+<span class="cstat-no" title="statement not covered" >import { buildTrendData, strategyTagType } from '../utils/benchmarkViewHelpers'</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >export default {</span>
+<span class="cstat-no" title="statement not covered" >  __name: 'JobDetail',</span>
+<span class="cstat-no" title="statement not covered" >  components: {</span>
+<span class="cstat-no" title="statement not covered" >    FileJson,</span>
+<span class="cstat-no" title="statement not covered" >    Setting,</span>
+<span class="cstat-no" title="statement not covered" >    DataLine,</span>
+<span class="cstat-no" title="statement not covered" >    Clock,</span>
+<span class="cstat-no" title="statement not covered" >    VideoPlay,</span>
+<span class="cstat-no" title="statement not covered" >    PerformanceCharts</span>
+<span class="cstat-no" title="statement not covered" >  },</span>
+<span class="cstat-no" title="statement not covered" >  setup(__props, { expose: __expose }) {</span>
 <span class="cstat-no" title="statement not covered" >  __expose();</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >const route = useRoute()</span>
@@ -313,8 +313,8 @@ export default {
 <span class="cstat-no" title="statement not covered" >const __returned__ = { route, router, job, dataSource, runs, loading, starting, trendData, load, startJob, formatDate, goRun, computed, onMounted, ref, get useRoute() { return useRoute }, get useRouter() { return useRouter }, get ElMessage() { return ElMessage }, get ElMessageBox() { return ElMessageBox }, get FileJson() { return FileJson }, get Setting() { return Setting }, get DataLine() { return DataLine }, get Clock() { return Clock }, get VideoPlay() { return VideoPlay }, get client() { return client }, get API_ENDPOINTS() { return API_ENDPOINTS }, get JOB_BY_ID() { return JOB_BY_ID }, get RUN_START() { return RUN_START }, PerformanceCharts, get buildTrendData() { return buildTrendData }, get strategyTagType() { return strategyTagType } }</span>
 <span class="cstat-no" title="statement not covered" >return __returned__</span>
 <span class="cstat-no" title="statement not covered" >}</span>
-&nbsp;
-}
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >}</span>
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -322,7 +322,7 @@ export default {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-03-31T15:31:26.040Z
+                at 2026-04-02T10:09:10.967Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

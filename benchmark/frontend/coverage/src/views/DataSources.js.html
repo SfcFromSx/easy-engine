@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">11.28% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>22/195</span>
+                <span class='fraction'>0/195</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/0</span>
+                <span class='fraction'>0/1</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">11.28% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>22/195</span>
+                <span class='fraction'>0/195</span>
             </div>
         
             
@@ -263,31 +263,16 @@
 <a name='L198'></a><a href='#L198'>198</a>
 <a name='L199'></a><a href='#L199'>199</a>
 <a name='L200'></a><a href='#L200'>200</a>
-<a name='L201'></a><a href='#L201'>201</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<a name='L201'></a><a href='#L201'>201</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -461,33 +446,48 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { computed, ref, onMounted } from 'vue'
-import { Plus, Edit, Delete, Connection, Search, Upload } from '@element-plus/icons-vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { useI18n } from 'vue-i18n'
-import client from '../api/client'
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >import { computed, ref, onMounted } from 'vue'</span></span></span>
+<span class="cstat-no" title="statement not covered" >import { Plus, Edit, Delete, Connection, Search, Upload } from '@element-plus/icons-vue'</span>
+<span class="cstat-no" title="statement not covered" >import { ElMessage, ElMessageBox } from 'element-plus'</span>
+<span class="cstat-no" title="statement not covered" >import { useI18n } from 'vue-i18n'</span>
+<span class="cstat-no" title="statement not covered" >import client from '../api/client'</span>
 import {
   API_ENDPOINTS,
   DATA_SOURCE_BY_ID,
   DATA_SOURCE_TEST,
   DRIVER_UPLOAD
-} from '../api/endpoints'
-import { filterDataSources, validateDriverUploadFile } from '../utils/benchmarkViewHelpers'
-&nbsp;
-&nbsp;
-export default {
-  __name: 'DataSources',
-  components: {
-    Plus,
-    Edit,
-    Delete,
-    Connection,
-    Search,
-    Upload
-  },
-<span class="fstat-no" title="function not covered" >  setup(__props, { expose: __expose }) {</span>
+<span class="cstat-no" title="statement not covered" >} from '../api/endpoints'</span>
+<span class="cstat-no" title="statement not covered" >import { filterDataSources, validateDriverUploadFile } from '../utils/benchmarkViewHelpers'</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >export default {</span>
+<span class="cstat-no" title="statement not covered" >  __name: 'DataSources',</span>
+<span class="cstat-no" title="statement not covered" >  components: {</span>
+<span class="cstat-no" title="statement not covered" >    Plus,</span>
+<span class="cstat-no" title="statement not covered" >    Edit,</span>
+<span class="cstat-no" title="statement not covered" >    Delete,</span>
+<span class="cstat-no" title="statement not covered" >    Connection,</span>
+<span class="cstat-no" title="statement not covered" >    Search,</span>
+<span class="cstat-no" title="statement not covered" >    Upload</span>
+<span class="cstat-no" title="statement not covered" >  },</span>
+<span class="cstat-no" title="statement not covered" >  setup(__props, { expose: __expose }) {</span>
 <span class="cstat-no" title="statement not covered" >  __expose();</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >const { t } = useI18n()</span>
@@ -661,8 +661,8 @@ export default {
 <span class="cstat-no" title="statement not covered" >const __returned__ = { t, loading, saving, driversLoading, uploadingDriver, dataSources, uploadedDrivers, searchTerm, selectedDriverClass, dialogVisible, isEdit, driverFileInput, form, driverClassOptions, filteredDataSources, fetchDataSources, fetchDrivers, openDriverPicker, handleAdd, handleEdit, saveDataSource, handleDelete, testConnection, handleDriverFileChange, computed, ref, onMounted, get Plus() { return Plus }, get Edit() { return Edit }, get Delete() { return Delete }, get Connection() { return Connection }, get Search() { return Search }, get Upload() { return Upload }, get ElMessage() { return ElMessage }, get ElMessageBox() { return ElMessageBox }, get useI18n() { return useI18n }, get client() { return client }, get API_ENDPOINTS() { return API_ENDPOINTS }, get DATA_SOURCE_BY_ID() { return DATA_SOURCE_BY_ID }, get DATA_SOURCE_TEST() { return DATA_SOURCE_TEST }, get DRIVER_UPLOAD() { return DRIVER_UPLOAD }, get filterDataSources() { return filterDataSources }, get validateDriverUploadFile() { return validateDriverUploadFile } }</span>
 <span class="cstat-no" title="statement not covered" >return __returned__</span>
 <span class="cstat-no" title="statement not covered" >}</span>
-&nbsp;
-}
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >}</span>
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -670,7 +670,7 @@ export default {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-03-31T15:31:26.040Z
+                at 2026-04-02T10:09:10.967Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
