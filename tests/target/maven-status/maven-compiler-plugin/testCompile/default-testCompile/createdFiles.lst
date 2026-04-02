@@ -1,9 +1,0 @@
-com/smartbi/e2e/E2ETestBase.class
-com/smartbi/e2e/ManagerApiE2ETest.class
-com/smartbi/e2e/QueryHttpE2ETest.class
-com/smartbi/e2e/KylinJdbcE2ETest.class
-com/smartbi/e2e/TraceRecordE2ETest.class
-com/smartbi/e2e/MysqlInfraE2ETest.class
-com/smartbi/e2e/CacheE2ETest.class
-com/smartbi/e2e/E2EConfig.class
-com/smartbi/e2e/PrestoRoutingE2ETest.class

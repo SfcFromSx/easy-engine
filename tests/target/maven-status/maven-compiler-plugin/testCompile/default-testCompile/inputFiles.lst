@@ -1,9 +1,0 @@
-/Users/sfc/Documents/projects/engine/tests/src/test/java/com/smartbi/e2e/CacheE2ETest.java
-/Users/sfc/Documents/projects/engine/tests/src/test/java/com/smartbi/e2e/E2EConfig.java
-/Users/sfc/Documents/projects/engine/tests/src/test/java/com/smartbi/e2e/E2ETestBase.java
-/Users/sfc/Documents/projects/engine/tests/src/test/java/com/smartbi/e2e/KylinJdbcE2ETest.java
-/Users/sfc/Documents/projects/engine/tests/src/test/java/com/smartbi/e2e/ManagerApiE2ETest.java
-/Users/sfc/Documents/projects/engine/tests/src/test/java/com/smartbi/e2e/MysqlInfraE2ETest.java
-/Users/sfc/Documents/projects/engine/tests/src/test/java/com/smartbi/e2e/PrestoRoutingE2ETest.java
-/Users/sfc/Documents/projects/engine/tests/src/test/java/com/smartbi/e2e/QueryHttpE2ETest.java
-/Users/sfc/Documents/projects/engine/tests/src/test/java/com/smartbi/e2e/TraceRecordE2ETest.java
