@@ -9,6 +9,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
 | TRACE-CACHE-KEY-001 | PERSIST CACHE KEYS IN TRACE RECORDS AND EXPOSE THEM IN MANAGER | query, manager, docs | Query traces now persist the exact Redis `cacheKey` used for cache-eligible requests, manager stores and exposes that field through `/api/v1/traces` with filtering support, the manager traces page shows and filters by cache key, and query/manager/frontend validations all passed. |
+| UI-BUNDLE-002 | REFRESH MANAGER EMBEDDED FRONTEND BUNDLE AND REVIEW CN QUICKSTART | manager, docs | Manager frontend assets were rebuilt and resynced into the embedded Java static directory, the packaged manager artifact now contains the new cache-console bundle, `doc-CN/quickstart.md` now documents the required build/sync/restart flow for precompiled hosting, and release-prep validation passed. |
 | UI-BUNDLE-001 | CLEAN TEMP ARTIFACTS AND REBUILD EMBEDDED FRONTENDS | frontend, docs | Removed the untracked `analyze/target` build-temp directory, restored tracked manager coverage artifacts instead of deleting them, rebuilt both `manager` and `benchmark` frontends, and synced each `dist` into its Java `resources/static` directory so embedded assets now match the latest frontend bundles. |
 | MGR-REVIEW-002 | AUDIT REDIS CACHE CONSOLE QUERY SCALABILITY | manager, docs | The manager cache console now avoids default whole-keyspace Redis work by replacing exact live summaries with lightweight policy metadata, requiring a narrower `kylin_cache:` prefix before listing, paging matches via Redis cursor navigation, and keeping cache detail/create/update/delete semantics intact; focused and full manager backend validation plus manager frontend tests/build all passed. |
 | MGR-QA-001 | REVIEW AND VERIFY REDIS CACHE MANAGER | manager | Redis cache management was re-reviewed end to end; manager backend validation is now unblocked and green via the documented `analyze+manager` reactor path; manager frontend tests/build pass; browser QA evidence was captured for desktop and mobile cache flows; and cache list pagination/refresh behavior is now deterministic and stable. |
@@ -135,6 +136,33 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
     - Evidence: `npm --prefix manager/frontend run build` passed; `npm --prefix benchmark/frontend run build` passed; `analyze/target/` no longer exists; `manager/src/main/resources/static/` and `benchmark/src/main/resources/static/` now mirror their respective `frontend/dist/` directories.
     - Next action: none
     - Escalation: none
+
+### UI-BUNDLE-002: REFRESH MANAGER EMBEDDED FRONTEND BUNDLE AND REVIEW CN QUICKSTART
+
+- **Status**: done
+- **Updated**: 2026-04-03
+- **Progress log**:
+  - **2026-04-03 — intake**
+    - Human requested a release-prep pass: rebuild the current manager frontend, sync the generated static assets into `manager/src/main/resources/static/`, review the Chinese quickstart flow, update it if needed, and close the work through the normal task commit flow.
+    - Investigation confirmed the manager source already reflects the latest cache-console UX, but the embedded backend-served UI at `http://127.0.0.1:8090/cache` is still serving an older static bundle while the Vite dev server at `http://127.0.0.1:5173/cache` shows the new prefix-search design.
+    - Scope for this task: rebuild only the manager frontend bundle, sync the resulting `dist/` output into the manager Java static-resource directory, update `doc-CN/quickstart.md` if the current release or offline-hosting steps are stale, validate the refreshed bundle and docs, and keep unrelated generated artifacts or in-progress changes outside the task commit.
+  - **2026-04-03 — implementation**
+    - Files changed: `manager/frontend/dist/`, `manager/src/main/resources/static/`, `doc-CN/quickstart.md`, plus task ledger/archive records.
+    - Commands run: `npm --prefix manager/frontend run build`, `rsync -a --delete manager/frontend/dist/ manager/src/main/resources/static/`, `mvn -q -f manager/pom.xml -DskipTests package`, `sed`, `curl`, `jar tf`.
+    - Result: Rebuilt the manager frontend bundle, resynced the embedded backend-served static assets, and updated the Chinese quickstart so the precompiled-hosting flow now explicitly requires frontend build, `rsync --delete`, and backend repack/restart before release verification.
+  - **2026-04-03 — review**
+    - Self-Review: [x] release bundle sync [x] doc clarity [x] side-effects
+    - Notes: Kept scope limited to manager release artifacts plus the human-facing Chinese quickstart. Left tracked coverage output, local settings, and unrelated untracked build directories outside the task commit.
+  - **2026-04-03 — verification**
+    - Validation status: approved
+    - Evidence: `npm --prefix manager/frontend run build` passed.
+    - Evidence: `manager/src/main/resources/static/index.html` now references `/assets/index-0A4iWuDa.js` and `/assets/index-Egkut5lV.css`, matching `manager/frontend/dist/`.
+    - Evidence: `mvn -q -f manager/pom.xml -DskipTests package` passed; `manager/target/classes/static/index.html` and `manager/target/manager-1.0.0-SNAPSHOT.jar` both contain the new bundle asset names.
+    - Evidence: Live `http://127.0.0.1:8090/` still returned the previous bundle before service restart, which confirmed the quickstart needed an explicit restart/repackage note after static-resource sync.
+    - Next action: none
+    - Escalation: none
+  - **2026-04-03 — doc-garden**
+    - Updated `doc-CN/quickstart.md` so the offline/precompiled flow now documents concrete build, `rsync`, and backend repackage/restart steps, including the release-time caveat that running services may continue serving stale static resources until restarted.
 
 ### MGR-REVIEW-002: AUDIT REDIS CACHE CONSOLE QUERY SCALABILITY
 

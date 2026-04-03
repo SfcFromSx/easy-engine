@@ -14,6 +14,24 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Do not convert inbox entries directly into implementation tasks without explicit human confirmation.
 - For tooling or infrastructure changes, prefer logging the issue here before changing the harness.
 
+### INBOX-20260403-019
+- Area: Harness audit trail
+- Related task(s): `UI-BUNDLE-002`
+- Summary: `tasks.md` was updated on 2026-04-03 to intake and start a release-prep task for rebuilding the manager frontend bundle, syncing embedded static assets, and reviewing the Chinese quickstart instructions.
+- Evidence: The active ledger now includes `UI-BUNDLE-002` with intake notes covering the observed drift between the latest Vite-served manager UI and the older backend-served embedded bundle, plus the requirement to review and update `doc-CN/quickstart.md` if the release steps are stale.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edit as ad hoc bookkeeping instead of the required intake/start record for this release-bundle refresh pass.
+- Suggested next step: Keep the bundle sync, quickstart updates, validation evidence, archive entry, and task commit aligned while `UI-BUNDLE-002` is completed.
+- Human decision: pending
+
+### INBOX-20260403-020
+- Area: Harness audit trail
+- Related task(s): `UI-BUNDLE-002`
+- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-03 to archive the completion of `UI-BUNDLE-002` after rebuilding the manager embedded frontend bundle and updating the Chinese quickstart release flow.
+- Evidence: The active ledger row and section for `UI-BUNDLE-002` were removed from `tasks.md`, its full intake/implementation/review/verification/doc-garden record was archived under `tasks-done.md`, and the archived evidence records the passed manager frontend build plus manager package validation with the new bundle assets present in both `target/classes` and the packaged jar.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edits as ad hoc bookkeeping rather than the required closeout workflow for this release-bundle refresh task.
+- Suggested next step: Keep the archived task entry, refreshed manager static assets, quickstart update, and task commit aligned; unrelated coverage output, local settings, and other build leftovers should remain outside this task's staged scope.
+- Human decision: pending
+
 ### INBOX-20260403-018
 - Area: Harness audit trail
 - Related task(s): `TRACE-CACHE-KEY-001`

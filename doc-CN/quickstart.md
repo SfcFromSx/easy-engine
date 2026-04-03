@@ -120,11 +120,25 @@ npm --prefix benchmark/frontend run dev
 ### 方案 2：预编译托管模式（适合内网/隔离环境）
 如果您在内网环境无法运行 `npm install`，可以使用此方案。由 Spring Boot 后端直接提供前端静态资源服务。
 
-1.  **在外网环境构建**：执行 `npm run build` 生成 `dist` 目录。
-2.  **拷贝至内网**：将 `dist` 目录下的所有文件拷贝到后端的静态资源目录：
-    - `manager/frontend/dist/*` -> `manager/src/main/resources/static/`
-    - `benchmark/frontend/dist/*` -> `benchmark/src/main/resources/static/`
-3.  **启动后端**：本地统一执行 `mvn spring-boot:run -Dspring-boot.run.profiles=dev`。
+1.  **在前端工作区构建静态资源**：
+    ```bash
+    npm --prefix manager/frontend run build
+    npm --prefix benchmark/frontend run build
+    ```
+2.  **同步到后端静态资源目录**：
+    ```bash
+    rsync -a --delete manager/frontend/dist/ manager/src/main/resources/static/
+    rsync -a --delete benchmark/frontend/dist/ benchmark/src/main/resources/static/
+    ```
+    - 如果本次只修改了 Manager UI，只需要执行 `manager/frontend` 的构建和同步。
+    - `--delete` 很重要，它会删除旧的 hash 资源文件，避免后端继续引用过期 bundle。
+3.  **重新打包或重启后端**：
+    ```bash
+    mvn -q -f manager/pom.xml -DskipTests package
+    mvn -q -f benchmark/pom.xml -DskipTests package
+    ```
+    - 如果后端已经在运行，完成同步后还需要**重启对应服务**，否则运行中的进程可能继续使用旧的静态资源。
+    - 如果只需要本地开发验证，也可以重新执行 `mvn spring-boot:run -Dspring-boot.run.profiles=dev`。
 4.  **访问地址**：直接访问后端端口即可看到 UI。
     - **Manager**: http://localhost:8090/
     - **Benchmark**: http://localhost:8091/
