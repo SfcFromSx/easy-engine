@@ -79,10 +79,15 @@ class TraceFlywayExecutionModeIntegrationTest {
                 "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
                         "WHERE LOWER(table_name) = 'manager_sql_execution_record' AND LOWER(column_name) = 'parameter_payload'",
                 Integer.class);
+        Integer cacheKeyColumnCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
+                        "WHERE LOWER(table_name) = 'manager_sql_execution_record' AND LOWER(column_name) = 'cache_key'",
+                Integer.class);
         assertEquals(Integer.valueOf(1), executionModeColumnCount);
         assertEquals(Integer.valueOf(1), parameterPayloadColumnCount);
+        assertEquals(Integer.valueOf(1), cacheKeyColumnCount);
 
-        ingestionService.ingestJson("{\"datasourceName\":\"default\",\"datasourceType\":\"h2\",\"originalSql\":\"SELECT 1\",\"parameterPayload\":\"[{\\\"position\\\":1,\\\"className\\\":\\\"java.lang.Integer\\\",\\\"value\\\":\\\"7\\\"}]\",\"executionMode\":\"PREPARED_STATEMENT\",\"success\":false,\"durationMs\":12}");
+        ingestionService.ingestJson("{\"datasourceName\":\"default\",\"datasourceType\":\"h2\",\"originalSql\":\"SELECT 1\",\"parameterPayload\":\"[{\\\"position\\\":1,\\\"className\\\":\\\"java.lang.Integer\\\",\\\"value\\\":\\\"7\\\"}]\",\"executionMode\":\"PREPARED_STATEMENT\",\"success\":false,\"cacheKey\":\"kylin_cache:default:select-1\",\"durationMs\":12}");
         ingestionService.ingestJson("{\"datasourceName\":\"default\",\"datasourceType\":\"h2\",\"originalSql\":\"SELECT 2\",\"success\":true,\"durationMs\":8}");
 
         SqlExecutionRecord prepared = recordRepository.findAll().stream()
@@ -97,7 +102,9 @@ class TraceFlywayExecutionModeIntegrationTest {
         assertEquals("PREPARED_STATEMENT", prepared.getExecutionMode());
         assertEquals("[{\"position\":1,\"className\":\"java.lang.Integer\",\"value\":\"7\"}]",
                 prepared.getParameterPayload());
+        assertEquals("kylin_cache:default:select-1", prepared.getCacheKey());
         assertNull(legacy.getParameterPayload());
+        assertNull(legacy.getCacheKey());
         assertNull(legacy.getExecutionMode());
         assertNotNull(prepared.getSqlFingerprint());
         assertNotNull(legacy.getSqlFingerprint());
@@ -115,6 +122,8 @@ class TraceFlywayExecutionModeIntegrationTest {
         assertEquals("PREPARED_STATEMENT", preparedTrace.path("executionMode").asText());
         assertEquals("[{\"position\":1,\"className\":\"java.lang.Integer\",\"value\":\"7\"}]",
                 preparedTrace.path("parameterPayload").asText());
+        assertEquals("kylin_cache:default:select-1", preparedTrace.path("cacheKey").asText());
+        assertTrue(legacyTrace.path("cacheKey").isMissingNode() || legacyTrace.path("cacheKey").isNull());
         assertTrue(legacyTrace.path("parameterPayload").isMissingNode() || legacyTrace.path("parameterPayload").isNull());
         assertTrue(legacyTrace.path("executionMode").isMissingNode() || legacyTrace.path("executionMode").isNull());
     }

@@ -12,6 +12,7 @@ public class TraceListItemDto {
     private String datasourceType;
     private Long durationMs;
     private Boolean cacheHit;
+    private String cacheKey;
     private ParseStatus parseStatus;
     private String sqlFingerprint;
     private String originalSql;
@@ -66,6 +67,14 @@ public class TraceListItemDto {
 
     public void setCacheHit(Boolean cacheHit) {
         this.cacheHit = cacheHit;
+    }
+
+    public String getCacheKey() {
+        return cacheKey;
+    }
+
+    public void setCacheKey(String cacheKey) {
+        this.cacheKey = cacheKey;
     }
 
     public ParseStatus getParseStatus() {

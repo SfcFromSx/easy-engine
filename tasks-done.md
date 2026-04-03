@@ -8,7 +8,9 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| TRACE-CACHE-KEY-001 | PERSIST CACHE KEYS IN TRACE RECORDS AND EXPOSE THEM IN MANAGER | query, manager, docs | Query traces now persist the exact Redis `cacheKey` used for cache-eligible requests, manager stores and exposes that field through `/api/v1/traces` with filtering support, the manager traces page shows and filters by cache key, and query/manager/frontend validations all passed. |
 | UI-BUNDLE-001 | CLEAN TEMP ARTIFACTS AND REBUILD EMBEDDED FRONTENDS | frontend, docs | Removed the untracked `analyze/target` build-temp directory, restored tracked manager coverage artifacts instead of deleting them, rebuilt both `manager` and `benchmark` frontends, and synced each `dist` into its Java `resources/static` directory so embedded assets now match the latest frontend bundles. |
+| MGR-REVIEW-002 | AUDIT REDIS CACHE CONSOLE QUERY SCALABILITY | manager, docs | The manager cache console now avoids default whole-keyspace Redis work by replacing exact live summaries with lightweight policy metadata, requiring a narrower `kylin_cache:` prefix before listing, paging matches via Redis cursor navigation, and keeping cache detail/create/update/delete semantics intact; focused and full manager backend validation plus manager frontend tests/build all passed. |
 | MGR-QA-001 | REVIEW AND VERIFY REDIS CACHE MANAGER | manager | Redis cache management was re-reviewed end to end; manager backend validation is now unblocked and green via the documented `analyze+manager` reactor path; manager frontend tests/build pass; browser QA evidence was captured for desktop and mobile cache flows; and cache list pagination/refresh behavior is now deterministic and stable. |
 | MGR-TEST-002 | ALIGN MANAGER MIGRATION TESTS WITH REDIS-ENABLED ENGINE ROUTING | manager | Manager now keeps the Redis dependency/profile wiring required by the new `ENGINE` routing path, the leftover Flyway/bootstrap tests are cleaned up and aligned with the current seeded datasource count, and the focused validation remains blocked only by the pre-existing `JdbcSqlAdvisorService` constructor issue during Spring context startup. |
 | QUERY-ENGINE-001 | SWITCH ROUTING TO ENGINE AND ADD REDIS REPORT OVERRIDES | query, manager, analyze, benchmark, docs | Routing now resolves datasource selection from parsed `ENGINE` with optional Redis override by `YH_RPTID`, `YH_TARGET_ENGINE` is parsed as legacy metadata only, normalized execution SQL and JDBC rewrite advice emit `/* ENGINE=... */`, benchmark/E2E samples were updated to the new routing hint, and focused `analyze`, `query`, `manager`, and `benchmark` validations all passed. |
@@ -88,6 +90,30 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+### TRACE-CACHE-KEY-001: PERSIST CACHE KEYS IN TRACE RECORDS AND EXPOSE THEM IN MANAGER
+
+- **Status**: done
+- **Updated**: 2026-04-03
+- **Progress log**:
+  - **2026-04-03 — intake**
+    - Human requested that Redis cache keys be written into manager SQL execution records so later troubleshooting can identify the exact key used by each trace and derive per-key hit counts from `cache_hit = true` rows.
+    - Investigation confirmed that `query` already computes the effective Redis cache key inside `QueryCacheService`, but the current trace payload only persists `cacheHit` and does not propagate the resolved key into `manager_sql_execution_record`.
+    - Scope for this task: add task-scoped schema support for a nullable `cache_key`, extend query trace emission and manager ingestion/API exposure, add manager traces filter/display support for `cacheKey`, keep legacy trace payloads backward-compatible, and avoid adding a separate aggregate table in this change.
+  - **2026-04-03 — implementation**
+    - Files changed: query trace/cache files under `query/src/main/java/com/smartbi/query/service/` and `query/src/main/java/com/smartbi/query/integration/`, both query/manager `SqlExecutionRecord` entities, manager trace ingestion/filter/controller/DTO files, manager frontend traces/i18n test files, manager migration `V12__add_cache_key_to_sql_execution_record.sql`, and the related canonical docs.
+    - Commands run: `rg`, `sed`, `mvn -q -pl analyze install -DskipTests`, `mvn -q -f query/pom.xml clean -DskipTests compile`, `mvn -q -f query/pom.xml -DskipTests test-compile`.
+    - Result: Added nullable `cache_key` persistence for trace rows, computed a single resolved Redis key in `query` for cache-eligible requests and reused it across lookup/write/trace paths, extended manager `/api/v1/traces` with `cacheKey` filtering/mapping, surfaced the field in the manager traces page, and kept legacy payloads without `cacheKey` backward-compatible.
+  - **2026-04-03 — review**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Notes: Preserved existing cache behavior, including refresh/no-cache semantics, while limiting `cacheKey` trace emission to the normal cache lookup path so operators can distinguish actively matched cache traffic from bypassed requests.
+  - **2026-04-03 — verification**
+    - Validation status: approved
+    - Evidence: `mvn -q -f query/pom.xml -Dtest=QueryCacheServiceTest,QueryExecutionServiceTest,TraceReportingServiceTest,JdbcTraceWriterTest,QueryTracePersistenceIntegrationTest test` passed; `mvn -q -f query/pom.xml test` passed after a task-local clean compile; `mvn -q -f manager/pom.xml -Dtest=TraceIngestionTest,TraceControllerTest,ManagerApiTest,TraceFlywayExecutionModeIntegrationTest test` passed; `mvn -q -f manager/pom.xml test` passed after compiling the module once in the current workspace; `npm --prefix manager/frontend run test` passed; `npm --prefix manager/frontend run build` passed.
+    - Next action: none
+    - Escalation: none
+  - **2026-04-03 — doc-garden**
+    - Updated `docs/modules/query.md`, `docs/modules/manager.md`, and `docs/architecture/http-interfaces.md` so the canonical docs now describe the new `cacheKey` trace field, manager filter support, and the cache-eligibility/bypass contract for trace emission.
+
 ### UI-BUNDLE-001: CLEAN TEMP ARTIFACTS AND REBUILD EMBEDDED FRONTENDS
 
 - **Status**: done
@@ -109,6 +135,38 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
     - Evidence: `npm --prefix manager/frontend run build` passed; `npm --prefix benchmark/frontend run build` passed; `analyze/target/` no longer exists; `manager/src/main/resources/static/` and `benchmark/src/main/resources/static/` now mirror their respective `frontend/dist/` directories.
     - Next action: none
     - Escalation: none
+
+### MGR-REVIEW-002: AUDIT REDIS CACHE CONSOLE QUERY SCALABILITY
+
+- **Status**: done
+- **Updated**: 2026-04-03
+- **Progress log**:
+  - **2026-04-03 — intake**
+    - Human requested a review of the Redis cache console query and display logic to determine whether it will create Redis pressure when the managed keyspace grows to tens of millions of keys.
+    - Initial code inspection shows the current manager cache console still performs whole-keyspace work for both summary and paged listing: full `SCAN` collection, full in-memory sort, and per-key metadata reads before rendering.
+    - Scope for this task: review the manager cache console end to end, quantify Redis/read-path pressure for page load, refresh, pagination, and detail access, and produce a concrete redesign recommendation plus acceptance criteria if the current query/display model is not viable at large scale.
+    - This task is assessment-only; it should not implement the redesign.
+  - **2026-04-03 — intake update**
+    - Human expanded the task from assessment-only into a single review-plus-optimization pass and requested full task closeout through the standard ledger, validation, and commit workflow.
+    - Updated execution scope: keep the cache feature limited to managed `kylin_cache:` keys, remove default whole-namespace browsing and exact live summary reads, require a narrower managed-key prefix before listing, and replace offset pagination with Redis cursor-based page navigation.
+  - **2026-04-03 — implementation**
+    - Files changed: `manager/src/main/java/com/smartbi/engine/web/CacheManagementController.java`, `manager/src/main/java/com/smartbi/engine/web/RestExceptionHandler.java`, cache DTOs under `manager/src/main/java/com/smartbi/engine/web/dto/`, cache frontend files under `manager/frontend/src/views/`, `manager/frontend/src/i18n.js`, `manager/frontend/test/cache-management.spec.js`, `docs/modules/manager.md`, `docs/architecture/http-interfaces.md`, plus task ledger/archive records.
+    - Commands run: `rg`, `sed`, `javap`, `mvn -q -f manager/pom.xml -Dtest=CacheManagementControllerTest test`, `npm --prefix manager/frontend run test -- cache-management.spec.js`, `npm --prefix manager/frontend run test`, `npm --prefix manager/frontend run build`, `mvn -q -f manager/pom.xml test`.
+    - Result: Replaced exact live cache summaries with lightweight policy metadata, changed `/api/v1/cache/keys` from `offset`/`limit` array responses to required-prefix cursor pages, removed default whole-namespace browsing from the cache UI, added search-first prefix validation plus previous/next cursor navigation, and kept single-key detail/create/update/delete flows intact.
+  - **2026-04-03 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: The original cache console displayed paged rows in the UI but still performed whole-keyspace Redis work underneath by collecting and sorting every managed key, then computing exact summary totals and per-row metadata on top of the full scan result.
+    - Cure: Switched the operator workflow to search-first prefix scans with Redis cursor continuation, limited metadata reads to the current page, and stopped issuing exact live namespace totals on page load.
+    - Notes: Preserved the existing managed-namespace guardrails and single-key troubleshooting flows while intentionally dropping any UI promise of exact global totals or stable alphabetical browse order.
+  - **2026-04-03 — verification**
+    - Validation status: approved
+    - Evidence: `mvn -q -f manager/pom.xml -Dtest=CacheManagementControllerTest test` passed.
+    - Evidence: `npm --prefix manager/frontend run test -- cache-management.spec.js` passed; `npm --prefix manager/frontend run test` passed; `npm --prefix manager/frontend run build` passed.
+    - Evidence: `mvn -q -f manager/pom.xml test` passed after the cache API contract and UI/test updates landed, so this task no longer depends on the older unrelated manager-suite blocker mentioned in prior cache work.
+    - Next action: none
+    - Escalation: none
+  - **2026-04-03 — doc-garden**
+    - Updated `docs/modules/manager.md` and `docs/architecture/http-interfaces.md` so the canonical manager docs now describe the lightweight cache policy endpoint, required prefix search, cursor-based key paging, and the removal of exact live global cache totals.
 
 ### MGR-QA-001: REVIEW AND VERIFY REDIS CACHE MANAGER
 

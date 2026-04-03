@@ -32,7 +32,7 @@ class TraceIngestionTest {
     @Test
     // Covers TraceIngestionService#ingestJson success path.
     void shouldIngestAndSummarizeTrace() {
-        String json = "{\"datasourceName\":\"default\",\"datasourceType\":\"h2\",\"originalSql\":\"SELECT 1\",\"parameterPayload\":\"[{\\\"position\\\":1,\\\"className\\\":\\\"java.lang.Integer\\\",\\\"value\\\":\\\"1\\\"}]\",\"executionMode\":\"PREPARED_STATEMENT\",\"success\":false,\"durationMs\":10}";
+        String json = "{\"datasourceName\":\"default\",\"datasourceType\":\"h2\",\"originalSql\":\"SELECT 1\",\"parameterPayload\":\"[{\\\"position\\\":1,\\\"className\\\":\\\"java.lang.Integer\\\",\\\"value\\\":\\\"1\\\"}]\",\"executionMode\":\"PREPARED_STATEMENT\",\"success\":false,\"cacheKey\":\"kylin_cache:default:fp1\",\"durationMs\":10}";
         
         ingestionService.ingestJson(json);
 
@@ -43,6 +43,7 @@ class TraceIngestionTest {
         assertEquals("[{\"position\":1,\"className\":\"java.lang.Integer\",\"value\":\"1\"}]",
                 record.getParameterPayload());
         assertEquals("PREPARED_STATEMENT", record.getExecutionMode());
+        assertEquals("kylin_cache:default:fp1", record.getCacheKey());
         assertEquals(ParseStatus.OK, record.getParseStatus());
         assertNotNull(record.getSqlFingerprint());
 

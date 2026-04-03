@@ -15,6 +15,7 @@ public class TracePayload {
     public final String executionMode;
     public final boolean success;
     public final Boolean cacheHit;
+    public final String cacheKey;
     public final long durationMs;
     public final String errorMessage;
     public final SqlMetadata metadata;
@@ -28,6 +29,7 @@ public class TracePayload {
                         String executionMode,
                         boolean success,
                         Boolean cacheHit,
+                        String cacheKey,
                         long durationMs,
                         String errorMessage,
                         SqlMetadata metadata) {
@@ -40,6 +42,7 @@ public class TracePayload {
         this.executionMode = executionMode;
         this.success = success;
         this.cacheHit = cacheHit;
+        this.cacheKey = cacheKey;
         this.durationMs = durationMs;
         this.errorMessage = errorMessage;
         this.metadata = metadata;

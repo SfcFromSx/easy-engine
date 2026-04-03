@@ -27,6 +27,7 @@ export default defineComponent({
     const activeFilters = computed(() => ({
       fingerprint: normalizeQuery(route.query.fingerprint),
       datasource: normalizeQuery(route.query.datasource),
+      cacheKey: normalizeQuery(route.query.cacheKey),
       sourceFlag: normalizeQuery(route.query.sourceFlag),
       cacheHit: normalizeQuery(route.query.cacheHit),
       parseStatus: normalizeQuery(route.query.parseStatus),
@@ -41,6 +42,9 @@ export default defineComponent({
       }
       if (activeFilters.value.datasource) {
         entries.push({ label: t('traces.datasource'), value: activeFilters.value.datasource })
+      }
+      if (activeFilters.value.cacheKey) {
+        entries.push({ label: t('traces.cacheKey'), value: activeFilters.value.cacheKey })
       }
       if (activeFilters.value.sourceFlag) {
         entries.push({ label: t('traces.flag'), value: activeFilters.value.sourceFlag })
@@ -65,6 +69,7 @@ export default defineComponent({
       return {
         fingerprint: '',
         datasource: '',
+        cacheKey: '',
         sourceFlag: '',
         cacheHit: '',
         parseStatus: '',
@@ -80,6 +85,7 @@ export default defineComponent({
       const query = {}
       if (filters.fingerprint.trim()) query.fingerprint = filters.fingerprint.trim()
       if (filters.datasource.trim()) query.datasource = filters.datasource.trim()
+      if (filters.cacheKey.trim()) query.cacheKey = filters.cacheKey.trim()
       if (filters.sourceFlag.trim()) query.sourceFlag = filters.sourceFlag.trim()
       if (filters.cacheHit.trim()) query.cacheHit = filters.cacheHit.trim()
       if (filters.parseStatus.trim()) query.parseStatus = filters.parseStatus.trim()
@@ -136,6 +142,7 @@ export default defineComponent({
         const params = { page: page.value - 1, size: size.value }
         if (activeFilters.value.fingerprint) params.fingerprint = activeFilters.value.fingerprint
         if (activeFilters.value.datasource) params.datasource = activeFilters.value.datasource
+        if (activeFilters.value.cacheKey) params.cacheKey = activeFilters.value.cacheKey
         if (activeFilters.value.sourceFlag) params.sourceFlag = activeFilters.value.sourceFlag
         if (activeFilters.value.cacheHit) params.cacheHit = activeFilters.value.cacheHit === 'true'
         if (activeFilters.value.parseStatus) params.parseStatus = activeFilters.value.parseStatus

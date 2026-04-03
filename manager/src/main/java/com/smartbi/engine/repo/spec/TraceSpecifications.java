@@ -18,12 +18,14 @@ public final class TraceSpecifications {
 
     public static Specification<SqlExecutionRecord> withFilters(String fingerprint,
                                                                 String datasource,
+                                                                String cacheKey,
                                                                 String sourceFlag,
                                                                 Boolean cacheHit,
                                                                 String parseStatus,
                                                                 String sqlKeyword) {
         return Specification.where(hasFingerprint(fingerprint))
                 .and(hasDatasource(datasource))
+                .and(hasCacheKey(cacheKey))
                 .and(hasSourceFlag(sourceFlag))
                 .and(hasCacheHit(cacheHit))
                 .and(hasParseStatus(parseStatus))
@@ -44,6 +46,14 @@ public final class TraceSpecifications {
         }
         String normalized = likeValue(datasource);
         return (root, query, builder) -> builder.like(lower(builder, root, "datasourceName"), normalized);
+    }
+
+    private static Specification<SqlExecutionRecord> hasCacheKey(String cacheKey) {
+        if (!StringUtils.hasText(cacheKey)) {
+            return null;
+        }
+        String normalized = likeValue(cacheKey);
+        return (root, query, builder) -> builder.like(lower(builder, root, "cacheKey"), normalized);
     }
 
     private static Specification<SqlExecutionRecord> hasSourceFlag(String sourceFlag) {

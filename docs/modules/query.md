@@ -10,6 +10,7 @@
 - Define the routing, caching, preserved metadata, and trace semantics that adapter layers must preserve.
 - Route only by the parsed `ENGINE` field, with optional Redis override by `YH_RPTID`; legacy `YH_TARGET_ENGINE` metadata is preserved for parsing but ignored for routing.
 - Publish trace payloads with explicit `executionMode` values so downstream operators can distinguish `STATEMENT` from `PREPARED_STATEMENT` without SQL-text inspection.
+- Publish a nullable `cacheKey` field for cache-eligible traces so downstream operators can see the exact Redis key used for cache lookup/write troubleshooting.
 - Publish a dedicated `parameterPayload` field for failed prepared executions, derived from the submitted `params` DTOs as readable JSON text so operators can debug bindings without stack-trace scraping or `rawPayload` inspection.
 
 ## Compatibility Shim Scope
@@ -50,9 +51,12 @@
 - asynchronous best-effort persistence of cacheable datasource results into Redis after execution
 - preserved metadata handling that must remain visible after any adapter handoff
 - trace and execution metadata contracts such as `executionMode` and failed-prepared `parameterPayload`
+- cache-key traceability for cache-eligible requests
 
 ## Trace Contract Notes
 
+- `cacheKey` is emitted when the request participates in the normal cache lookup path, including cache hits, cache misses, and downstream execution failures for cache-eligible requests.
+- `cacheKey` remains `null` when cache lookup is bypassed by request metadata such as `no-cache` or `cache-refresh`, or when prepared-parameter caching is disabled because the request uses unsupported parameter types.
 - `parameterPayload` is only emitted for failed `PREPARED_STATEMENT` traces in this task; statement executions and successful prepared executions keep it `null` or omit it.
 - The payload is sourced from `PreparedQueryRequestDto.getParams()` / `StatementParameterDto` values only.
 - The external prepared request contract stays the same, but Kylin-routed prepared requests are literalized inside `query` before the downstream statement executes.

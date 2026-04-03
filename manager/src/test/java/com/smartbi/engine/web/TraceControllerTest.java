@@ -36,6 +36,7 @@ class TraceControllerTest {
         row.setDatasourceType("KYLIN");
         row.setDurationMs(120L);
         row.setCacheHit(Boolean.TRUE);
+        row.setCacheKey("kylin_cache:learn_kylin:fingerprint-1");
         row.setParseStatus(ParseStatus.OK);
         row.setSqlFingerprint("fingerprint-1");
         row.setOriginalSql("SELECT count(*) FROM KYLIN_SALES");
@@ -45,7 +46,7 @@ class TraceControllerTest {
         when(recordRepository.findAll(any(Specification.class), any(PageRequest.class)))
                 .thenReturn(new PageImpl<>(Collections.singletonList(row), PageRequest.of(0, 20), 1));
 
-        Page<TraceListItemDto> page = controller.page(0, 20, "fingerprint-1", null, null, null, null, null);
+        Page<TraceListItemDto> page = controller.page(0, 20, "fingerprint-1", null, null, null, null, null, null);
 
         verify(recordRepository).findAll(any(Specification.class), eq(PageRequest.of(0, 20, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "receivedAt"))));
         assertEquals(1, page.getTotalElements());
@@ -54,6 +55,7 @@ class TraceControllerTest {
         assertEquals("[{\"position\":1,\"className\":\"java.lang.Long\",\"value\":\"42\"}]",
                 page.getContent().get(0).getParameterPayload());
         assertEquals("PREPARED_STATEMENT", page.getContent().get(0).getExecutionMode());
+        assertEquals("kylin_cache:learn_kylin:fingerprint-1", page.getContent().get(0).getCacheKey());
         assertEquals(ParseStatus.OK, page.getContent().get(0).getParseStatus());
         assertEquals("SEED", page.getContent().get(0).getSourceFlag());
     }
@@ -76,10 +78,21 @@ class TraceControllerTest {
         when(recordRepository.findAll(any(Specification.class), any(PageRequest.class)))
                 .thenReturn(new PageImpl<>(Arrays.asList(selfRow, jdbcRow), PageRequest.of(0, 5), 2));
 
-        Page<TraceListItemDto> page = controller.page(0, 5, "  ", null, null, null, null, null);
+        Page<TraceListItemDto> page = controller.page(0, 5, "  ", null, null, null, null, null, null);
 
         verify(recordRepository).findAll(any(Specification.class), eq(PageRequest.of(0, 5, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "receivedAt"))));
         assertEquals("SELF", page.getContent().get(0).getSourceFlag());
         assertEquals("JDBC", page.getContent().get(1).getSourceFlag());
+    }
+
+    @Test
+    // Covers TraceController#page cache-key filter mapping.
+    void pageAcceptsCacheKeyFilter() {
+        when(recordRepository.findAll(any(Specification.class), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(Collections.<SqlExecutionRecord>emptyList(), PageRequest.of(0, 20), 0));
+
+        controller.page(0, 20, null, null, "cache-key-fragment", null, null, null, null);
+
+        verify(recordRepository).findAll(any(Specification.class), eq(PageRequest.of(0, 20, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "receivedAt"))));
     }
 }

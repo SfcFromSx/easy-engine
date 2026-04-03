@@ -105,6 +105,8 @@ class QueryTracePersistenceIntegrationTest {
         Assertions.assertEquals(DEFAULT_DATASOURCE_NAME, record.getDatasourceName());
         Assertions.assertEquals(STATEMENT_EXECUTION_MODE, record.getExecutionMode());
         Assertions.assertEquals(ParseStatus.OK, record.getParseStatus());
+        Assertions.assertNotNull(record.getCacheKey());
+        Assertions.assertTrue(record.getCacheKey().startsWith("kylin_cache:"));
         Assertions.assertNotNull(record.getSqlFingerprint());
         Assertions.assertTrue(record.getRawPayload().contains(RAW_PAYLOAD_DATASOURCE_FRAGMENT));
 

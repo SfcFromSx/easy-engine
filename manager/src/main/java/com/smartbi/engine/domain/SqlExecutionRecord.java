@@ -43,6 +43,9 @@ public class SqlExecutionRecord {
     @Column(name = "cache_hit")
     private Boolean cacheHit;
 
+    @Column(name = "cache_key", length = 1024)
+    private String cacheKey;
+
     @Column(name = "duration_ms")
     private Long durationMs;
 
@@ -152,6 +155,14 @@ public class SqlExecutionRecord {
 
     public void setCacheHit(Boolean cacheHit) {
         this.cacheHit = cacheHit;
+    }
+
+    public String getCacheKey() {
+        return cacheKey;
+    }
+
+    public void setCacheKey(String cacheKey) {
+        this.cacheKey = cacheKey;
     }
 
     public Long getDurationMs() {

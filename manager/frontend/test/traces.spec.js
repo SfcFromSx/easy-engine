@@ -29,30 +29,32 @@ describe('Traces view', () => {
     // Covers src/views/Traces.js:load, src/views/Traces.js:buildQuery, src/views/Traces.js:applyFilter, and route-backed filter normalization.
     client.get.mockResolvedValue({
       data: {
-        content: [{ id: 1, datasourceName: 'default', sqlFingerprint: 'fp-1', originalSql: 'SELECT 1', durationMs: 20, receivedAt: '2026-03-31T00:00:00Z' }],
+        content: [{ id: 1, datasourceName: 'default', sqlFingerprint: 'fp-1', originalSql: 'SELECT 1', cacheKey: 'kylin_cache:default:fp-1', durationMs: 20, receivedAt: '2026-03-31T00:00:00Z' }],
         totalElements: 1
       }
     })
 
-    const { wrapper, router } = await mountView(Traces, { route: '/traces?fingerprint=fp-1&datasource=default&sqlKeyword=SELECT' })
+    const { wrapper, router } = await mountView(Traces, { route: '/traces?fingerprint=fp-1&datasource=default&cacheKey=kylin_cache:default:fp-1&sqlKeyword=SELECT' })
     await flushPromises()
 
     expect(client.get).toHaveBeenLastCalledWith(API_ENDPOINTS.TRACES, {
-      params: { page: 0, size: 10, fingerprint: 'fp-1', datasource: 'default', sqlKeyword: 'SELECT' }
+      params: { page: 0, size: 10, fingerprint: 'fp-1', datasource: 'default', cacheKey: 'kylin_cache:default:fp-1', sqlKeyword: 'SELECT' }
     })
 
     const inputs = wrapper.findAll('input')
     await inputs[0].setValue('  fp-2  ')
     await inputs[1].setValue(' analytics ')
-    await inputs[2].setValue(' orders ')
+    await inputs[2].setValue(' kylin_cache:analytics:fp-2 ')
+    await inputs[3].setValue(' orders ')
     const searchButton = wrapper.findAll('button').find((button) => button.text() === 'Search')
     await searchButton.trigger('click')
     await flushPromises()
 
-    expect(router.currentRoute.value.query).toEqual({ fingerprint: 'fp-2', datasource: 'analytics', sqlKeyword: 'orders' })
+    expect(router.currentRoute.value.query).toEqual({ fingerprint: 'fp-2', datasource: 'analytics', cacheKey: 'kylin_cache:analytics:fp-2', sqlKeyword: 'orders' })
     expect(client.get).toHaveBeenLastCalledWith(API_ENDPOINTS.TRACES, {
-      params: { page: 0, size: 10, fingerprint: 'fp-2', datasource: 'analytics', sqlKeyword: 'orders' }
+      params: { page: 0, size: 10, fingerprint: 'fp-2', datasource: 'analytics', cacheKey: 'kylin_cache:analytics:fp-2', sqlKeyword: 'orders' }
     })
+    expect(wrapper.text()).toContain('kylin_cache:default:fp-1')
   })
 
   test('clears the filter and resets rows after a failed load', async () => {

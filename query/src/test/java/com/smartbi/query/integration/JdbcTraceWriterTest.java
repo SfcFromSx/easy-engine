@@ -64,7 +64,7 @@ class JdbcTraceWriterTest {
         ArgumentCaptor<SqlExecutionRecord> recordCaptor = ArgumentCaptor.forClass(SqlExecutionRecord.class);
         ArgumentCaptor<SqlPatternStats> statsCaptor = ArgumentCaptor.forClass(SqlPatternStats.class);
 
-        writer.publish("{\"datasourceName\":\"default\",\"datasourceType\":\"h2\",\"originalSql\":\"SELECT * FROM SALES\",\"cleanSql\":\"SELECT * FROM SALES\",\"paramFingerprint\":\"fp\",\"parameterPayload\":null,\"executionMode\":\"STATEMENT\",\"success\":true,\"cacheHit\":false,\"durationMs\":12}");
+        writer.publish("{\"datasourceName\":\"default\",\"datasourceType\":\"h2\",\"originalSql\":\"SELECT * FROM SALES\",\"cleanSql\":\"SELECT * FROM SALES\",\"paramFingerprint\":\"fp\",\"parameterPayload\":null,\"executionMode\":\"STATEMENT\",\"success\":true,\"cacheHit\":false,\"cacheKey\":\"kylin_cache:default:fp\",\"durationMs\":12}");
 
         verify(recordRepository).save(recordCaptor.capture());
         SqlExecutionRecord record = recordCaptor.getValue();
@@ -72,6 +72,7 @@ class JdbcTraceWriterTest {
         assertEquals("default", record.getDatasourceName());
         assertEquals("h2", record.getDatasourceType());
         assertEquals("STATEMENT", record.getExecutionMode());
+        assertEquals("kylin_cache:default:fp", record.getCacheKey());
         assertEquals(Long.valueOf(12L), record.getDurationMs());
         assertNotNull(record.getSqlFingerprint());
 

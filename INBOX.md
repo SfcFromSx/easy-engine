@@ -14,6 +14,51 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Do not convert inbox entries directly into implementation tasks without explicit human confirmation.
 - For tooling or infrastructure changes, prefer logging the issue here before changing the harness.
 
+### INBOX-20260403-018
+- Area: Harness audit trail
+- Related task(s): `TRACE-CACHE-KEY-001`
+- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-03 to archive the completion of `TRACE-CACHE-KEY-001` after implementing cache-key persistence and manager trace exposure.
+- Evidence: The active ledger row and section for `TRACE-CACHE-KEY-001` were removed from `tasks.md`, its full intake/implementation/review/verification/doc-garden record was archived under `tasks-done.md`, and the archived evidence records the passed query, manager, and manager-frontend validation commands for the cache-key traceability change.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edits as ad hoc bookkeeping rather than the required closeout workflow for this traceability task.
+- Suggested next step: Keep the archived task entry and single-task commit aligned, while leaving unrelated in-progress harness and cache-console work outside this task's staged scope.
+- Human decision: pending
+
+### INBOX-20260403-017
+- Area: Harness audit trail
+- Related task(s): `MGR-REVIEW-002`
+- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-03 to archive the completion of `MGR-REVIEW-002` after the Redis cache console scalability review and bounded-cost redesign landed.
+- Evidence: The active ledger row and section for `MGR-REVIEW-002` were removed from `tasks.md`, its full intake/implementation/review/verification/doc-garden record was archived under `tasks-done.md`, and the archived evidence records the new prefix-first cursor pagination contract plus the passed manager backend/frontend validation.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edits as ad hoc bookkeeping rather than the required closeout workflow for this cache-scalability task.
+- Suggested next step: Keep the archived task entry and task commit aligned; unrelated in-progress task work and generated coverage artifacts should remain outside this task's staged scope.
+- Human decision: pending
+
+### INBOX-20260403-016
+- Area: Harness audit trail
+- Related task(s): `MGR-REVIEW-002`
+- Summary: `tasks.md` was updated on 2026-04-03 to move `MGR-REVIEW-002` into `in_progress` after the human expanded the task from assessment-only into a combined review-and-optimization pass.
+- Evidence: The active ledger row for `MGR-REVIEW-002` now shows `in_progress`, and its progress log now records the scope expansion from review-only to implementing a bounded-cost cache-console redesign in the same task.
+- Impact/Risk: Without an explicit audit note, later recovery could miss why the task's execution scope widened midstream and misread the ledger change as undocumented task drift.
+- Suggested next step: Keep the implementation, verification evidence, closeout archive entry, and task-scoped commit aligned with the expanded review-plus-optimization scope.
+- Human decision: pending
+
+### INBOX-20260403-015
+- Area: Harness audit trail
+- Related task(s): `TRACE-CACHE-KEY-001`
+- Summary: `tasks.md` was updated on 2026-04-03 to intake and start a human-requested task for persisting Redis cache keys into trace records and exposing them through manager traces.
+- Evidence: The active ledger now includes `TRACE-CACHE-KEY-001` with intake notes covering the existing gap between query-side cache-key computation and manager-side trace persistence, plus the planned schema/API/UI work for `cacheKey`.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edit as ad hoc bookkeeping instead of the required intake/start record for this cache-key traceability task.
+- Suggested next step: Keep the task ledger, implementation evidence, archive entry, and eventual task commit aligned as `TRACE-CACHE-KEY-001` progresses.
+- Human decision: pending
+
+### INBOX-20260403-014
+- Area: Harness audit trail
+- Related task(s): `MGR-REVIEW-002`
+- Summary: `tasks.md` was updated on 2026-04-03 to intake a human-requested review task for Redis cache console scalability under very large managed keyspaces.
+- Evidence: The active ledger now includes `MGR-REVIEW-002` with intake notes covering the current whole-keyspace `SCAN`/sort/per-key-metadata behavior in the manager cache summary and paged list flows, plus the requirement to deliver assessment and redesign guidance without implementing the redesign yet.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edit as ad hoc bookkeeping instead of the required intake for this Redis-scalability review task.
+- Suggested next step: Keep the new task ledger entry, any later review evidence, and the eventual follow-up implementation task aligned if the assessment concludes that the current cache browsing model is not viable at tens-of-millions scale.
+- Human decision: pending
+
 ### INBOX-20260403-013
 - Area: Harness audit trail
 - Related task(s): `UI-BUNDLE-001`

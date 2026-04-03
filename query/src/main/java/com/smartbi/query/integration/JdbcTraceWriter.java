@@ -76,6 +76,7 @@ public class JdbcTraceWriter implements TraceWriter {
         if (root.has("cacheHit") && !root.get("cacheHit").isNull()) {
             row.setCacheHit(root.get("cacheHit").asBoolean());
         }
+        row.setCacheKey(text(root, "cacheKey"));
         if (root.has("durationMs") && !root.get("durationMs").isNull()) {
             row.setDurationMs(root.get("durationMs").asLong());
         }

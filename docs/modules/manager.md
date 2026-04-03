@@ -15,19 +15,22 @@
 - The dashboard plus the traces, patterns, and acceleration views now share the same page-header, filter-bar, table-shell, and card styling so operators see one consistent control-plane layout across the main manager routes.
 - On screens at or below 960px wide, the traces, patterns, and acceleration list views switch from dense desktop tables to stacked record cards to preserve readable controls, SQL snippets, and row actions on smaller devices.
 - The datasource catalog now exposes client-side filters for keyword, datasource type, and default/custom scope after the full datasource list is fetched from `/api/v1/query-datasources`.
-- The cache management page now supports summary, paged key listing, single-key detail reads, manual cache-key creation, TTL/value edits for existing keys, and key deletion inside the managed `kylin_cache:` namespace.
+- The cache management page now exposes only lightweight policy metadata by default; operators must enter a narrower managed-key prefix before the UI will list Redis cache keys.
 - `query` now consumes `/api/v1/query-routing-context` to refresh datasource and active-acceleration routing context without adding a fourth runtime service.
 - The traces, patterns, and acceleration list views expose route-backed filters so reload, bookmark, and back/forward navigation preserve the active list conditions.
 - Applying or clearing trace, pattern, or acceleration filters resets the current page to page 1 before reloading the existing `/traces`, `/patterns/top`, or `/acceleration-tables` data with the corresponding request parameters.
 - `/api/v1/traces` supports practical operator filters for fingerprint, datasource name, source flag, cache state, parse status, and SQL keyword matches on top of pagination.
 - `/api/v1/patterns/top` supports fingerprint, clean-SQL keyword, and minimum execution-count filters on top of pagination.
 - `/api/v1/acceleration-tables` supports keyword, status, schema name, and source filters on top of pagination.
-- `/api/v1/cache/keys` remains limited to `kylin_cache:` entries and does not support renaming existing keys; operators may only create a new key, edit an existing key's stored value and TTL, or delete a key.
+- `/api/v1/cache/keys` now requires a prefix narrower than `kylin_cache:` and pages through matching keys by Redis cursor instead of materializing or sorting the full namespace. Per-row size/TTL reads are limited to the current page of matched keys.
+- `/api/v1/cache/info` is now a lightweight policy endpoint describing the managed namespace and the disabled exact-summary behavior; it no longer computes live global key counts or total byte sizes from Redis.
+- Cache-key detail, create, update, and delete operations remain limited to `kylin_cache:` entries, and existing keys still cannot be renamed.
 - Fresh default manager schemas now start with empty traces, pattern stats, and acceleration tables; the dashboard stays empty until live traces are ingested or operators create acceleration entries themselves.
 - `/api/v1/traces` now exposes an explicit `executionMode` field from ingested trace payloads, backed by `manager_sql_execution_record.execution_mode`, so operators do not need to inspect `rawPayload` to distinguish statement versus prepared execution.
+- `/api/v1/traces` now also exposes `cacheKey`, backed by `manager_sql_execution_record.cache_key`, so operators can filter by and inspect the exact Redis key used on cache-eligible query traces.
 - `/api/v1/traces` also exposes `parameterPayload`, backed by `manager_sql_execution_record.parameter_payload`, so failed prepared executions can be debugged from the normal API response instead of accidental stack-trace leakage.
 - Manager-owned metadata tables now use the `manager_` prefix consistently: `manager_sql_execution_record`, `manager_sql_pattern_stats`, `manager_acceleration_table`, `manager_query_datasource_config`, and `manager_flyway_schema_history`.
-- Legacy traces that do not send `parameterPayload` still ingest successfully and surface `null` or a missing field for backward compatibility.
+- Legacy traces that do not send `cacheKey` or `parameterPayload` still ingest successfully and surface `null` or a missing field for backward compatibility.
 - This task only stores the readable payload supplied by `query`; it does not change JDBC binding or reconstruct parameters from driver state.
 
 ## Current Review Notes

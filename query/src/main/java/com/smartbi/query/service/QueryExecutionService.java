@@ -87,12 +87,16 @@ public class QueryExecutionService {
                 cachePolicy);
 
         boolean skipLookup = parsed.metadata.noCache || parsed.metadata.cacheRefresh || cachePolicy.shouldBypassCacheBeforeLookup(parsed);
+        String cacheKey = parameterCacheable
+                ? queryCacheService.buildKey(parsed, paramFingerprint, routed.datasourceName)
+                : null;
+        String traceCacheKey = skipLookup ? null : cacheKey;
         if (!skipLookup && parameterCacheable) {
-            SqlResponseStubDto cached = queryCacheService.tryGet(parsed, paramFingerprint, routed.datasourceName);
+            SqlResponseStubDto cached = queryCacheService.tryGet(cacheKey);
             if (cached != null) {
                 cached.setStorageCacheUsed(true);
                 cached.setDuration(elapsedMs(startedAt));
-                traceReportingService.report(routed, parsed, paramFingerprint, params, executionMode, true, true,
+                traceReportingService.report(routed, parsed, paramFingerprint, params, executionMode, true, traceCacheKey, true,
                         cached.getDuration(), null);
                 return cached;
             }
@@ -105,7 +109,7 @@ public class QueryExecutionService {
             } catch (IllegalArgumentException ex) {
                 long durationMs = elapsedMs(startedAt);
                 SqlResponseStubDto response = queryResultMapper.exceptionResponse(routed.datasourceName, durationMs, ex.getMessage());
-                traceReportingService.report(routed, parsed, paramFingerprint, params, executionMode, false, false,
+                traceReportingService.report(routed, parsed, paramFingerprint, params, executionMode, false, traceCacheKey, false,
                         durationMs, response.getExceptionMessage());
                 return response;
             }
@@ -114,15 +118,15 @@ public class QueryExecutionService {
         try (Connection connection = managedDataSourceRegistry.getConnection(routed.datasourceName)) {
             SqlResponseStubDto response = executeAgainstDatasource(connection, routed, params, kylinPreparedSql, startedAt);
             if (!parsed.metadata.noCache && parameterCacheable) {
-                queryCacheService.put(parsed, paramFingerprint, routed.datasourceName, response);
+                queryCacheService.put(cacheKey, parsed, response);
             }
-            traceReportingService.report(routed, parsed, paramFingerprint, params, executionMode, true, false,
+            traceReportingService.report(routed, parsed, paramFingerprint, params, executionMode, true, traceCacheKey, false,
                     response.getDuration(), null);
             return response;
         } catch (Exception ex) {
             long durationMs = elapsedMs(startedAt);
             SqlResponseStubDto response = queryResultMapper.exceptionResponse(routed.datasourceName, durationMs, ex.getMessage());
-            traceReportingService.report(routed, parsed, paramFingerprint, params, executionMode, false, false,
+            traceReportingService.report(routed, parsed, paramFingerprint, params, executionMode, false, traceCacheKey, false,
                     durationMs, ex.getMessage());
             return response;
         }
@@ -138,7 +142,7 @@ public class QueryExecutionService {
         String cube = routed == null ? managedDataSourceRegistry.getDefaultName() : routed.datasourceName;
         SqlResponseStubDto response = queryResultMapper.exceptionResponse(cube, durationMs, message);
         if (routed != null) {
-            traceReportingService.report(routed, parsed, null, params, executionMode, false, false,
+            traceReportingService.report(routed, parsed, null, params, executionMode, false, null, false,
                     durationMs, response.getExceptionMessage());
         }
         return response;

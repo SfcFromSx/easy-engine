@@ -27,13 +27,14 @@ public class TraceController {
                                        @RequestParam(defaultValue = "20") int size,
                                        @RequestParam(required = false) String fingerprint,
                                        @RequestParam(required = false) String datasource,
+                                       @RequestParam(required = false) String cacheKey,
                                        @RequestParam(required = false) String sourceFlag,
                                        @RequestParam(required = false) Boolean cacheHit,
                                        @RequestParam(required = false) String parseStatus,
                                        @RequestParam(required = false) String sqlKeyword) {
         PageRequest request = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "receivedAt"));
         Page<SqlExecutionRecord> traces = recordRepository.findAll(
-                TraceSpecifications.withFilters(fingerprint, datasource, sourceFlag, cacheHit, parseStatus, sqlKeyword),
+                TraceSpecifications.withFilters(fingerprint, datasource, cacheKey, sourceFlag, cacheHit, parseStatus, sqlKeyword),
                 request);
         return traces.map(this::toDto);
     }
@@ -46,6 +47,7 @@ public class TraceController {
         dto.setDatasourceType(row.getDatasourceType());
         dto.setDurationMs(row.getDurationMs());
         dto.setCacheHit(row.getCacheHit());
+        dto.setCacheKey(row.getCacheKey());
         dto.setParseStatus(row.getParseStatus());
         dto.setSqlFingerprint(row.getSqlFingerprint());
         dto.setOriginalSql(row.getOriginalSql());

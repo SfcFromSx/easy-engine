@@ -38,6 +38,7 @@ public class TraceReportingService {
                        List<StatementParameterDto> params,
                        String executionMode,
                        boolean success,
+                       String cacheKey,
                        Boolean cacheHit,
                        long durationMs,
                        String errorMessage) {
@@ -54,6 +55,7 @@ public class TraceReportingService {
                 executionMode,
                 success,
                 cacheHit,
+                cacheKey,
                 durationMs,
                 errorMessage,
                 parsed.metadata

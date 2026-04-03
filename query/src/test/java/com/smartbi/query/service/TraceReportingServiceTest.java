@@ -31,7 +31,7 @@ class TraceReportingServiceTest {
         CollectingTraceWriter writer = new CollectingTraceWriter();
         TraceReportingService service = new TraceReportingService(properties, writer, new ObjectMapper());
 
-        service.report(routedSql(), parsedSql(), null, null, "STATEMENT", true, false, 5L, null);
+        service.report(routedSql(), parsedSql(), null, null, "STATEMENT", true, null, false, 5L, null);
 
         assertTrue(writer.payloads.isEmpty());
     }
@@ -42,12 +42,13 @@ class TraceReportingServiceTest {
         CollectingTraceWriter writer = new CollectingTraceWriter();
         TraceReportingService service = new TraceReportingService(new QueryProperties(), writer, new ObjectMapper());
 
-        service.report(routedSql(), parsedSql(), "fp", null, "STATEMENT", true, false, 8L, null);
+        service.report(routedSql(), parsedSql(), "fp", null, "STATEMENT", true, "kylin_cache:default:fp", false, 8L, null);
 
         assertEquals(1, writer.payloads.size());
         JsonNode payload = JSON.readTree(writer.payloads.get(0));
         assertEquals("default", payload.path("datasourceName").asText());
         assertEquals("STATEMENT", payload.path("executionMode").asText());
+        assertEquals("kylin_cache:default:fp", payload.path("cacheKey").asText());
         assertTrue(payload.path("parameterPayload").isMissingNode() || payload.path("parameterPayload").isNull());
     }
 
@@ -62,7 +63,7 @@ class TraceReportingServiceTest {
         };
         TraceReportingService service = new TraceReportingService(new QueryProperties(), writer, new ObjectMapper());
 
-        assertDoesNotThrow(() -> service.report(routedSql(), parsedSql(), "fp", null, "STATEMENT", true, false, 8L, null));
+        assertDoesNotThrow(() -> service.report(routedSql(), parsedSql(), "fp", null, "STATEMENT", true, null, false, 8L, null));
     }
 
     // Covers TraceReportingService#resolveParameterPayload happy-path for failed prepared execution.
@@ -72,11 +73,12 @@ class TraceReportingServiceTest {
         TraceReportingService service = new TraceReportingService(new QueryProperties(), writer, new ObjectMapper());
         List<StatementParameterDto> params = Collections.singletonList(param("java.lang.Integer", "1"));
 
-        service.report(routedSql(), parsedSql(), "fp", params, "PREPARED_STATEMENT", false, false, 9L, "boom");
+        service.report(routedSql(), parsedSql(), "fp", params, "PREPARED_STATEMENT", false, "kylin_cache:default:fp", false, 9L, "boom");
 
         JsonNode payload = JSON.readTree(writer.payloads.get(0));
         assertEquals("[{\"position\":1,\"className\":\"java.lang.Integer\",\"value\":\"1\"}]",
                 payload.path("parameterPayload").asText());
+        assertEquals("kylin_cache:default:fp", payload.path("cacheKey").asText());
     }
 
     // Covers TraceReportingService#resolveParameterPayload null-return branches for success, statement, and empty params.
@@ -86,11 +88,11 @@ class TraceReportingServiceTest {
         TraceReportingService service = new TraceReportingService(new QueryProperties(), writer, new ObjectMapper());
 
         service.report(routedSql(), parsedSql(), "fp", Collections.singletonList(param("java.lang.Integer", "1")),
-                "PREPARED_STATEMENT", true, false, 7L, null);
+                "PREPARED_STATEMENT", true, null, false, 7L, null);
         service.report(routedSql(), parsedSql(), "fp", Collections.singletonList(param("java.lang.Integer", "1")),
-                "STATEMENT", false, false, 7L, "boom");
+                "STATEMENT", false, null, false, 7L, "boom");
         service.report(routedSql(), parsedSql(), "fp", Collections.<StatementParameterDto>emptyList(),
-                "PREPARED_STATEMENT", false, false, 7L, "boom");
+                "PREPARED_STATEMENT", false, null, false, 7L, "boom");
 
         assertNull(JSON.readTree(writer.payloads.get(0)).path("parameterPayload").textValue());
         assertNull(JSON.readTree(writer.payloads.get(1)).path("parameterPayload").textValue());
@@ -104,7 +106,7 @@ class TraceReportingServiceTest {
         TraceReportingService service = new TraceReportingService(new QueryProperties(), writer, new ListFailingObjectMapper());
 
         service.report(routedSql(), parsedSql(), "fp", Collections.singletonList(param("java.lang.Integer", "1")),
-                "PREPARED_STATEMENT", false, false, 7L, "boom");
+                "PREPARED_STATEMENT", false, null, false, 7L, "boom");
 
         JsonNode payload = JSON.readTree(writer.payloads.get(0));
         assertTrue(payload.path("parameterPayload").isMissingNode() || payload.path("parameterPayload").isNull());

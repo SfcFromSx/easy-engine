@@ -24,8 +24,8 @@ Base service: `manager`
 | `GET` | `/api/v1/acceleration-tables` | `Implemented` | List acceleration tables | Sorted by updated time; supports `keyword`, `status`, `schemaName`, and `source` filters. |
 | `GET` | `/api/v1/query-datasources` | `Implemented` | List query datasource configs | Returns the full datasource catalog; manager UI filters this list client-side by keyword, type, and default/custom scope. |
 | `GET` | `/api/v1/query-routing-context` | `Implemented` | Return query routing context | Returns datasource configs plus active acceleration rules for `query`'s in-process analyzer cache. |
-| `GET` | `/api/v1/cache/info` | `Implemented` | Return cache summary | Aggregates key count and total stored bytes for the managed `kylin_cache:*` namespace. |
-| `GET` | `/api/v1/cache/keys` | `Implemented` | List cache keys | Supports `offset`/`limit` pagination over the managed `kylin_cache:*` namespace and returns key, size, and TTL metadata. |
+| `GET` | `/api/v1/cache/info` | `Implemented` | Return cache policy | Returns the managed `kylin_cache:` prefix plus a message that exact live cache totals are intentionally disabled for large-keyspace safety. |
+| `GET` | `/api/v1/cache/keys` | `Implemented` | List cache keys | Requires a `prefix` narrower than `kylin_cache:` and supports bounded cursor pagination with `cursor`/`limit`; returns only the current page's key, size, and TTL metadata. |
 | `GET` | `/api/v1/cache/keys/{key}` | `Implemented` | Return one cache entry | Restricted to `kylin_cache:` keys; returns the stored string payload plus size and TTL metadata. |
 | `POST` | `/api/v1/cache/keys` | `Implemented` | Create cache entry | Restricted to `kylin_cache:` keys with no `/` or whitespace; requires `value` plus positive `ttlSeconds`; rejects duplicate keys. |
 | `PUT` | `/api/v1/cache/keys/{key}` | `Implemented` | Update cache entry | Restricted to existing `kylin_cache:` keys; updates stored value plus positive `ttlSeconds`; key rename is not supported. |
@@ -33,7 +33,7 @@ Base service: `manager`
 | `POST` | `/api/v1/acceleration-tables` | `Implemented` | Create manual acceleration table definition | Saves draft metadata. |
 | `POST` | `/api/v1/acceleration-tables/from-pattern` | `Implemented` | Create draft from pattern stats | Generates draft DDL, refresh SQL, and a fixed cron scaffold that operators should review before activation. |
 | `PATCH` | `/api/v1/acceleration-tables/{id}/status` | `Implemented` | Change acceleration status | Activation executes the stored DDL and refresh SQL as-is. |
-| `GET` | `/api/v1/traces` | `Implemented` | Page trace history | Supports pagination plus `fingerprint`, `datasource`, `sourceFlag`, `cacheHit`, `parseStatus`, and `sqlKeyword` filters; returns `executionMode` and optional `parameterPayload` for failed prepared traces. |
+| `GET` | `/api/v1/traces` | `Implemented` | Page trace history | Supports pagination plus `fingerprint`, `datasource`, `cacheKey`, `sourceFlag`, `cacheHit`, `parseStatus`, and `sqlKeyword` filters; returns `executionMode`, nullable `cacheKey`, and optional `parameterPayload` for failed prepared traces. |
 | `POST` | `/api/v1/jdbc/sql-rewrite` | `Implemented` | Ask manager for JDBC rewrite advice | Best-effort advisory path that emits `ENGINE`-based leading comments and adds `cache-table` when an active acceleration rule matches. |
 | `GET` | `/api/v1/acceleration-tables/{id}` | `Planned` | Table detail | Not exposed today. |
 | `PUT` | `/api/v1/acceleration-tables/{id}` | `Implemented` | Update acceleration definition | Updates draft metadata and preserves the existing status/source. |

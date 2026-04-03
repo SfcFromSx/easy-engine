@@ -43,6 +43,7 @@ class ManagerApiTest {
         record.setSqlFingerprint("fp1");
         record.setRawPayload("{\"sql\":\"SELECT 1\"}");
         record.setCacheHit(Boolean.FALSE);
+        record.setCacheKey("kylin_cache:default:fp1");
         record.setParameterPayload("[{\"position\":1,\"className\":\"java.lang.Integer\",\"value\":\"1\"}]");
         record.setExecutionMode("PREPARED_STATEMENT");
         recordRepository.save(record);
@@ -55,6 +56,7 @@ class ManagerApiTest {
         filteredRecord.setSqlFingerprint("orders_fp");
         filteredRecord.setRawPayload("{\"sql\":\"SELECT customer_id FROM orders\"}");
         filteredRecord.setCacheHit(Boolean.TRUE);
+        filteredRecord.setCacheKey("kylin_cache:analytics:orders_fp");
         recordRepository.save(filteredRecord);
 
         SqlPatternStats stats = new SqlPatternStats();
@@ -108,7 +110,8 @@ class ManagerApiTest {
         mockMvc.perform(get("/api/v1/traces"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(2))
-                .andExpect(jsonPath("$.content[0].originalSql").value("SELECT customer_id FROM orders"));
+                .andExpect(jsonPath("$.content[0].originalSql").value("SELECT customer_id FROM orders"))
+                .andExpect(jsonPath("$.content[0].cacheKey").value("kylin_cache:analytics:orders_fp"));
     }
 
     @Test
@@ -116,6 +119,7 @@ class ManagerApiTest {
     void shouldReturnFilteredTraces() throws Exception {
         mockMvc.perform(get("/api/v1/traces")
                         .param("datasource", "analytics")
+                        .param("cacheKey", "orders_fp")
                         .param("sourceFlag", "JDBC")
                         .param("cacheHit", "true")
                         .param("parseStatus", "ERROR")
@@ -123,6 +127,7 @@ class ManagerApiTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].datasourceName").value("analytics"))
-                .andExpect(jsonPath("$.content[0].originalSql").value("SELECT customer_id FROM orders"));
+                .andExpect(jsonPath("$.content[0].originalSql").value("SELECT customer_id FROM orders"))
+                .andExpect(jsonPath("$.content[0].cacheKey").value("kylin_cache:analytics:orders_fp"));
     }
 }

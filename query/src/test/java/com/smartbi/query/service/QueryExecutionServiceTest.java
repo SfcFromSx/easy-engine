@@ -65,11 +65,12 @@ class QueryExecutionServiceTest {
         when(mapper.toResponse(eq(resultSet), eq("default"), anyLong())).thenReturn(response);
 
         SqlResponseStubDto actual = service.execute(request);
+        String expectedCacheKey = cacheService.buildKey(com.smartbi.query.parsing.SqlCommentParser.parse(request.getSql()), null, "default");
 
         assertEquals("default", actual.getCube());
         assertEquals("alpha", actual.getResults().get(0)[0]);
-        verify(cacheService).put(any(), eq(null), eq("default"), eq(response));
-        verify(traceReportingService).report(eq(routed), any(), eq(null), eq(null), eq("STATEMENT"), eq(true), eq(false), eq(12L), eq(null));
+        verify(cacheService).put(eq(expectedCacheKey), any(), eq(response));
+        verify(traceReportingService).report(eq(routed), any(), eq(null), eq(null), eq("STATEMENT"), eq(true), eq(expectedCacheKey), eq(false), eq(12L), eq(null));
     }
 
     // Covers QueryExecutionService#execute prepared happy path, QueryExecutionService#bindParameters, and QueryExecutionService#resolveExecutionMode prepared branch for non-Kylin datasources.
@@ -96,11 +97,13 @@ class QueryExecutionServiceTest {
         when(mapper.toResponse(eq(resultSet), eq("default"), anyLong())).thenReturn(response);
 
         SqlResponseStubDto actual = service.execute(request);
+        String expectedCacheKey = cacheService.buildKey(com.smartbi.query.parsing.SqlCommentParser.parse(request.getSql()),
+                "1=19:java.lang.Integer:1;", "default");
 
         assertEquals("alpha", actual.getResults().get(0)[0]);
         verify(statement).setObject(1, Integer.valueOf(1));
         verify(traceReportingService).report(eq(routed), any(), eq("1=19:java.lang.Integer:1;"), eq(request.getParams()),
-                eq("PREPARED_STATEMENT"), eq(true), eq(false), eq(15L), eq(null));
+                eq("PREPARED_STATEMENT"), eq(true), eq(expectedCacheKey), eq(false), eq(15L), eq(null));
     }
 
     // Covers QueryExecutionService#executeAgainstDatasource Kylin literalization branch, including numeric, quoted-string, date, and null parameter rendering.
@@ -138,7 +141,7 @@ class QueryExecutionServiceTest {
         verify(connection, never()).prepareStatement(any());
         verify(statement).executeQuery(expectedSql);
         verify(traceReportingService).report(eq(routed), any(), any(), eq(request.getParams()),
-                eq("PREPARED_STATEMENT"), eq(true), eq(false), eq(14L), eq(null));
+                eq("PREPARED_STATEMENT"), eq(true), any(), eq(false), eq(14L), eq(null));
     }
 
     // Covers QueryExecutionService#literalizeKylinPreparedSql placeholder-count mismatch branch before datasource execution.
@@ -166,7 +169,7 @@ class QueryExecutionServiceTest {
         assertEquals(message, actual.getExceptionMessage());
         verify(registry, never()).getConnection(any());
         verify(traceReportingService).report(eq(routed), any(), any(), eq(request.getParams()),
-                eq("PREPARED_STATEMENT"), eq(false), eq(false), anyLong(), eq(message));
+                eq("PREPARED_STATEMENT"), eq(false), any(), eq(false), anyLong(), eq(message));
     }
 
     // Covers QueryExecutionService#convertValue unsupported-class fallback and PreparedParameterSupport cache-disable behavior.
@@ -199,7 +202,7 @@ class QueryExecutionServiceTest {
         verify(cacheService, never()).tryGet(any(), any(), any());
         verify(cacheService, never()).put(any(), any(), any(), any());
         verify(traceReportingService).report(eq(routed), any(), eq(null), eq(request.getParams()),
-                eq("PREPARED_STATEMENT"), eq(true), eq(false), eq(11L), eq(null));
+                eq("PREPARED_STATEMENT"), eq(true), eq(null), eq(false), eq(11L), eq(null));
     }
 
     // Covers QueryExecutionService#execute non-query rejection branch.
@@ -224,7 +227,7 @@ class QueryExecutionServiceTest {
 
         assertTrue(actual.getIsException());
         verify(registry, never()).getConnection(any());
-        verify(traceReportingService).report(eq(routed), any(), eq(null), eq(null), eq("STATEMENT"), eq(false), eq(false), anyLong(),
+        verify(traceReportingService).report(eq(routed), any(), eq(null), eq(null), eq("STATEMENT"), eq(false), eq(null), eq(false), anyLong(),
                 eq("Only query SQL is supported by engine-query"));
     }
 
@@ -252,8 +255,10 @@ class QueryExecutionServiceTest {
         assertEquals(message, actual.getExceptionMessage());
         verify(routeService, never()).routeAndRewrite(any(), any());
         verify(cacheService, never()).tryGet(any(), any(), any());
+        verify(cacheService, never()).tryGet(any());
         verify(cacheService, never()).put(any(), any(), any(), any());
-        verify(traceReportingService, never()).report(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyLong(), any());
+        verify(cacheService, never()).put(any(), any(), any());
+        verify(traceReportingService, never()).report(any(), any(), any(), any(), any(), anyBoolean(), any(), anyBoolean(), anyLong(), any());
     }
 
     // Covers QueryExecutionService#execute null-request rejection before routing or cache work.
@@ -279,8 +284,10 @@ class QueryExecutionServiceTest {
         assertEquals(message, actual.getExceptionMessage());
         verify(routeService, never()).routeAndRewrite(any(), any());
         verify(cacheService, never()).tryGet(any(), any(), any());
+        verify(cacheService, never()).tryGet(any());
         verify(cacheService, never()).put(any(), any(), any(), any());
-        verify(traceReportingService, never()).report(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyLong(), any());
+        verify(cacheService, never()).put(any(), any(), any());
+        verify(traceReportingService, never()).report(any(), any(), any(), any(), any(), anyBoolean(), any(), anyBoolean(), anyLong(), any());
     }
 
     // Covers QueryExecutionService#execute unsupported-request-shape rejection before routing or cache work.
@@ -308,8 +315,10 @@ class QueryExecutionServiceTest {
         assertEquals(message, actual.getExceptionMessage());
         verify(routeService, never()).routeAndRewrite(any(), any());
         verify(cacheService, never()).tryGet(any(), any(), any());
+        verify(cacheService, never()).tryGet(any());
         verify(cacheService, never()).put(any(), any(), any(), any());
-        verify(traceReportingService, never()).report(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyLong(), any());
+        verify(cacheService, never()).put(any(), any(), any());
+        verify(traceReportingService, never()).report(any(), any(), any(), any(), any(), anyBoolean(), any(), anyBoolean(), anyLong(), any());
     }
 
     // Covers QueryExecutionService#execute cache-hit branch.
@@ -331,10 +340,11 @@ class QueryExecutionServiceTest {
         when(routeService.routeAndRewrite(eq(request.getSql()), any())).thenReturn(routed);
 
         SqlResponseStubDto actual = service.execute(request);
+        String expectedCacheKey = cacheService.buildKey(com.smartbi.query.parsing.SqlCommentParser.parse(request.getSql()), null, "default");
 
         assertTrue(actual.isStorageCacheUsed());
         verify(registry, never()).getConnection(any());
-        verify(traceReportingService).report(eq(routed), any(), eq(null), eq(null), eq("STATEMENT"), eq(true), eq(true), anyLong(), eq(null));
+        verify(traceReportingService).report(eq(routed), any(), eq(null), eq(null), eq("STATEMENT"), eq(true), eq(expectedCacheKey), eq(true), anyLong(), eq(null));
     }
 
     // Covers QueryExecutionService#execute cache-bypass branches for no-cache and force-refresh metadata.
@@ -363,6 +373,8 @@ class QueryExecutionServiceTest {
         service.execute(request);
 
         verify(cacheService, never()).tryGet(any(), any(), any());
+        verify(cacheService, never()).tryGet(any());
+        verify(traceReportingService).report(eq(routed), any(), eq(null), eq(null), eq("STATEMENT"), eq(true), eq(null), eq(false), eq(9L), eq(null));
     }
 
     // Covers QueryExecutionService#execute datasource-error branch.
@@ -385,9 +397,10 @@ class QueryExecutionServiceTest {
         when(mapper.exceptionResponse(eq("default"), anyLong(), eq("boom"))).thenReturn(response);
 
         SqlResponseStubDto actual = service.execute(request);
+        String expectedCacheKey = cacheService.buildKey(com.smartbi.query.parsing.SqlCommentParser.parse(request.getSql()), null, "default");
 
         assertTrue(actual.getIsException());
-        verify(traceReportingService).report(eq(routed), any(), eq(null), eq(null), eq("STATEMENT"), eq(false), eq(false), anyLong(), eq("boom"));
+        verify(traceReportingService).report(eq(routed), any(), eq(null), eq(null), eq("STATEMENT"), eq(false), eq(expectedCacheKey), eq(false), anyLong(), eq("boom"));
     }
 
     // Covers QueryExecutionService#convertValue supported-type, null, and fallback branches.

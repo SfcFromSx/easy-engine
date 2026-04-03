@@ -41,6 +41,13 @@
           :placeholder="t('traces.filterDatasourcePlaceholder')"
           @keyup.enter="applyFilter"
         />
+        <el-input
+          v-model="filterDraft.cacheKey"
+          class="filter-input"
+          clearable
+          :placeholder="t('traces.filterCacheKeyPlaceholder')"
+          @keyup.enter="applyFilter"
+        />
         <el-select v-model="filterDraft.sourceFlag" class="filter-select" clearable :placeholder="t('traces.allSourceFlags')">
           <el-option :label="t('traces.allSourceFlags')" value="" />
           <el-option label="SEED" value="SEED" />
@@ -116,6 +123,11 @@
               <el-tag v-else type="info" size="small" effect="plain">MISS</el-tag>
             </template>
           </el-table-column>
+          <el-table-column :label="t('traces.cacheKey')" width="240" show-overflow-tooltip>
+            <template #default="{ row }">
+              <code class="mini-code text-mono">{{ row.cacheKey || '--' }}</code>
+            </template>
+          </el-table-column>
           <el-table-column :label="t('traces.parseResult')" width="110">
             <template #default="{ row }">
               <el-tag :type="statusType(row.parseStatus)" size="small">
@@ -178,6 +190,13 @@
                 {{ shortFingerprint(row.sqlFingerprint) }}
               </el-link>
               <span v-else class="muted-text">{{ t('traces.noFingerprint') }}</span>
+            </div>
+          </div>
+
+          <div class="mobile-record-field">
+            <span class="mobile-record-label">{{ t('traces.cacheKey') }}</span>
+            <div class="mobile-record-value">
+              <code class="mini-code text-mono">{{ row.cacheKey || '--' }}</code>
             </div>
           </div>
 

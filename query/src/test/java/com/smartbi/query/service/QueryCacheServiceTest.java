@@ -58,6 +58,28 @@ class QueryCacheServiceTest {
         assertEquals(300, store.ttlForLastSet());
     }
 
+    // Covers QueryCacheService#tryGet(String) and QueryCacheService#put(String, ParsedSql, SqlResponseStubDto) with a pre-resolved key.
+    @Test
+    void shouldRoundTripCachedResponseUsingResolvedKey() {
+        QueryProperties properties = new QueryProperties();
+        MapCacheStore store = new MapCacheStore();
+        QueryCacheService service = new QueryCacheService(store, properties, new ObjectMapper());
+        SqlCommentParser.ParsedSql parsed = SqlCommentParser.parse("SELECT * FROM sales");
+        String key = service.buildKey(parsed, "", "default");
+
+        SqlResponseStubDto response = new SqlResponseStubDto();
+        response.setCube("default");
+        response.setDuration(12);
+        response.setResults(java.util.Collections.singletonList(new String[]{"1", "foo"}));
+
+        service.put(key, parsed, response);
+        SqlResponseStubDto cached = service.tryGet(key);
+
+        assertNotNull(cached);
+        assertEquals("default", cached.getCube());
+        assertEquals(key, store.lastKey());
+    }
+
     // Covers QueryCacheService#buildKey shared-cache and explicit cache-key branches.
     @Test
     void shouldBuildSharedKeysAndHonorExplicitCacheKey() {

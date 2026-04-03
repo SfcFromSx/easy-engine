@@ -24,7 +24,6 @@ Completed task history lives in [tasks-done.md](/Users/sfc/Documents/projects/en
 |----|-------|--------|--------|---------|--------------|
 | CONFIG-REVIEW-001 | AUDIT REPO FOR PROFILE-YAML-ONLY ENV CONFIG COMPLIANCE | platform | todo | 2026-04-02 | none |
 
-
 ### CONFIG-REVIEW-001: AUDIT REPO FOR PROFILE-YAML-ONLY ENV CONFIG COMPLIANCE
 
 - **Status**: todo

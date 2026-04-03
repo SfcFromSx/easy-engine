@@ -50,7 +50,11 @@ public class QueryCacheService {
     }
 
     public SqlResponseStubDto tryGet(ParsedSql parsed, String paramFingerprint, String datasourceName) {
-        String value = cacheStore.get(buildKey(parsed, paramFingerprint, datasourceName));
+        return tryGet(buildKey(parsed, paramFingerprint, datasourceName));
+    }
+
+    public SqlResponseStubDto tryGet(String key) {
+        String value = cacheStore.get(key);
         if (value == null) {
             return null;
         }
@@ -65,16 +69,21 @@ public class QueryCacheService {
                     String paramFingerprint,
                     String datasourceName,
                     SqlResponseStubDto response) {
+        put(buildKey(parsed, paramFingerprint, datasourceName), parsed, response);
+    }
+
+    public void put(String key,
+                    ParsedSql parsed,
+                    SqlResponseStubDto response) {
         try {
             String json = objectMapper.writeValueAsString(response);
             if (json.getBytes(StandardCharsets.UTF_8).length > queryProperties.getCache().getMaxCacheSizeBytes()) {
                 return;
             }
-            final String key = buildKey(parsed, paramFingerprint, datasourceName);
             final int ttl = effectiveTtl(parsed);
             cacheWriteExecutor.execute(() -> cacheStore.set(key, json, ttl));
         } catch (Exception ex) {
-            log.warn("Skipping async cache write for datasource {}: {}", datasourceName, ex.getMessage());
+            log.warn("Skipping async cache write for key {}: {}", key, ex.getMessage());
         }
     }
 
