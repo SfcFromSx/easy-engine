@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| CONFIG-MYSQL-001 | STANDARDIZE YAML PROFILES ON MYSQL-ONLY CONFIG | platform | `manager`, `query`, and `benchmark` `application-test.yml` files are now MySQL-first, H2-only regression fixtures moved into test-scoped `application-test.properties` overrides, `scripts/init-db.sh test ...` now follows the runtime profile classpath, and manager/query/benchmark validation plus test-profile DB init all passed. |
 | DB-AUDIT-001 | AUDIT INIT DB MIGRATIONS FOR CREATE-THEN-ALTER DRIFT | platform | Manager and benchmark fresh-schema bootstrap now create current table shapes directly where safe, retained upgrade migrations are checksum-safe and idempotent for legacy schemas, manager Flyway regression tests pass, and `init-db` smoke runs now pass for manager plus benchmark's dev/MySQL-backed test paths. |
 | MGR-BUG-002 | FIX MYSQL CACHE KEY INDEX LENGTH IN V12 MIGRATION | manager | Manager Flyway migration `V12` now creates a MySQL-safe prefix index for `cache_key` without breaking H2-backed migration tests by using a MySQL executable comment; focused manager Flyway validation and a live MySQL 8 syntax probe both passed. |
 | GIT-HYGIENE-002 | STOP TRACKING LOCAL TOOLING AND COVERAGE ARTIFACTS | platform | `.claude/settings.local.json` and `manager/frontend/coverage/` are no longer tracked by Git, new ignore rules now cover those paths plus `analyze/target/`, local copies were preserved, and verification confirmed the repo now treats them as ignored local artifacts instead of release changes. |
@@ -38,6 +39,34 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | QUERY-BUG-001 | REJECT NON-QUERY REQUESTS AT QUERY BOUNDARY | query | `query` now rejects blank and non-query SQL before cache/datasource work while preserving the compatibility exception payload contract, the request docs are updated, `mvn -q -f query/pom.xml test` passes, and broader compatibility-input review is tracked in `QUERY-REVIEW-002`. |
 | BENCH-TEST-002 | EXTERNALIZE PREFLIGHT CONTROLLER TEST FIXTURES | benchmark | `PreflightControllerTest` now loads its probe fixture values from `benchmark/src/test/resources/preflight-controller-test.properties` instead of inline literals, the focused benchmark validation passes, and the broader audit follow-up is tracked in `TEST-CONFIG-001`. |
 | BENCH-CONFIG-001 | EXTERNALIZE BENCHMARK PREFLIGHT DATASOURCE PROBE SETTINGS | benchmark | `BenchmarkPreflightProperties` no longer embeds Kylin/Presto probe defaults in Java, `benchmark.preflight.*` can be overridden from environment-backed config, task-local preflight tests pass, and unrelated benchmark-suite drift is logged in `INBOX-20260402-001`. |
+
+### CONFIG-MYSQL-001: STANDARDIZE YAML PROFILES ON MYSQL-ONLY CONFIG
+
+- **Status**: done
+- **Updated**: 2026-04-03
+- **Progress log**:
+  - **2026-04-03 — intake**
+    - Human decided the repo should follow a MySQL-only rule for YAML-based environment configuration.
+    - Scope for this task: audit module-level `application-dev.yml`, `application-test.yml`, and `application-pro.yml` files across `manager`, `query`, and `benchmark`; remove remaining H2-first defaults from YAML configuration; align test/bootstrap flows and related docs with the MySQL-only rule; and verify the affected init-db and validation paths still work with the standardized configuration.
+  - **2026-04-03 — implementation**
+    - Files changed: `manager/query/benchmark` `application-test.yml`, matching test-scoped `application-test.properties` overrides, the three test-fixture loaders, `scripts/init-db.sh`, `docs/operations/local-development.md`, `docs/modules/{manager,query,benchmark}.md`, `doc-CN/local-development.md`, plus task ledger/archive records.
+    - Commands run: `rg`, `sed`, `git diff`, `bash scripts/init-db.sh test manager benchmark`, `mvn -q -f query/pom.xml clean test`, `mvn -q -f manager/pom.xml test`, `mvn -q -f benchmark/pom.xml test`.
+    - Result: Switched the module `test` profile YAMLs to MySQL-first defaults, moved H2-only regression fixtures into test-scoped property overrides consumed by Spring tests and fixture helpers, and updated the DB-init script so `test` profile bootstrap now uses the runtime classpath instead of accidentally reloading test-only H2 overrides.
+  - **2026-04-03 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: `CONFIG-PROFILE-001` centralized environment settings into profile YAMLs, but the module `application-test.yml` files still mixed runtime MySQL intent with H2-first regression fixtures, so the `test` profile meant different things to normal bootstrap and to isolated test classes.
+    - Cure: Split the concerns cleanly by keeping module profile YAMLs MySQL-first, moving H2-only regression inputs into test-scoped property overrides and fixture loaders, and forcing `scripts/init-db.sh` to execute against the runtime classpath for every profile.
+    - Generalization: Existing profile-governance guidance in `docs/operations/best-practices.md` already covers this drift; no new generalized rule was needed.
+  - **2026-04-03 — verification**
+    - Validation status: approved
+    - Evidence: `bash scripts/init-db.sh test manager benchmark` passed and both init apps reported MySQL `jdbc:mysql://localhost:3307/engine_db` plus up-to-date schemas on the runtime classpath.
+    - Evidence: `mvn -q -f query/pom.xml clean test` passed after a clean rebuild, confirming the query regression suite still picks up the H2 test overrides while the runtime `test` profile remains MySQL-first.
+    - Evidence: `mvn -q -f manager/pom.xml test` passed.
+    - Evidence: `mvn -q -f benchmark/pom.xml test` passed with the existing Docker-less Testcontainers warning path for the skipped Flyway seed container coverage.
+    - Next action: none
+    - Escalation: none
+  - **2026-04-03 — doc-garden**
+    - Updated `docs/operations/local-development.md`, `docs/modules/manager.md`, `docs/modules/query.md`, `docs/modules/benchmark.md`, and the configured mirror `doc-CN/local-development.md` so the docs now state that profile YAMLs are MySQL-first and that any H2 usage is confined to test-scoped override resources.
 | task-ui-integration-001 | 整合前端静态资源及 SPA 路由支持 | manager, benchmark | `manager/src/.../EngineConfig.java`, `benchmark/src/.../WebConfig.java`, `doc-CN/quickstart.md` updated; SPA route forwarding implemented for bundled assets. |
 | task-ui-integration-001 | 整合前端静态资源及 SPA 路由支持 | manager, benchmark | `manager/src/.../EngineConfig.java`, `benchmark/src/.../WebConfig.java`, `doc-CN/quickstart.md` updated; SPA route forwarding implemented for bundled assets. |
 | DOC-CN-003 | ADD MYSQL TABLE OVERVIEW TO QUICKSTART | docs | `doc-CN/quickstart.md` updated with MySQL table inventory for Manager and Benchmark modules. |

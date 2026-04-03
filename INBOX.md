@@ -14,6 +14,23 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Do not convert inbox entries directly into implementation tasks without explicit human confirmation.
 - For tooling or infrastructure changes, prefer logging the issue here before changing the harness.
 
+### INBOX-20260403-028
+- Area: Harness audit trail
+- Related task(s): CONFIG-MYSQL-001
+- Summary: tasks.md and tasks-done.md were updated on 2026-04-03 to archive the completion of CONFIG-MYSQL-001 after standardizing the module profile YAMLs on MySQL-first defaults and recording the verification evidence.
+- Evidence: The active ledger row and section for CONFIG-MYSQL-001 were removed from tasks.md, its full intake/implementation/review/verification/doc-garden record was archived under tasks-done.md, and the archived evidence captures the passing bash scripts/init-db.sh test manager benchmark, mvn -q -f query/pom.xml clean test, mvn -q -f manager/pom.xml test, and mvn -q -f benchmark/pom.xml test commands.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the core ledger edits as ad hoc bookkeeping instead of the required closeout workflow for this repo-wide configuration standardization task.
+- Suggested next step: Keep the archived task entry, profile/test-config split, runtime-classpath init-db behavior, and single task commit aligned.
+- Human decision: pending
+
+### INBOX-20260403-027
+- Area: Harness audit trail
+- Related task(s): CONFIG-MYSQL-001
+- Human decision: pending
+- Summary: tasks.md was updated on 2026-04-03 to intake a human-requested platform task for standardizing module YAML environment profiles on a MySQL-only rule.
+- Evidence: The active ledger now includes CONFIG-MYSQL-001 with intake notes covering manager, query, and benchmark application-dev.yml, application-test.yml, and application-pro.yml, plus the requirement to remove remaining H2-first YAML defaults and align affected bootstrap, validation, and documentation flows.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the core ledger edit as ad hoc bookkeeping instead of the requested intake record for this repo-wide configuration standardization task.
+- Suggested next step: Keep the configuration changes, verification evidence, archive entry, and single task commit aligned when CONFIG-MYSQL-001 is implemented.
 ### INBOX-20260403-023
 - Area: Harness audit trail
 - Related task(s): `MGR-BUG-002`

@@ -72,8 +72,9 @@ npm --prefix benchmark/frontend run dev
 - Benchmark connects to `query` using the standard Apache Kylin JDBC driver (`jdbc:kylin://localhost:8092/<project>`). Upload additional JDBC driver JARs via the Benchmark UI under Data Sources > Upload Driver before running datasource tests or benchmark jobs that depend on them.
 - If you want benchmark or another JDBC client to exercise the Trino compatibility path instead, point `io.trino.jdbc.TrinoDriver` at `jdbc:trino://localhost:8093/<catalog>/<schema>`. That port is execution-only and intentionally does not support metadata browsing.
 - Each backend module now owns `application-dev.yml`, `application-test.yml`, and `application-pro.yml`. Local startup uses `dev`, automated tests use `test`, test-environment containers should set `SPRING_PROFILES_ACTIVE=test`, and production should set `SPRING_PROFILES_ACTIVE=pro`.
-- The default local metadata store is MySQL on `localhost:3307`; those local defaults now live only in the `dev` profile rather than Java, scripts, or Maven defaults.
+- The profile YAMLs are now MySQL-first across `dev`, `test`, and `pro`; local metadata defaults point at MySQL on `localhost:3307`, and any in-memory H2 usage is limited to test-scoped override files under `src/test/resources`.
 - `manager` and `benchmark` now expect the metadata schema to be initialized already; if you skip `bash scripts/init-db.sh`, startup fails fast on missing tables instead of mutating the database during boot.
+- `bash scripts/init-db.sh <profile> ...` now reads only the module runtime classpath, so `test`-profile schema bootstrap follows the module `application-test.yml` MySQL settings instead of test-only H2 overrides.
 - Preserved metadata comments (e.g. `ENGINE`) in SQL are used to route requests to specific backends within `query`.
 - If Flyway reports a checksum mismatch after editing an applied migration during local work, repair and migrate explicitly:
 

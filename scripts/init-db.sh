@@ -25,19 +25,15 @@ run_module() {
   local profile="$1"
   local module="$2"
   local main_class
-  local classpath_scope="runtime"
   local mvn_goal="org.codehaus.mojo:exec-maven-plugin:3.1.0:java"
 
   main_class="$(main_class_for "${module}")"
   echo "Initializing ${module} schema with profile ${profile}..."
-  if [[ "${profile}" == "test" ]]; then
-    classpath_scope="test"
-  fi
   mvn -q -f "${ROOT_DIR}/${module}/pom.xml" \
     -DskipTests \
     -Dspring.profiles.active="${profile}" \
     -Dexec.mainClass="${main_class}" \
-    -Dexec.classpathScope="${classpath_scope}" \
+    -Dexec.classpathScope="runtime" \
     "${mvn_goal}"
 }
 

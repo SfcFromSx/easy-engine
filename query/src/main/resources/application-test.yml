@@ -2,10 +2,10 @@ spring:
   application:
     name: query
   datasource:
-    url: ${QUERY_TEST_META_DB_JDBC_URL:jdbc:h2:mem:querytestmeta;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
-    username: ${QUERY_TEST_META_DB_USER:sa}
-    password: ${QUERY_TEST_META_DB_PASSWORD:}
-    driver-class-name: ${QUERY_TEST_META_DB_DRIVER_CLASS:org.h2.Driver}
+    url: ${QUERY_TEST_META_DB_JDBC_URL:jdbc:mysql://localhost:3307/engine_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${QUERY_TEST_META_DB_USER:engine}
+    password: ${QUERY_TEST_META_DB_PASSWORD:engine123}
+    driver-class-name: ${QUERY_TEST_META_DB_DRIVER_CLASS:com.mysql.cj.jdbc.Driver}
   jpa:
     open-in-view: false
     hibernate:
@@ -38,69 +38,35 @@ engine:
     datasource:
       default:
         name: default
-        type: h2
-        driver-class: org.h2.Driver
-        jdbc-url: ${QUERY_TEST_DEFAULT_JDBC_URL:jdbc:h2:mem:querytestdefault;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
-        username: ${QUERY_TEST_DEFAULT_JDBC_USER:sa}
-        password: ${QUERY_TEST_DEFAULT_JDBC_PASSWORD:}
+        type: ${QUERY_TEST_DEFAULT_TYPE:kylin}
+        driver-class: ${QUERY_TEST_DEFAULT_DRIVER_CLASS:org.apache.kylin.jdbc.Driver}
+        jdbc-url: ${QUERY_TEST_DEFAULT_JDBC_URL:jdbc:kylin://localhost:17070/learn_kylin}
+        username: ${QUERY_TEST_DEFAULT_JDBC_USER:ADMIN}
+        password: ${QUERY_TEST_DEFAULT_JDBC_PASSWORD:KYLIN}
         max-pool-size: 4
         min-idle: 1
         connection-timeout-ms: 10000
       named:
         presto_local:
           name: presto_local
-          type: presto
-          driver-class: org.h2.Driver
-          jdbc-url: ${QUERY_TEST_PRESTO_JDBC_URL:jdbc:h2:mem:querytestpresto;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
-          username: ${QUERY_TEST_PRESTO_JDBC_USER:sa}
+          type: ${QUERY_TEST_PRESTO_TYPE:presto}
+          driver-class: ${QUERY_TEST_PRESTO_DRIVER_CLASS:com.facebook.presto.jdbc.PrestoDriver}
+          jdbc-url: ${QUERY_TEST_PRESTO_JDBC_URL:jdbc:presto://localhost:18081/tpch/tiny}
+          username: ${QUERY_TEST_PRESTO_JDBC_USER:admin}
           password: ${QUERY_TEST_PRESTO_JDBC_PASSWORD:}
           max-pool-size: 4
           min-idle: 1
           connection-timeout-ms: 10000
         trino_local:
           name: trino_local
-          type: trino
-          driver-class: org.h2.Driver
-          jdbc-url: ${QUERY_TEST_TRINO_JDBC_URL:jdbc:h2:mem:querytesttrino;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
-          username: ${QUERY_TEST_TRINO_JDBC_USER:sa}
+          type: ${QUERY_TEST_TRINO_TYPE:trino}
+          driver-class: ${QUERY_TEST_TRINO_DRIVER_CLASS:io.trino.jdbc.TrinoDriver}
+          jdbc-url: ${QUERY_TEST_TRINO_JDBC_URL:jdbc:trino://localhost:18080/tpch/tiny}
+          username: ${QUERY_TEST_TRINO_JDBC_USER:admin}
           password: ${QUERY_TEST_TRINO_JDBC_PASSWORD:}
           max-pool-size: 4
           min-idle: 1
           connection-timeout-ms: 10000
-
-query:
-  test:
-    manager-url: http://localhost:8090
-    manager-response:
-      default-jdbc-url: jdbc:h2:mem:remote_default
-      default-driver-class: org.h2.Driver
-    result-mapper:
-      jdbc-url: jdbc:h2:mem:result_mapper;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-      jdbc-user: sa
-      jdbc-password:
-    registry:
-      shared:
-        driver-class: org.h2.Driver
-        username: sa
-        password:
-      default:
-        name: default
-        type: h2
-        driver-class: org.h2.Driver
-        jdbc-url: jdbc:h2:mem:fallback_default
-        username: sa
-        password:
-      presto:
-        name: presto_local
-        type: presto
-        driver-class: org.h2.Driver
-        jdbc-url: jdbc:h2:mem:fallback_presto
-        username: sa
-        password:
-      keyed:
-        jdbc-url: jdbc:h2:mem:keyed_named
-      manager:
-        jdbc-url-prefix: "jdbc:h2:mem:"
 
 logging:
   level:

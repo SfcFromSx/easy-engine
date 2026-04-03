@@ -6,10 +6,10 @@ spring:
       max-file-size: 20MB
       max-request-size: 20MB
   datasource:
-    url: ${BENCHMARK_TEST_DB_JDBC_URL:jdbc:h2:mem:benchmarktestmeta;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
-    username: ${BENCHMARK_TEST_DB_USER:sa}
-    password: ${BENCHMARK_TEST_DB_PASSWORD:}
-    driver-class-name: ${BENCHMARK_TEST_DB_DRIVER_CLASS:org.h2.Driver}
+    url: ${BENCHMARK_TEST_DB_JDBC_URL:jdbc:mysql://localhost:3307/engine_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${BENCHMARK_TEST_DB_USER:engine}
+    password: ${BENCHMARK_TEST_DB_PASSWORD:engine123}
+    driver-class-name: ${BENCHMARK_TEST_DB_DRIVER_CLASS:com.mysql.cj.jdbc.Driver}
   jpa:
     hibernate:
       ddl-auto: create-drop
@@ -36,45 +36,6 @@ benchmark:
     kylin-user: ADMIN
     kylin-password: KYLIN
     presto-info-url: http://presto/info
-  test:
-    datasource:
-      update:
-        jdbc-url: jdbc:h2:mem:new
-        jdbc-user: sa
-        jdbc-password: pw
-        driver-class: org.h2.Driver
-    smoke:
-      test-datasource:
-        name: test_ds
-        type: h2
-        driver-class: org.h2.Driver
-        jdbc-url: jdbc:h2:mem:test
-        jdbc-user: sa
-        jdbc-password:
-    jdbc-upload:
-      test-datasource:
-        name: uploaded-driver
-        driver-class: com.example.uploaded.UploadedH2Driver
-        jdbc-url: jdbc:h2:mem:uploadeddriver;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-        jdbc-user: sa
-        jdbc-password:
-    async-runner:
-      target:
-        driver-class: org.h2.Driver
-        jdbc-url: jdbc:h2:mem:benchmarkrunnerexec;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-        jdbc-user: sa
-        jdbc-password:
-    query-service:
-      driver-class: org.h2.Driver
-      jdbc-url-prefix: jdbc:h2:mem:benchmark-query-
-      jdbc-url-suffix: ;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-      jdbc-user: sa
-      jdbc-password:
-    flyway-seed:
-      mysql-image: mysql:8.4
-      mysql-database: engine_db
-      mysql-username: engine
-      mysql-password: engine123
 
 logging:
   level:

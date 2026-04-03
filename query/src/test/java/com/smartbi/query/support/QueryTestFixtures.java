@@ -1,13 +1,13 @@
 package com.smartbi.query.support;
 
-import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.support.PropertiesLoaderUtils;
 
 import java.util.Properties;
 
 public final class QueryTestFixtures {
 
-    private static final String RESOURCE = "application-test.yml";
+    private static final String RESOURCE = "application-test.properties";
     private static final Properties PROPERTIES = load();
 
     private QueryTestFixtures() {
@@ -22,13 +22,10 @@ public final class QueryTestFixtures {
     }
 
     private static Properties load() {
-        YamlPropertiesFactoryBean factory = new YamlPropertiesFactoryBean();
-        factory.setResources(new ClassPathResource(RESOURCE));
-        factory.afterPropertiesSet();
-        Properties properties = factory.getObject();
-        if (properties == null) {
-            throw new IllegalStateException("Missing query test fixture resource: " + RESOURCE);
+        try {
+            return PropertiesLoaderUtils.loadProperties(new ClassPathResource(RESOURCE));
+        } catch (Exception ex) {
+            throw new IllegalStateException("Missing query test fixture resource: " + RESOURCE, ex);
         }
-        return properties;
     }
 }

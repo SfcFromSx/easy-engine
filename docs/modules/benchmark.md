@@ -66,7 +66,9 @@ cd /Users/sfc/Documents/projects/engine/benchmark/frontend && npm run dev
 `bash scripts/init-db.sh <dev|test|pro> [manager] [benchmark]` before booting
 `manager` or `benchmark` so the shared metadata schema and seed data are
 created explicitly. Benchmark runtime settings are now centralized in
-`application-dev.yml`, `application-test.yml`, and `application-pro.yml`.
+`application-dev.yml`, `application-test.yml`, and `application-pro.yml`. Those
+profile YAMLs are now MySQL-first; H2 stays confined to test-scoped override
+resources used by benchmark regression coverage.
 
 ## Verify
 

@@ -1,4 +1,4 @@
-<!-- MIRROR: docs/operations/local-development.md | SOURCE_SHA256: 9fd23f17a9192bcb260fb6b86d73d9faef0c48870f6e4d3231a98c9287af3f6f | SYNCED_AT: 2026-04-02T04:42:17Z -->
+<!-- MIRROR: docs/operations/local-development.md | SOURCE_SHA256: 914f8b6d8b4278126d3727078a71409f8a8c128bab7e773c17d365ba521f0d88 | SYNCED_AT: 2026-04-03T09:10:24Z -->
 
 # 本地开发
 
@@ -69,8 +69,9 @@ npm --prefix benchmark/frontend run dev
 - benchmark 是执行 benchmark run、预检和结构化运行报告时首选的控制界面。
 - benchmark 通过标准 Apache Kylin JDBC 驱动连接到 `query`（`jdbc:kylin://localhost:8092/<project>`）。额外的 JDBC 驱动 JAR 可通过 Benchmark UI 中的 Data Sources > Upload Driver 上传。
 - 每个后端模块现在都维护 `application-dev.yml`、`application-test.yml`、`application-pro.yml` 三套配置。本地启动统一用 `dev`，自动化测试统一用 `test`，测试环境容器应设置 `SPRING_PROFILES_ACTIVE=test`，生产环境设置 `SPRING_PROFILES_ACTIVE=pro`。
-- 默认本地元数据库仍是 MySQL `localhost:3307`，但这些默认值现在只保存在 `dev` profile 中，不再散落在 Java、脚本或 Maven 默认参数里。
+- 三套 profile YAML（`dev` / `test` / `pro`）现在都以 MySQL 为默认元数据库配置；任何内存 H2 仅保留在 `src/test/resources` 下的测试专用覆盖文件里。
 - `manager` 和 `benchmark` 现在默认要求元数据库已提前初始化；如果跳过 `bash scripts/init-db.sh`，服务会因为缺少表而快速失败，而不是在启动阶段直接修改数据库。
+- `bash scripts/init-db.sh <profile> ...` 现在只读取模块运行时 classpath，因此 `test` profile 的 schema 初始化会遵循模块 `application-test.yml` 中的 MySQL 配置，而不会误读测试专用 H2 覆盖。
 - SQL 中的保留元数据注释（例如 `ENGINE`）用于在 `query` 内部将请求路由到指定后端。
 - 如果本地修改了已经应用过的 migration，导致 Flyway 报 checksum mismatch，需要显式修复并重新迁移：
 
