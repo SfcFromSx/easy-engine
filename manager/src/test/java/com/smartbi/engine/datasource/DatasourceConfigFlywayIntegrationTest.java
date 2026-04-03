@@ -61,7 +61,7 @@ class DatasourceConfigFlywayIntegrationTest {
 
         assertEquals(Integer.valueOf(1), defaultColumnCount);
         assertEquals(Integer.valueOf(1), updatedAtColumnCount);
-        assertEquals(Long.valueOf(2L), jdbcTemplate.queryForObject(
+        assertEquals(Long.valueOf(3L), jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM manager_query_datasource_config",
                 Long.class));
 
@@ -71,13 +71,15 @@ class DatasourceConfigFlywayIntegrationTest {
                         .getResponse()
                         .getContentAsString());
 
-        assertEquals(2, rows.size());
+        assertEquals(3, rows.size());
         assertEquals("default", rows.get(0).path("name").asText());
         assertEquals(true, rows.get(0).path("isDefault").asBoolean());
         assertEquals("org.apache.kylin.jdbc.Driver", rows.get(0).path("driverClass").asText());
         assertEquals("presto_local", rows.get(1).path("name").asText());
         assertEquals(false, rows.get(1).path("isDefault").asBoolean());
         assertEquals("com.facebook.presto.jdbc.PrestoDriver", rows.get(1).path("driverClass").asText());
+        assertEquals("trino_local", rows.get(2).path("name").asText());
+        assertEquals("io.trino.jdbc.TrinoDriver", rows.get(2).path("driverClass").asText());
     }
 
     private static String baselineJdbcUrl() {

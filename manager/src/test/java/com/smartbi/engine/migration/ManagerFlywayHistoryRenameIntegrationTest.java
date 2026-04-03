@@ -56,7 +56,7 @@ class ManagerFlywayHistoryRenameIntegrationTest {
         assertEquals(Integer.valueOf(1), jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE LOWER(table_name) = 'manager_query_datasource_config'",
                 Integer.class));
-        assertEquals(Long.valueOf(2L), jdbcTemplate.queryForObject(
+        assertEquals(Long.valueOf(3L), jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM manager_query_datasource_config",
                 Long.class));
     }

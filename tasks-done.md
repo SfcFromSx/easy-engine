@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| MGR-QA-001 | REVIEW AND VERIFY REDIS CACHE MANAGER | manager | Redis cache management was re-reviewed end to end; manager backend validation is now unblocked and green via the documented `analyze+manager` reactor path; manager frontend tests/build pass; browser QA evidence was captured for desktop and mobile cache flows; and cache list pagination/refresh behavior is now deterministic and stable. |
 | MGR-TEST-002 | ALIGN MANAGER MIGRATION TESTS WITH REDIS-ENABLED ENGINE ROUTING | manager | Manager now keeps the Redis dependency/profile wiring required by the new `ENGINE` routing path, the leftover Flyway/bootstrap tests are cleaned up and aligned with the current seeded datasource count, and the focused validation remains blocked only by the pre-existing `JdbcSqlAdvisorService` constructor issue during Spring context startup. |
 | QUERY-ENGINE-001 | SWITCH ROUTING TO ENGINE AND ADD REDIS REPORT OVERRIDES | query, manager, analyze, benchmark, docs | Routing now resolves datasource selection from parsed `ENGINE` with optional Redis override by `YH_RPTID`, `YH_TARGET_ENGINE` is parsed as legacy metadata only, normalized execution SQL and JDBC rewrite advice emit `/* ENGINE=... */`, benchmark/E2E samples were updated to the new routing hint, and focused `analyze`, `query`, `manager`, and `benchmark` validations all passed. |
 | QUERY-TRINO-003 | ADD TRINO JDBC COMPATIBILITY PORT FOR BENCHMARK | query, benchmark | `query` now serves Kylin JDBC on `8092` plus a minimal Trino JDBC `/v1/statement` surface on `8093`, explicit Trino `PREPARE` / `EXECUTE ... USING ...` / `DEALLOCATE PREPARE` flows are covered against the real query service, benchmark now has Trino JDBC statement/prepared regression coverage, and `mvn -q -pl analyze,query -am test`, `mvn -q -f benchmark/pom.xml test`, and `npm --prefix benchmark/frontend run build` all passed. |
@@ -86,6 +87,33 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+### MGR-QA-001: REVIEW AND VERIFY REDIS CACHE MANAGER
+
+- **Status**: done
+- **Updated**: 2026-04-03
+- **Progress log**:
+  - **2026-04-03 — intake**
+    - Human requested a full review of the manager Redis cache feature, including persistent-browser QA using the `$playwright-interactive` workflow, followed by frontend/backend validation and a task-scoped commit.
+    - Investigation confirmed the cache feature currently spans `/cache` in the manager frontend and `/api/v1/cache/*` in manager backend, with focused frontend/backend tests already present. This session does not expose `js_repl`, so Playwright browser tooling was replaced with a temporary local Playwright harness for QA evidence capture.
+    - Scope for this task: review the entire manager cache experience, fix any functional or QA-signoff defects, unblock manager-scoped backend validation if the existing `JdbcSqlAdvisorService` constructor issue still prevents context startup, capture QA evidence, and close the task through the required ledger/archive workflow.
+  - **2026-04-03 — implementation**
+    - Files changed: `manager/src/main/java/com/smartbi/engine/jdbc/JdbcSqlAdvisorService.java`, `manager/src/main/java/com/smartbi/engine/web/CacheManagementController.java`, `manager/frontend/src/views/CacheManagement.js`, `manager/src/test/java/com/smartbi/engine/datasource/DatasourceConfigFlywayIntegrationTest.java`, `manager/src/test/java/com/smartbi/engine/migration/ManagerDashboardBootstrapIntegrationTest.java`, `manager/src/test/java/com/smartbi/engine/migration/ManagerFlywayHistoryRenameIntegrationTest.java`, refreshed frontend bundles under `manager/frontend/dist/`, refreshed embedded manager static assets under `manager/src/main/resources/static/`, plus task ledger/archive records.
+    - Commands run: `mvn -q -pl analyze,manager -am -Dspring.mvc.pathmatch.matching-strategy=ant_path_matcher -DfailIfNoTests=false -Dtest=CacheManagementControllerTest,JdbcSqlAdvisorServiceTest,EffectiveEngineResolverTest,ManagerApiTest,DatasourceConfigFlywayIntegrationTest,ManagerDashboardBootstrapIntegrationTest,ManagerFlywayHistoryRenameIntegrationTest test`, `mvn -q -pl analyze,manager -am -Dspring.mvc.pathmatch.matching-strategy=ant_path_matcher test`, `npm --prefix manager/frontend run test`, `npm --prefix manager/frontend run build`, `bash scripts/init-db.sh dev manager`, local manager startup, local frontend startup, and Playwright QA via `/tmp/codex-playwright/cache-qa.mjs`.
+    - Result: Fixed Spring constructor injection for `JdbcSqlAdvisorService`, made cache key pagination deterministic by sorting managed keys before offset/limit slicing, clamped cache-page refreshes back into a valid page after data changes, updated manager migration/bootstrap tests to the current seeded datasource and flyway-history counts, and refreshed the embedded frontend bundle to match the reviewed cache UI.
+  - **2026-04-03 — review**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Notes: Reviewed summary cards, key list, create/edit/delete flows, duplicate key handling, JSON/key validation, pagination, refresh behavior, mobile layout, and embedded-static consistency. The cache feature remains intentionally scoped to managed `kylin_cache:` keys only.
+  - **2026-04-03 — verification**
+    - Validation status: approved
+    - Evidence: `mvn -q -pl analyze,manager -am -Dspring.mvc.pathmatch.matching-strategy=ant_path_matcher test` passed; `npm --prefix manager/frontend run test` passed; `npm --prefix manager/frontend run build` passed.
+    - Evidence: Browser QA captured desktop and mobile evidence under `/tmp/engine-cache-qa/`:
+      `01-desktop-empty.png`, `02-create-dialog-empty.png`, `03-after-create.png`, `04-edit-dialog.png`, `05-after-edit.png`, `06-pagination-page1.png`, `07-pagination-page2.png`, `08-after-delete.png`, `09-mobile-cache.png`, and notes in `/tmp/engine-cache-qa/notes.txt`.
+    - Evidence: QA confirmed empty-state rendering, create validation for empty key/invalid key/invalid JSON, successful create, duplicate-key rejection, read-only key on edit, successful edit, second-page pagination, delete from paginated state, and mobile card layout without obvious clipping, unreadable labels, broken actions, or stale loading indicators.
+    - Next action: none
+    - Escalation: none
+  - **2026-04-03 — doc-garden**
+    - Existing cache API and manager module docs remained accurate after the fixes; no canonical doc text change was required in this pass.
+
 ### MGR-TEST-002: ALIGN MANAGER MIGRATION TESTS WITH REDIS-ENABLED ENGINE ROUTING
 
 - **Status**: done

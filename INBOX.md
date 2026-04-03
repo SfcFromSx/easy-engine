@@ -14,6 +14,24 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Do not convert inbox entries directly into implementation tasks without explicit human confirmation.
 - For tooling or infrastructure changes, prefer logging the issue here before changing the harness.
 
+### INBOX-20260403-011
+- Area: Harness audit trail
+- Related task(s): `MGR-QA-001`
+- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-03 to archive the completion of `MGR-QA-001` after the full manager Redis cache review, validation, and browser QA pass.
+- Evidence: The active ledger row and section for `MGR-QA-001` were removed from `tasks.md`, its full progress log and done signal were archived under `tasks-done.md`, and the archived evidence records the passed `analyze+manager` reactor validation, passed manager frontend validation, and Playwright QA evidence paths under `/tmp/engine-cache-qa/`.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edits as ad hoc bookkeeping rather than the required closeout workflow for the cache review/signoff task.
+- Suggested next step: Keep the archived task entry, QA evidence references, and task commit aligned; unrelated dirty artifacts such as coverage output should remain outside this task commit.
+- Human decision: pending
+
+### INBOX-20260403-010
+- Area: Harness audit trail
+- Related task(s): `MGR-QA-001`
+- Summary: `tasks.md` was updated on 2026-04-03 to intake a human-requested full review and signoff task for the manager Redis cache feature.
+- Evidence: The active ledger now includes `MGR-QA-001` with intake notes covering manager cache UI/API review, Playwright-based QA evidence capture, manager-scoped validation, and task-scoped closeout.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edit as ad hoc bookkeeping instead of the required intake for this review-and-signoff pass.
+- Suggested next step: Keep the task ledger, archive, QA evidence, and eventual task commit aligned while `MGR-QA-001` is implemented and verified.
+- Human decision: pending
+
 ### INBOX-20260403-009
 - Area: Harness audit trail
 - Related task(s): `MGR-TEST-002`

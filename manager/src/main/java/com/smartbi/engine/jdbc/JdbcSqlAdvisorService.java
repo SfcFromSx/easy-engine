@@ -14,6 +14,7 @@ import com.smartbi.engine.domain.AccelerationTable;
 import com.smartbi.engine.jdbc.dto.SqlRewriteRequest;
 import com.smartbi.engine.jdbc.dto.SqlRewriteResponse;
 import com.smartbi.engine.repo.AccelerationTableRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -28,6 +29,7 @@ public class JdbcSqlAdvisorService {
     private final EffectiveEngineResolver effectiveEngineResolver;
     private final SqlRoutingAnalyzer sqlRoutingAnalyzer = new SqlRoutingAnalyzer();
 
+    @Autowired
     public JdbcSqlAdvisorService(AccelerationTableRepository accelerationTableRepository,
                                  QueryDatasourceConfigService queryDatasourceConfigService,
                                  EffectiveEngineResolver effectiveEngineResolver) {

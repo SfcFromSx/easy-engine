@@ -193,7 +193,12 @@ export default defineComponent({
     }
 
     const refresh = async () => {
-      await Promise.all([loadCacheInfo(), loadCacheKeys()])
+      await loadCacheInfo()
+      const maxPage = Math.max(1, Math.ceil((cacheInfo.keyCount || 0) / pageSize.value))
+      if (currentPage.value > maxPage) {
+        currentPage.value = maxPage
+      }
+      await loadCacheKeys()
     }
 
     const handlePageChange = (page) => {

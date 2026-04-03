@@ -59,7 +59,7 @@ class ManagerDashboardBootstrapIntegrationTest {
                 jdbcTemplate.queryForObject("SELECT COUNT(*) FROM manager_acceleration_table", Long.class));
         assertEquals(Long.valueOf(3L),
                 jdbcTemplate.queryForObject("SELECT COUNT(*) FROM manager_query_datasource_config", Long.class));
-        assertEquals(Long.valueOf(8L), jdbcTemplate
+        assertEquals(Long.valueOf(10L), jdbcTemplate
                 .queryForObject("SELECT MAX(installed_rank) FROM manager_flyway_schema_history", Long.class));
 
         JsonNode summary = JSON.readTree(mockMvc.perform(get("/api/v1/stats/summary"))

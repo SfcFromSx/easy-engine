@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -33,25 +34,16 @@ public class CacheManagementController {
     public CacheInfoDto getCacheInfo() {
         CacheInfoDto info = new CacheInfoDto();
         long totalSize = 0;
-        int keyCount = 0;
-
-        try (Cursor<String> cursor = redisTemplate.scan(
-                ScanOptions.scanOptions()
-                        .match(CACHE_KEY_PATTERN)
-                        .count(SCAN_BATCH_SIZE)
-                        .build())) {
-            while (cursor.hasNext()) {
-                String key = cursor.next();
-                keyCount++;
-                Long size = redisTemplate.opsForValue().size(key);
-                if (size != null) {
-                    totalSize += size;
-                }
+        List<String> keys = collectManagedKeys();
+        for (String key : keys) {
+            Long size = redisTemplate.opsForValue().size(key);
+            if (size != null) {
+                totalSize += size;
             }
         }
 
         info.setTotalSizeBytes(totalSize);
-        info.setKeyCount(keyCount);
+        info.setKeyCount(keys.size());
         return info;
     }
 
@@ -60,29 +52,24 @@ public class CacheManagementController {
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "100") int limit) {
         List<CacheKeyDto> keys = new ArrayList<>();
-        int skipped = 0;
-        int collected = 0;
+        if (offset < 0 || limit <= 0) {
+            return keys;
+        }
 
-        try (Cursor<String> cursor = redisTemplate.scan(
-                ScanOptions.scanOptions()
-                        .match(CACHE_KEY_PATTERN)
-                        .count(SCAN_BATCH_SIZE)
-                        .build())) {
-            while (cursor.hasNext() && collected < limit) {
-                String key = cursor.next();
-                if (skipped < offset) {
-                    skipped++;
-                    continue;
-                }
-                CacheKeyDto dto = new CacheKeyDto();
-                dto.setKey(key);
-                Long size = redisTemplate.opsForValue().size(key);
-                dto.setSizeBytes(size != null ? size : 0L);
-                Long ttl = redisTemplate.getExpire(key);
-                dto.setTtlSeconds(ttl != null ? ttl : -1L);
-                keys.add(dto);
-                collected++;
-            }
+        List<String> managedKeys = collectManagedKeys();
+        int endExclusive = Math.min(managedKeys.size(), offset + limit);
+        if (offset >= managedKeys.size()) {
+            return keys;
+        }
+
+        for (String key : managedKeys.subList(offset, endExclusive)) {
+            CacheKeyDto dto = new CacheKeyDto();
+            dto.setKey(key);
+            Long size = redisTemplate.opsForValue().size(key);
+            dto.setSizeBytes(size != null ? size : 0L);
+            Long ttl = redisTemplate.getExpire(key);
+            dto.setTtlSeconds(ttl != null ? ttl : -1L);
+            keys.add(dto);
         }
 
         return keys;
@@ -170,6 +157,21 @@ public class CacheManagementController {
                 && key.startsWith(CACHE_KEY_PREFIX)
                 && key.indexOf('/') < 0
                 && !key.chars().anyMatch(Character::isWhitespace);
+    }
+
+    private List<String> collectManagedKeys() {
+        List<String> keys = new ArrayList<String>();
+        try (Cursor<String> cursor = redisTemplate.scan(
+                ScanOptions.scanOptions()
+                        .match(CACHE_KEY_PATTERN)
+                        .count(SCAN_BATCH_SIZE)
+                        .build())) {
+            while (cursor.hasNext()) {
+                keys.add(cursor.next());
+            }
+        }
+        Collections.sort(keys);
+        return keys;
     }
 
     private void requireValidValue(String value) {
