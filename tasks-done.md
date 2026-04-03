@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| MGR-BUG-002 | FIX MYSQL CACHE KEY INDEX LENGTH IN V12 MIGRATION | manager | Manager Flyway migration `V12` now creates a MySQL-safe prefix index for `cache_key` without breaking H2-backed migration tests by using a MySQL executable comment; focused manager Flyway validation and a live MySQL 8 syntax probe both passed. |
 | GIT-HYGIENE-002 | STOP TRACKING LOCAL TOOLING AND COVERAGE ARTIFACTS | platform | `.claude/settings.local.json` and `manager/frontend/coverage/` are no longer tracked by Git, new ignore rules now cover those paths plus `analyze/target/`, local copies were preserved, and verification confirmed the repo now treats them as ignored local artifacts instead of release changes. |
 | TRACE-CACHE-KEY-001 | PERSIST CACHE KEYS IN TRACE RECORDS AND EXPOSE THEM IN MANAGER | query, manager, docs | Query traces now persist the exact Redis `cacheKey` used for cache-eligible requests, manager stores and exposes that field through `/api/v1/traces` with filtering support, the manager traces page shows and filters by cache key, and query/manager/frontend validations all passed. |
 | UI-BUNDLE-002 | REFRESH MANAGER EMBEDDED FRONTEND BUNDLE AND REVIEW CN QUICKSTART | manager, docs | Manager frontend assets were rebuilt and resynced into the embedded Java static directory, the packaged manager artifact now contains the new cache-console bundle, `doc-CN/quickstart.md` now documents the required build/sync/restart flow for precompiled hosting, and release-prep validation passed. |
@@ -92,6 +93,31 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+### MGR-BUG-002: FIX MYSQL CACHE KEY INDEX LENGTH IN V12 MIGRATION
+
+- **Status**: done
+- **Updated**: 2026-04-03
+- **Progress log**:
+  - **2026-04-03 — intake**
+    - Human reported that manager Flyway migration `V12__add_cache_key_to_sql_execution_record.sql` fails on MySQL with `Specified key was too long; max key length is 3072 bytes` while creating the `(cache_hit, cache_key)` index after adding `cache_key VARCHAR(1024)`.
+    - Investigation confirmed the migration currently creates a full index on `cache_key`, which can exceed InnoDB's key-size limit under multibyte charsets such as `utf8mb4`.
+    - Scope for this task: apply the smallest safe migration fix by changing the V12 composite index to a prefix index, verify the manager module still passes focused validation, and close the work through the standard ledger/archive/commit flow without changing cache-key query semantics.
+  - **2026-04-03 — implementation**
+    - Files changed: `manager/src/main/resources/db/migration/V12__add_cache_key_to_sql_execution_record.sql`, plus task ledger/archive records.
+    - Commands run: `sed`, `rg`, `mvn -q -f manager/pom.xml -Dtest=TraceFlywayExecutionModeIntegrationTest test`, `java -cp /Users/sfc/.m2/repository/com/h2database/h2/2.1.214/h2-2.1.214.jar org.h2.tools.Shell ...`, `mysql -h127.0.0.1 -P3307 -uengine -pengine123 engine_db -e ...`.
+    - Result: Replaced the raw `cache_key(191)` syntax with `cache_key /*!80000 (191) */`, so MySQL 8 executes a 191-character prefix index while H2 test migrations ignore the executable-comment suffix and still accept the statement.
+  - **2026-04-03 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: The original migration indexed the full `VARCHAR(1024)` `cache_key`, which exceeds MySQL/InnoDB's 3072-byte key limit under multibyte charsets, and the naive fix of using bare prefix-index syntax would have broken the existing H2-backed Flyway tests because H2 does not parse MySQL's `(191)` index-prefix syntax.
+    - Cure: Kept the fix scoped to the migration by using a MySQL executable comment around the prefix length so production MySQL applies the bounded prefix index and H2 safely falls back to indexing the full column during tests.
+    - Generalization: Prefer dialect-tolerant SQL for shared Flyway migrations when the repo validates them against H2 but deploys them to MySQL.
+  - **2026-04-03 — verification**
+    - Validation status: approved
+    - Evidence: `mvn -q -f manager/pom.xml -Dtest=TraceFlywayExecutionModeIntegrationTest test` passed after the migration change, confirming the H2-backed Flyway integration path still boots through V12.
+    - Evidence: `mysql -h127.0.0.1 -P3307 -uengine -pengine123 engine_db -e "DROP TABLE IF EXISTS codex_idx_probe; CREATE TABLE codex_idx_probe (cache_hit BOOLEAN, cache_key VARCHAR(1024)); CREATE INDEX idx1 ON codex_idx_probe (cache_hit, cache_key /*!80000 (191) */); SHOW INDEX FROM codex_idx_probe; DROP TABLE codex_idx_probe;"` passed and reported `Sub_part = 191` for `cache_key`, confirming MySQL 8 executes the intended prefix index.
+    - Next action: none
+    - Escalation: none
+
 ### GIT-HYGIENE-002: STOP TRACKING LOCAL TOOLING AND COVERAGE ARTIFACTS
 
 - **Status**: done

@@ -14,6 +14,24 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Do not convert inbox entries directly into implementation tasks without explicit human confirmation.
 - For tooling or infrastructure changes, prefer logging the issue here before changing the harness.
 
+### INBOX-20260403-023
+- Area: Harness audit trail
+- Related task(s): `MGR-BUG-002`
+- Summary: `tasks.md` was updated on 2026-04-03 to intake and start a manager bugfix task for the MySQL key-length failure in Flyway migration `V12__add_cache_key_to_sql_execution_record.sql`.
+- Evidence: The active ledger now includes `MGR-BUG-002` with intake notes capturing the failing `CREATE INDEX idx_sql_exec_cache_hit_key ON manager_sql_execution_record (cache_hit, cache_key)` statement, the `Specified key was too long; max key length is 3072 bytes` MySQL error, and the decision to keep the fix scoped to a prefix index without changing cache-key filter behavior.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edit as ad hoc bookkeeping instead of the required intake/start record for this focused migration repair.
+- Suggested next step: Keep the migration edit, verification evidence, archive entry, and single task commit aligned while `MGR-BUG-002` is completed.
+- Human decision: pending
+
+### INBOX-20260403-024
+- Area: Harness audit trail
+- Related task(s): `MGR-BUG-002`
+- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-03 to archive the completion of `MGR-BUG-002` after repairing the MySQL key-length failure in manager Flyway migration `V12`.
+- Evidence: The active ledger row and section for `MGR-BUG-002` were removed from `tasks.md`, its full intake/implementation/review/verification record was archived under `tasks-done.md`, and the archived evidence records both the passing H2-backed manager Flyway integration test and the passing live MySQL 8 syntax probe with `Sub_part = 191` for `cache_key`.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edits as ad hoc bookkeeping rather than the required closeout workflow for this focused migration bugfix.
+- Suggested next step: Keep the archived task entry, the V12 migration edit, and the single task commit aligned; if a partially applied production migration already added `cache_key` without the index, handle that environment with a targeted follow-up apply step rather than re-running the old failing statement.
+- Human decision: pending
+
 ### INBOX-20260403-021
 - Area: Harness audit trail
 - Related task(s): `GIT-HYGIENE-002`
