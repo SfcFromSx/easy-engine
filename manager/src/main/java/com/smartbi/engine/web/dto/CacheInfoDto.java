@@ -1,22 +1,31 @@
 package com.smartbi.engine.web.dto;
 
 public class CacheInfoDto {
-    private long totalSizeBytes;
-    private int keyCount;
+    private String managedKeyPrefix;
+    private boolean exactSummaryAvailable;
+    private String summaryMessage;
 
-    public long getTotalSizeBytes() {
-        return totalSizeBytes;
+    public String getManagedKeyPrefix() {
+        return managedKeyPrefix;
     }
 
-    public void setTotalSizeBytes(long totalSizeBytes) {
-        this.totalSizeBytes = totalSizeBytes;
+    public void setManagedKeyPrefix(String managedKeyPrefix) {
+        this.managedKeyPrefix = managedKeyPrefix;
     }
 
-    public int getKeyCount() {
-        return keyCount;
+    public boolean isExactSummaryAvailable() {
+        return exactSummaryAvailable;
     }
 
-    public void setKeyCount(int keyCount) {
-        this.keyCount = keyCount;
+    public void setExactSummaryAvailable(boolean exactSummaryAvailable) {
+        this.exactSummaryAvailable = exactSummaryAvailable;
+    }
+
+    public String getSummaryMessage() {
+        return summaryMessage;
+    }
+
+    public void setSummaryMessage(String summaryMessage) {
+        this.summaryMessage = summaryMessage;
     }
 }

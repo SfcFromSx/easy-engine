@@ -20,25 +20,50 @@
   <div class="cache-summary">
     <div class="glass-card summary-card">
       <div class="summary-item">
-        <div class="summary-label">{{ t('cache.totalSize') }}</div>
-        <div class="summary-value">{{ totalSizeMB }} MB</div>
+        <div class="summary-label">{{ t('cache.managedPrefix') }}</div>
+        <div class="summary-value summary-value-prefix">{{ cacheInfo.managedKeyPrefix }}</div>
       </div>
     </div>
     <div class="glass-card summary-card">
       <div class="summary-item">
-        <div class="summary-label">{{ t('cache.keyCount') }}</div>
-        <div class="summary-value">{{ cacheInfo.keyCount }}</div>
+        <div class="summary-label">{{ t('cache.summaryPolicy') }}</div>
+        <div class="summary-value summary-value-message">{{ summaryMessage }}</div>
       </div>
     </div>
   </div>
 
   <div class="glass-card table-card keys-table-card">
     <div class="card-header">
-      <span>{{ t('cache.keysList') }}</span>
+      <div>
+        <span>{{ t('cache.keysList') }}</span>
+        <p class="card-subtitle">{{ t('cache.searchHint', { prefix: cacheInfo.managedKeyPrefix || 'kylin_cache:' }) }}</p>
+      </div>
     </div>
+
+    <div class="search-toolbar">
+      <el-input
+        v-model="searchPrefix"
+        class="search-prefix-input"
+        :placeholder="t('cache.searchPlaceholder')"
+        @keyup.enter="submitSearch"
+      />
+      <el-button type="primary" :loading="keysLoading" :icon="Search" @click="submitSearch">
+        {{ t('common.search') }}
+      </el-button>
+      <el-button @click="clearSearch" :disabled="keysLoading && !searchPerformed">
+        {{ t('common.clearFilter') }}
+      </el-button>
+    </div>
+
+    <div v-if="activePrefix" class="search-state">
+      <span class="search-state-label">{{ t('cache.searchState') }}</span>
+      <code class="cache-key">{{ activePrefix }}</code>
+    </div>
+
     <el-table
       :data="cacheKeys"
       v-loading="keysLoading"
+      :empty-text="emptyText"
       stripe
       style="width: 100%"
     >
@@ -105,14 +130,13 @@
       </article>
     </div>
 
-    <div class="pagination-container">
-      <el-pagination
-        v-model:current-page="currentPage"
-        :page-size="pageSize"
-        :total="cacheInfo.keyCount"
-        layout="total, prev, pager, next"
-        @current-change="handlePageChange"
-      />
+    <div class="pagination-container cursor-pagination">
+      <el-button @click="goPrevious" :disabled="keysLoading || !canGoPrevious">
+        {{ t('cache.previous') }}
+      </el-button>
+      <el-button type="primary" @click="goNext" :disabled="keysLoading || !hasMore">
+        {{ t('cache.next') }}
+      </el-button>
     </div>
   </div>
 

@@ -3,18 +3,17 @@ package com.smartbi.engine.web;
 import com.smartbi.engine.web.dto.CacheInfoDto;
 import com.smartbi.engine.web.dto.CacheKeyDetailDto;
 import com.smartbi.engine.web.dto.CacheKeyDto;
+import com.smartbi.engine.web.dto.CacheKeyPageDto;
 import com.smartbi.engine.web.dto.CacheKeyUpsertRequest;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.data.redis.core.Cursor;
-import org.springframework.data.redis.core.ScanOptions;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -23,8 +22,11 @@ public class CacheManagementController {
 
     private final StringRedisTemplate redisTemplate;
     private static final String CACHE_KEY_PREFIX = "kylin_cache:";
-    private static final String CACHE_KEY_PATTERN = "kylin_cache:*";
+    private static final String SCAN_COMMAND = "SCAN";
+    private static final int DEFAULT_LIMIT = 20;
+    private static final int MAX_LIMIT = 100;
     private static final int SCAN_BATCH_SIZE = 100;
+    private static final String SUMMARY_MESSAGE = "Exact live cache totals are disabled; enter a narrower managed-key prefix to inspect Redis keys with bounded scan cost.";
 
     public CacheManagementController(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
@@ -33,46 +35,48 @@ public class CacheManagementController {
     @GetMapping("/info")
     public CacheInfoDto getCacheInfo() {
         CacheInfoDto info = new CacheInfoDto();
-        long totalSize = 0;
-        List<String> keys = collectManagedKeys();
-        for (String key : keys) {
-            Long size = redisTemplate.opsForValue().size(key);
-            if (size != null) {
-                totalSize += size;
-            }
-        }
-
-        info.setTotalSizeBytes(totalSize);
-        info.setKeyCount(keys.size());
+        info.setManagedKeyPrefix(CACHE_KEY_PREFIX);
+        info.setExactSummaryAvailable(false);
+        info.setSummaryMessage(SUMMARY_MESSAGE);
         return info;
     }
 
     @GetMapping("/keys")
-    public List<CacheKeyDto> listCacheKeys(
-            @RequestParam(defaultValue = "0") int offset,
-            @RequestParam(defaultValue = "100") int limit) {
-        List<CacheKeyDto> keys = new ArrayList<>();
-        if (offset < 0 || limit <= 0) {
-            return keys;
+    public CacheKeyPageDto listCacheKeys(@RequestParam(required = false) String prefix,
+                                         @RequestParam(defaultValue = "0") String cursor,
+                                         @RequestParam(defaultValue = "20") int limit) {
+        String normalizedPrefix = validateSearchPrefix(prefix);
+        String normalizedCursor = normalizeCursor(cursor);
+        int boundedLimit = clampLimit(limit);
+
+        List<CacheKeyDto> items = new ArrayList<CacheKeyDto>();
+        String currentCursor = normalizedCursor;
+        boolean hasMore = false;
+        while (items.size() < boundedLimit) {
+            ScanChunk chunk = scanChunk(currentCursor, normalizedPrefix);
+            currentCursor = chunk.getNextCursor();
+            for (String key : chunk.getKeys()) {
+                items.add(toKeyDto(key));
+                if (items.size() >= boundedLimit) {
+                    break;
+                }
+            }
+            if (items.size() >= boundedLimit) {
+                hasMore = !"0".equals(currentCursor);
+                break;
+            }
+            if ("0".equals(currentCursor)) {
+                hasMore = false;
+                break;
+            }
         }
 
-        List<String> managedKeys = collectManagedKeys();
-        int endExclusive = Math.min(managedKeys.size(), offset + limit);
-        if (offset >= managedKeys.size()) {
-            return keys;
-        }
-
-        for (String key : managedKeys.subList(offset, endExclusive)) {
-            CacheKeyDto dto = new CacheKeyDto();
-            dto.setKey(key);
-            Long size = redisTemplate.opsForValue().size(key);
-            dto.setSizeBytes(size != null ? size : 0L);
-            Long ttl = redisTemplate.getExpire(key);
-            dto.setTtlSeconds(ttl != null ? ttl : -1L);
-            keys.add(dto);
-        }
-
-        return keys;
+        CacheKeyPageDto page = new CacheKeyPageDto();
+        page.setItems(items);
+        page.setQueryPrefix(normalizedPrefix);
+        page.setHasMore(hasMore);
+        page.setNextCursor(hasMore ? currentCursor : "0");
+        return page;
     }
 
     @GetMapping("/keys/{key}")
@@ -137,6 +141,16 @@ public class CacheManagementController {
         return dto;
     }
 
+    private CacheKeyDto toKeyDto(String key) {
+        CacheKeyDto dto = new CacheKeyDto();
+        dto.setKey(key);
+        Long size = redisTemplate.opsForValue().size(key);
+        dto.setSizeBytes(size != null ? size : 0L);
+        Long ttl = redisTemplate.getExpire(key);
+        dto.setTtlSeconds(ttl != null ? ttl : -1L);
+        return dto;
+    }
+
     private String requireValidCreateRequest(CacheKeyUpsertRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("cache request is required");
@@ -159,19 +173,84 @@ public class CacheManagementController {
                 && !key.chars().anyMatch(Character::isWhitespace);
     }
 
-    private List<String> collectManagedKeys() {
+    private String validateSearchPrefix(String prefix) {
+        if (prefix == null) {
+            throw new IllegalArgumentException("cache key prefix is required");
+        }
+        String normalized = prefix.trim();
+        if (normalized.isEmpty()) {
+            throw new IllegalArgumentException("cache key prefix is required");
+        }
+        if (!isCacheKeyCandidate(normalized)) {
+            throw new IllegalArgumentException("cache key prefix must start with kylin_cache: and must not contain '/' or whitespace");
+        }
+        if (CACHE_KEY_PREFIX.equals(normalized)) {
+            throw new IllegalArgumentException("cache key prefix must be narrower than kylin_cache:");
+        }
+        return normalized;
+    }
+
+    private String normalizeCursor(String cursor) {
+        if (cursor == null || cursor.trim().isEmpty()) {
+            return "0";
+        }
+        String normalized = cursor.trim();
+        try {
+            long parsed = Long.parseLong(normalized);
+            if (parsed < 0L) {
+                throw new IllegalArgumentException("cursor must be a non-negative number");
+            }
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("cursor must be a non-negative number");
+        }
+        return normalized;
+    }
+
+    private int clampLimit(int limit) {
+        if (limit <= 0) {
+            return DEFAULT_LIMIT;
+        }
+        return Math.min(limit, MAX_LIMIT);
+    }
+
+    private ScanChunk scanChunk(String cursor, String prefix) {
+        Object rawResult = redisTemplate.execute((RedisCallback<Object>) connection -> connection.execute(
+                SCAN_COMMAND,
+                cursor.getBytes(StandardCharsets.UTF_8),
+                "MATCH".getBytes(StandardCharsets.UTF_8),
+                (prefix + "*").getBytes(StandardCharsets.UTF_8),
+                "COUNT".getBytes(StandardCharsets.UTF_8),
+                Integer.toString(Math.max(DEFAULT_LIMIT, SCAN_BATCH_SIZE)).getBytes(StandardCharsets.UTF_8)));
+        return toScanChunk(rawResult);
+    }
+
+    private ScanChunk toScanChunk(Object rawResult) {
+        if (!(rawResult instanceof List)) {
+            return new ScanChunk("0", new ArrayList<String>());
+        }
+        List<?> parts = (List<?>) rawResult;
+        if (parts.size() < 2) {
+            return new ScanChunk("0", new ArrayList<String>());
+        }
+        String nextCursor = readString(parts.get(0));
         List<String> keys = new ArrayList<String>();
-        try (Cursor<String> cursor = redisTemplate.scan(
-                ScanOptions.scanOptions()
-                        .match(CACHE_KEY_PATTERN)
-                        .count(SCAN_BATCH_SIZE)
-                        .build())) {
-            while (cursor.hasNext()) {
-                keys.add(cursor.next());
+        Object rawKeys = parts.get(1);
+        if (rawKeys instanceof List) {
+            for (Object rawKey : (List<?>) rawKeys) {
+                String key = readString(rawKey);
+                if (key != null && !key.isEmpty()) {
+                    keys.add(key);
+                }
             }
         }
-        Collections.sort(keys);
-        return keys;
+        return new ScanChunk(nextCursor == null || nextCursor.isEmpty() ? "0" : nextCursor, keys);
+    }
+
+    private String readString(Object rawValue) {
+        if (rawValue instanceof byte[]) {
+            return new String((byte[]) rawValue, StandardCharsets.UTF_8);
+        }
+        return rawValue == null ? null : rawValue.toString();
     }
 
     private void requireValidValue(String value) {
@@ -185,5 +264,23 @@ public class CacheManagementController {
             throw new IllegalArgumentException("ttlSeconds must be greater than 0");
         }
         return ttlSeconds.longValue();
+    }
+
+    private static final class ScanChunk {
+        private final String nextCursor;
+        private final List<String> keys;
+
+        private ScanChunk(String nextCursor, List<String> keys) {
+            this.nextCursor = nextCursor;
+            this.keys = keys;
+        }
+
+        private String getNextCursor() {
+            return nextCursor;
+        }
+
+        private List<String> getKeys() {
+            return keys;
+        }
     }
 }

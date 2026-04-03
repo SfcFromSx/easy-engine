@@ -34,10 +34,17 @@ vi.mock('lucide-vue-next', () => ({
   Pencil: { template: '<span />' },
   Plus: { template: '<span />' },
   RefreshCw: { template: '<span />' },
+  Search: { template: '<span />' },
   Trash2: { template: '<span />' }
 }))
 
 import CacheManagement from '../src/views/CacheManagement.vue'
+
+const cacheInfoResponse = {
+  managedKeyPrefix: 'kylin_cache:',
+  exactSummaryAvailable: false,
+  summaryMessage: 'Exact totals disabled'
+}
 
 describe('CacheManagement view', () => {
   beforeEach(() => {
@@ -51,118 +58,195 @@ describe('CacheManagement view', () => {
     messageBox.confirm.mockReset()
   })
 
-  test('loads cache summary and keys on mount', async () => {
-    // Covers src/views/CacheManagement.js:loadCacheInfo, src/views/CacheManagement.js:loadCacheKeys, and onMounted refresh.
-    client.get
-      .mockResolvedValueOnce({ data: { totalSizeBytes: 2097152, keyCount: 1 } })
-      .mockResolvedValueOnce({ data: [{ key: 'kylin_cache:key1', sizeBytes: 32, ttlSeconds: 120 }] })
+  test('loads cache policy on mount without auto-loading keys', async () => {
+    // Covers src/views/CacheManagement.js:loadCacheInfo and onMounted policy-only load.
+    client.get.mockResolvedValueOnce({ data: cacheInfoResponse })
 
     const { wrapper } = await mountView(CacheManagement, { route: '/cache' })
     await flushPromises()
 
-    expect(client.get).toHaveBeenNthCalledWith(1, API_ENDPOINTS.CACHE_INFO)
+    expect(client.get).toHaveBeenCalledTimes(1)
+    expect(client.get).toHaveBeenCalledWith(API_ENDPOINTS.CACHE_INFO)
+    expect(wrapper.text()).toContain('kylin_cache:')
+    expect(wrapper.text()).toContain('Exact live totals are disabled')
+  })
+
+  test('validates the search prefix before loading keys', async () => {
+    // Covers src/views/CacheManagement.js:validateSearchPrefix too-broad branch.
+    client.get.mockResolvedValueOnce({ data: cacheInfoResponse })
+
+    const { wrapper } = await mountView(CacheManagement, { route: '/cache' })
+    await flushPromises()
+
+    wrapper.vm.searchPrefix = 'kylin_cache:'
+    await wrapper.vm.submitSearch()
+
+    expect(message.warning).toHaveBeenCalledWith('Cache key prefix must be narrower than kylin_cache:.')
+    expect(client.get).toHaveBeenCalledTimes(1)
+  })
+
+  test('searches cache keys with prefix and cursor params', async () => {
+    // Covers src/views/CacheManagement.js:submitSearch and first-page loadCacheKeys path.
+    client.get
+      .mockResolvedValueOnce({ data: cacheInfoResponse })
+      .mockResolvedValueOnce({
+        data: {
+          queryPrefix: 'kylin_cache:key',
+          nextCursor: '17',
+          hasMore: true,
+          items: [{ key: 'kylin_cache:key1', sizeBytes: 32, ttlSeconds: 120 }]
+        }
+      })
+
+    const { wrapper } = await mountView(CacheManagement, { route: '/cache' })
+    await flushPromises()
+
+    wrapper.vm.searchPrefix = 'kylin_cache:key'
+    await wrapper.vm.submitSearch()
+    await flushPromises()
+
     expect(client.get).toHaveBeenNthCalledWith(2, API_ENDPOINTS.CACHE_KEYS, {
-      params: { offset: 0, limit: 20 }
+      params: { prefix: 'kylin_cache:key', cursor: '0', limit: 20 }
     })
-    expect(wrapper.text()).toContain('2.00 MB')
-    expect(wrapper.text()).toContain('1')
     expect(wrapper.text()).toContain('kylin_cache:key1')
   })
 
-  test('validates cache form before create', async () => {
-    // Covers src/views/CacheManagement.js:openCreate and validation failures in save.
+  test('navigates cache results with next and previous cursors', async () => {
+    // Covers src/views/CacheManagement.js:goNext and goPrevious cursor history flow.
     client.get
-      .mockResolvedValueOnce({ data: { totalSizeBytes: 0, keyCount: 0 } })
-      .mockResolvedValueOnce({ data: [] })
+      .mockResolvedValueOnce({ data: cacheInfoResponse })
+      .mockResolvedValueOnce({
+        data: {
+          queryPrefix: 'kylin_cache:key',
+          nextCursor: '17',
+          hasMore: true,
+          items: [{ key: 'kylin_cache:key1', sizeBytes: 32, ttlSeconds: 120 }]
+        }
+      })
+      .mockResolvedValueOnce({
+        data: {
+          queryPrefix: 'kylin_cache:key',
+          nextCursor: '0',
+          hasMore: false,
+          items: [{ key: 'kylin_cache:key2', sizeBytes: 16, ttlSeconds: 90 }]
+        }
+      })
+      .mockResolvedValueOnce({
+        data: {
+          queryPrefix: 'kylin_cache:key',
+          nextCursor: '17',
+          hasMore: true,
+          items: [{ key: 'kylin_cache:key1', sizeBytes: 32, ttlSeconds: 120 }]
+        }
+      })
 
     const { wrapper } = await mountView(CacheManagement, { route: '/cache' })
     await flushPromises()
 
-    const addButton = wrapper.findAll('button').find((button) => button.text() === 'Add Cache Key')
-    await addButton.trigger('click')
+    wrapper.vm.searchPrefix = 'kylin_cache:key'
+    await wrapper.vm.submitSearch()
+    await flushPromises()
+    await wrapper.vm.goNext()
+    await flushPromises()
+    await wrapper.vm.goPrevious()
     await flushPromises()
 
-    const saveButton = wrapper.findAll('button').find((button) => button.text() === 'Create')
-    await saveButton.trigger('click')
-
-    expect(message.warning).toHaveBeenCalledWith('Please enter a cache key.')
-  })
-
-  test('creates a cache key and refreshes the page data', async () => {
-    // Covers src/views/CacheManagement.js:create success path.
-    client.get
-      .mockResolvedValueOnce({ data: { totalSizeBytes: 0, keyCount: 0 } })
-      .mockResolvedValueOnce({ data: [] })
-      .mockResolvedValueOnce({ data: { totalSizeBytes: 11, keyCount: 1 } })
-      .mockResolvedValueOnce({ data: [{ key: 'kylin_cache:new', sizeBytes: 11, ttlSeconds: 90 }] })
-    client.post.mockResolvedValue({ data: {} })
-
-    const { wrapper } = await mountView(CacheManagement, { route: '/cache' })
-    await flushPromises()
-
-    wrapper.vm.openCreate()
-    wrapper.vm.form.key = 'kylin_cache:new'
-    wrapper.vm.form.value = '{"ok":true}'
-    wrapper.vm.form.ttlSeconds = 90
-    await wrapper.vm.save()
-    await flushPromises()
-
-    expect(client.post).toHaveBeenCalledWith(API_ENDPOINTS.CACHE_KEYS, {
-      key: 'kylin_cache:new',
-      value: '{"ok":true}',
-      ttlSeconds: 90
+    expect(client.get).toHaveBeenNthCalledWith(3, API_ENDPOINTS.CACHE_KEYS, {
+      params: { prefix: 'kylin_cache:key', cursor: '17', limit: 20 }
     })
-    expect(message.success).toHaveBeenCalledWith('Cache key created successfully')
+    expect(client.get).toHaveBeenNthCalledWith(4, API_ENDPOINTS.CACHE_KEYS, {
+      params: { prefix: 'kylin_cache:key', cursor: '0', limit: 20 }
+    })
+    expect(wrapper.text()).toContain('kylin_cache:key1')
   })
 
-  test('loads detail before editing and saves the updated payload', async () => {
-    // Covers src/views/CacheManagement.js:openEdit and update success path.
+  test('loads detail before editing and refreshes the active search from cursor zero', async () => {
+    // Covers src/views/CacheManagement.js:openEdit, save update path, and refreshAfterMutation.
     client.get
-      .mockResolvedValueOnce({ data: { totalSizeBytes: 32, keyCount: 1 } })
-      .mockResolvedValueOnce({ data: [{ key: 'kylin_cache:key1', sizeBytes: 32, ttlSeconds: 120 }] })
+      .mockResolvedValueOnce({ data: cacheInfoResponse })
+      .mockResolvedValueOnce({
+        data: {
+          queryPrefix: 'kylin_cache:key',
+          nextCursor: '17',
+          hasMore: true,
+          items: [{ key: 'kylin_cache:key1', sizeBytes: 32, ttlSeconds: 120 }]
+        }
+      })
       .mockResolvedValueOnce({ data: { key: 'kylin_cache:key1', value: '{"rows":1}', sizeBytes: 10, ttlSeconds: 120 } })
-      .mockResolvedValueOnce({ data: { totalSizeBytes: 32, keyCount: 1 } })
-      .mockResolvedValueOnce({ data: [{ key: 'kylin_cache:key1', sizeBytes: 32, ttlSeconds: 180 }] })
+      .mockResolvedValueOnce({ data: cacheInfoResponse })
+      .mockResolvedValueOnce({
+        data: {
+          queryPrefix: 'kylin_cache:key',
+          nextCursor: '0',
+          hasMore: false,
+          items: [{ key: 'kylin_cache:key1', sizeBytes: 32, ttlSeconds: 180 }]
+        }
+      })
     client.put.mockResolvedValue({ data: {} })
 
     const { wrapper } = await mountView(CacheManagement, { route: '/cache' })
     await flushPromises()
 
+    wrapper.vm.searchPrefix = 'kylin_cache:key'
+    await wrapper.vm.submitSearch()
+    await flushPromises()
     await wrapper.vm.openEdit({ key: 'kylin_cache:key1' })
     await flushPromises()
-
-    expect(client.get).toHaveBeenNthCalledWith(3, CACHE_KEY_BY_KEY('kylin_cache:key1'))
 
     wrapper.vm.form.value = '{"rows":2}'
     wrapper.vm.form.ttlSeconds = 180
     await wrapper.vm.save()
     await flushPromises()
 
+    expect(client.get).toHaveBeenNthCalledWith(3, CACHE_KEY_BY_KEY('kylin_cache:key1'))
     expect(client.put).toHaveBeenCalledWith(CACHE_KEY_BY_KEY('kylin_cache:key1'), {
       value: '{"rows":2}',
       ttlSeconds: 180
     })
+    expect(client.get).toHaveBeenNthCalledWith(5, API_ENDPOINTS.CACHE_KEYS, {
+      params: { prefix: 'kylin_cache:key', cursor: '0', limit: 20 }
+    })
     expect(message.success).toHaveBeenCalledWith('Cache key updated successfully')
   })
 
-  test('confirms delete and refreshes cache data afterwards', async () => {
-    // Covers src/views/CacheManagement.js:deleteKey success path.
+  test('confirms delete and refreshes the active search from cursor zero', async () => {
+    // Covers src/views/CacheManagement.js:deleteKey success path with active-search refresh.
     client.get
-      .mockResolvedValueOnce({ data: { totalSizeBytes: 32, keyCount: 1 } })
-      .mockResolvedValueOnce({ data: [{ key: 'kylin_cache:key1', sizeBytes: 32, ttlSeconds: 120 }] })
-      .mockResolvedValueOnce({ data: { totalSizeBytes: 0, keyCount: 0 } })
-      .mockResolvedValueOnce({ data: [] })
+      .mockResolvedValueOnce({ data: cacheInfoResponse })
+      .mockResolvedValueOnce({
+        data: {
+          queryPrefix: 'kylin_cache:key',
+          nextCursor: '17',
+          hasMore: true,
+          items: [{ key: 'kylin_cache:key1', sizeBytes: 32, ttlSeconds: 120 }]
+        }
+      })
+      .mockResolvedValueOnce({ data: cacheInfoResponse })
+      .mockResolvedValueOnce({
+        data: {
+          queryPrefix: 'kylin_cache:key',
+          nextCursor: '0',
+          hasMore: false,
+          items: []
+        }
+      })
     client.delete.mockResolvedValue({ data: {} })
     messageBox.confirm.mockResolvedValue()
 
     const { wrapper } = await mountView(CacheManagement, { route: '/cache' })
     await flushPromises()
 
+    wrapper.vm.searchPrefix = 'kylin_cache:key'
+    await wrapper.vm.submitSearch()
+    await flushPromises()
     await wrapper.vm.deleteKey('kylin_cache:key1')
     await flushPromises()
 
     expect(messageBox.confirm).toHaveBeenCalled()
     expect(client.delete).toHaveBeenCalledWith(CACHE_KEY_BY_KEY('kylin_cache:key1'))
+    expect(client.get).toHaveBeenNthCalledWith(4, API_ENDPOINTS.CACHE_KEYS, {
+      params: { prefix: 'kylin_cache:key', cursor: '0', limit: 20 }
+    })
     expect(message.success).toHaveBeenCalledWith('Cache key deleted successfully')
   })
 })

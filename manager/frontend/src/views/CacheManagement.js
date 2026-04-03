@@ -1,9 +1,11 @@
 import { computed, defineComponent, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Database, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-vue-next'
+import { Database, Pencil, Plus, RefreshCw, Search, Trash2 } from 'lucide-vue-next'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import client from '../api/client'
 import { API_ENDPOINTS, CACHE_KEY_BY_KEY } from '../api/endpoints'
+
+const DEFAULT_MANAGED_PREFIX = 'kylin_cache:'
 
 export default defineComponent({
   name: 'CacheManagementView',
@@ -12,11 +14,16 @@ export default defineComponent({
     Pencil,
     Plus,
     RefreshCw,
+    Search,
     Trash2
   },
   setup() {
     const { t } = useI18n()
-    const cacheInfo = reactive({ totalSizeBytes: 0, keyCount: 0 })
+    const cacheInfo = reactive({
+      managedKeyPrefix: DEFAULT_MANAGED_PREFIX,
+      exactSummaryAvailable: false,
+      summaryMessage: ''
+    })
     const cacheKeys = ref([])
     const infoLoading = ref(false)
     const keysLoading = ref(false)
@@ -24,7 +31,13 @@ export default defineComponent({
     const submitting = ref(false)
     const dialogVisible = ref(false)
     const dialogMode = ref('create')
-    const currentPage = ref(1)
+    const searchPrefix = ref(DEFAULT_MANAGED_PREFIX)
+    const activePrefix = ref('')
+    const currentCursor = ref('0')
+    const nextCursor = ref('0')
+    const hasMore = ref(false)
+    const searchPerformed = ref(false)
+    const cursorHistory = ref([])
     const pageSize = ref(20)
     const form = reactive({
       key: '',
@@ -32,17 +45,29 @@ export default defineComponent({
       ttlSeconds: 300
     })
 
-    const totalSizeMB = computed(() => (cacheInfo.totalSizeBytes / (1024 * 1024)).toFixed(2))
     const dialogTitle = computed(() => (
       dialogMode.value === 'create' ? t('cache.createTitle') : t('cache.editTitle')
     ))
     const valuePlaceholder = computed(() => '{\n  "columnMetas": [],\n  "results": []\n}')
+    const managedPrefix = computed(() => cacheInfo.managedKeyPrefix || DEFAULT_MANAGED_PREFIX)
+    const summaryMessage = computed(() => (
+      cacheInfo.exactSummaryAvailable
+        ? t('cache.summaryAvailable')
+        : t('cache.summaryUnavailableHint', { prefix: managedPrefix.value })
+    ))
+    const canGoPrevious = computed(() => cursorHistory.value.length > 0)
+    const emptyText = computed(() => (
+      searchPerformed.value ? t('cache.searchEmpty') : t('cache.searchIdle')
+    ))
 
     const loadCacheInfo = async () => {
       infoLoading.value = true
       try {
         const response = await client.get(API_ENDPOINTS.CACHE_INFO)
         Object.assign(cacheInfo, response.data)
+        if (!searchPerformed.value) {
+          searchPrefix.value = cacheInfo.managedKeyPrefix || DEFAULT_MANAGED_PREFIX
+        }
       } catch (error) {
         ElMessage.error(t('cache.loadInfoError'))
         console.error('Failed to load cache info:', error)
@@ -51,20 +76,83 @@ export default defineComponent({
       }
     }
 
-    const loadCacheKeys = async () => {
+    const resetSearchState = ({ preserveInput = true } = {}) => {
+      cacheKeys.value = []
+      activePrefix.value = ''
+      currentCursor.value = '0'
+      nextCursor.value = '0'
+      hasMore.value = false
+      searchPerformed.value = false
+      cursorHistory.value = []
+      if (!preserveInput) {
+        searchPrefix.value = managedPrefix.value
+      }
+    }
+
+    const validateSearchPrefix = () => {
+      const prefix = searchPrefix.value.trim()
+      if (!prefix) {
+        ElMessage.warning(t('cache.searchRequired'))
+        return null
+      }
+      if (!prefix.startsWith(managedPrefix.value) || prefix.includes('/') || /\s/.test(prefix)) {
+        ElMessage.warning(t('cache.invalidSearchPrefix'))
+        return null
+      }
+      if (prefix === managedPrefix.value) {
+        ElMessage.warning(t('cache.searchTooBroad'))
+        return null
+      }
+      return prefix
+    }
+
+    const loadCacheKeys = async ({ prefix, cursor = '0' }) => {
       keysLoading.value = true
       try {
-        const offset = (currentPage.value - 1) * pageSize.value
         const response = await client.get(API_ENDPOINTS.CACHE_KEYS, {
-          params: { offset, limit: pageSize.value }
+          params: { prefix, cursor, limit: pageSize.value }
         })
-        cacheKeys.value = response.data
+        cacheKeys.value = response.data.items || []
+        activePrefix.value = response.data.queryPrefix || prefix
+        currentCursor.value = cursor
+        nextCursor.value = response.data.nextCursor || '0'
+        hasMore.value = Boolean(response.data.hasMore)
+        searchPerformed.value = true
       } catch (error) {
-        ElMessage.error(t('cache.loadKeysError'))
+        ElMessage.error(error.response?.data?.message || t('cache.loadKeysError'))
         console.error('Failed to load cache keys:', error)
       } finally {
         keysLoading.value = false
       }
+    }
+
+    const submitSearch = async () => {
+      const prefix = validateSearchPrefix()
+      if (!prefix) {
+        return
+      }
+      cursorHistory.value = []
+      await loadCacheKeys({ prefix, cursor: '0' })
+    }
+
+    const goNext = async () => {
+      if (!hasMore.value || !activePrefix.value) {
+        return
+      }
+      cursorHistory.value.push(currentCursor.value)
+      await loadCacheKeys({ prefix: activePrefix.value, cursor: nextCursor.value })
+    }
+
+    const goPrevious = async () => {
+      if (!canGoPrevious.value || !activePrefix.value) {
+        return
+      }
+      const previousCursor = cursorHistory.value.pop()
+      await loadCacheKeys({ prefix: activePrefix.value, cursor: previousCursor })
+    }
+
+    const clearSearch = () => {
+      resetSearchState({ preserveInput: false })
     }
 
     const resetForm = () => {
@@ -117,7 +205,7 @@ export default defineComponent({
           return false
         }
         const key = form.key.trim()
-        if (!key.startsWith('kylin_cache:') || key.includes('/') || /\s/.test(key)) {
+        if (!key.startsWith(managedPrefix.value) || key.includes('/') || /\s/.test(key)) {
           ElMessage.warning(t('cache.invalidKey'))
           return false
         }
@@ -137,6 +225,14 @@ export default defineComponent({
         return false
       }
       return true
+    }
+
+    const refreshAfterMutation = async () => {
+      await loadCacheInfo()
+      if (activePrefix.value) {
+        cursorHistory.value = []
+        await loadCacheKeys({ prefix: activePrefix.value, cursor: '0' })
+      }
     }
 
     const save = async () => {
@@ -161,7 +257,7 @@ export default defineComponent({
           ElMessage.success(t('cache.updateSuccess'))
         }
         dialogVisible.value = false
-        await refresh()
+        await refreshAfterMutation()
       } catch (error) {
         ElMessage.error(error.response?.data?.message || t('cache.saveError'))
         console.error('Failed to save cache key:', error)
@@ -183,7 +279,7 @@ export default defineComponent({
         )
         await client.delete(CACHE_KEY_BY_KEY(key))
         ElMessage.success(t('cache.deleteSuccess'))
-        await refresh()
+        await refreshAfterMutation()
       } catch (error) {
         if (error !== 'cancel') {
           ElMessage.error(t('cache.deleteError'))
@@ -194,16 +290,10 @@ export default defineComponent({
 
     const refresh = async () => {
       await loadCacheInfo()
-      const maxPage = Math.max(1, Math.ceil((cacheInfo.keyCount || 0) / pageSize.value))
-      if (currentPage.value > maxPage) {
-        currentPage.value = maxPage
+      if (activePrefix.value) {
+        cursorHistory.value = []
+        await loadCacheKeys({ prefix: activePrefix.value, cursor: '0' })
       }
-      await loadCacheKeys()
-    }
-
-    const handlePageChange = (page) => {
-      currentPage.value = page
-      loadCacheKeys()
     }
 
     const formatBytes = (bytes) => {
@@ -227,7 +317,7 @@ export default defineComponent({
     }
 
     onMounted(() => {
-      refresh()
+      loadCacheInfo()
     })
 
     return {
@@ -242,21 +332,29 @@ export default defineComponent({
       dialogMode,
       dialogTitle,
       valuePlaceholder,
-      currentPage,
-      pageSize,
+      searchPrefix,
+      activePrefix,
+      hasMore,
+      searchPerformed,
+      canGoPrevious,
+      summaryMessage,
+      emptyText,
       form,
-      totalSizeMB,
       openCreate,
       openEdit,
       deleteKey,
       save,
       refresh,
-      handlePageChange,
+      submitSearch,
+      goNext,
+      goPrevious,
+      clearSearch,
       formatBytes,
       formatTTL,
       estimateValueSize,
       RefreshCw,
       Plus,
+      Search,
       Pencil,
       Trash2
     }
