@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| BENCH-BUG-001 | REMOVE SYNTHETIC ACCESSOR DEPENDENCY FROM BENCHMARK RUN DISPATCH | benchmark | Benchmark run dispatch now uses an explicit static after-commit synchronization helper instead of an anonymous inner callback, so the compiled backend no longer depends on `BenchmarkExecutionService.access$000(...)`; `mvn -q -f benchmark/pom.xml clean test` and `npm --prefix benchmark/frontend run build` both pass, and `javap` confirms the synthetic bridge method is gone. |
 | MIGRATION-001 | UPGRADE TEXT COLUMNS TO MEDIUMTEXT FOR LONG SQL SUPPORT | platform | Upgraded 10 JPA domain classes across `benchmark`, `query`, and `manager` to `MEDIUMTEXT` (16MB). Added Flyway migrations `benchmark/V18` and `manager/V11`. Verified compilation of all affected modules. |
 | QUERY-TRINO-002 | ADD LOCAL TRINO SERVICE AND E2E COVERAGE | query | Trino service added to `docker-compose.yml`, seeded in `manager`, and verified with `TrinoRoutingE2ETest` passing 5/5 cases. Fixed repo-wide table name prefixing drift for `manager_sql_execution_record`. |
 | QUERY-BUG-003 | MAKE CLEAN SQL INDEPENDENT OF COMMENT VALUES | query | `cleanSql` now strips all SQL comments regardless of their contents, `executionSql` still preserves pass-through downstream comments, query docs/test matrix now describe the split contract explicitly, and the focused plus full `analyze`/`query` reactor validations pass. |
@@ -80,6 +81,29 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+### BENCH-BUG-001: REMOVE SYNTHETIC ACCESSOR DEPENDENCY FROM BENCHMARK RUN DISPATCH
+
+- **Status**: done
+- **Updated**: 2026-04-03
+- **Progress log**:
+  - **2026-04-03 — intake**
+    - Human reported a benchmark runtime failure: `Handler dispatch failed; nested exception is java.lang.NoSuchMethodError: 'com.smartbi.benchmark.run.BenchmarkAsyncRunner com.smartbi.benchmark.run.BenchmarkExecutionService.access$000(com.smartbi.benchmark.run.BenchmarkExecutionService)'`.
+    - Scope for this task: inspect the benchmark run-dispatch path, remove the runtime dependency on the compiler-generated `access$000(...)` bridge used by the anonymous after-commit callback, verify the benchmark module still passes validation, and close the task through the required ledger/archive workflow.
+  - **2026-04-03 — implementation**
+    - Files changed: `benchmark/src/main/java/com/smartbi/benchmark/run/BenchmarkExecutionService.java`, `tasks.md`, and `INBOX.md`.
+    - Commands run: `rg`, `sed`, `javap`, `mvn -q -f benchmark/pom.xml clean test`, and `npm --prefix benchmark/frontend run build`.
+    - Result: Replaced the anonymous `TransactionSynchronization` callback in `BenchmarkExecutionService#triggerAsyncRunAfterCommit(...)` with an explicit static nested synchronization helper that receives `BenchmarkAsyncRunner` and `runId` through its constructor, so the compiled dispatch path no longer depends on the synthetic `BenchmarkExecutionService.access$000(...)` bridge.
+  - **2026-04-03 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: The after-commit dispatch path captured a private field from an anonymous inner class, so Java 8 compiled the callback against a synthetic `access$000(...)` bridge. When mixed old/new benchmark class files were loaded together, the inner callback class could call a bridge method that no longer existed on the outer class, producing the observed `NoSuchMethodError`.
+    - Cure: Replaced the anonymous callback with a static nested synchronization class that uses constructor-injected state instead of private-outer-field access, which removes the runtime dependency on the synthetic bridge method and makes mixed-class incremental rebuilds less fragile.
+    - Generalization: This fix is specific to a localized runtime-compatibility failure in the benchmark dispatch path; no new repo-wide best-practice rule was added.
+  - **2026-04-03 — verification**
+    - Validation status: approved with known environment note
+    - Evidence: `mvn -q -f benchmark/pom.xml clean test` passed; `npm --prefix benchmark/frontend run build` passed; `javap -classpath benchmark/target/classes -p com.smartbi.benchmark.run.BenchmarkExecutionService` no longer lists `access$000(...)`; `javap -classpath benchmark/target/classes -p -c com.smartbi.benchmark.run.BenchmarkExecutionService$AfterCommitRunSynchronization` shows `afterCommit()` calling `BenchmarkAsyncRunner.executeRun(...)` directly.
+    - Next action: none
+    - Escalation: none
+
 ### QUERY-TRINO-002: ADD LOCAL TRINO SERVICE AND E2E COVERAGE
 
 - **Status**: done

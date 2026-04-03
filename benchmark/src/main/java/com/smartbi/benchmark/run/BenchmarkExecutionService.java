@@ -105,11 +105,23 @@ public class BenchmarkExecutionService {
             asyncRunner.executeRun(runId);
             return;
         }
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                asyncRunner.executeRun(runId);
-            }
-        });
+        TransactionSynchronizationManager.registerSynchronization(
+                new AfterCommitRunSynchronization(asyncRunner, runId));
+    }
+
+    private static final class AfterCommitRunSynchronization implements TransactionSynchronization {
+
+        private final BenchmarkAsyncRunner asyncRunner;
+        private final Long runId;
+
+        private AfterCommitRunSynchronization(BenchmarkAsyncRunner asyncRunner, Long runId) {
+            this.asyncRunner = asyncRunner;
+            this.runId = runId;
+        }
+
+        @Override
+        public void afterCommit() {
+            asyncRunner.executeRun(runId);
+        }
     }
 }
