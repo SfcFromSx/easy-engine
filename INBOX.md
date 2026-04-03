@@ -14,6 +14,24 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Do not convert inbox entries directly into implementation tasks without explicit human confirmation.
 - For tooling or infrastructure changes, prefer logging the issue here before changing the harness.
 
+### INBOX-20260403-021
+- Area: Harness audit trail
+- Related task(s): `GIT-HYGIENE-002`
+- Summary: `tasks.md` was updated on 2026-04-03 to intake and start a repo-hygiene task for removing tracked local settings and generated frontend coverage artifacts from the Git index and adding the missing ignore rules.
+- Evidence: The active ledger now includes `GIT-HYGIENE-002` with intake notes covering the tracked `.claude/settings.local.json`, the tracked `manager/frontend/coverage/` tree, and the unignored `analyze/target/` build directory.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edit as ad hoc bookkeeping instead of the required intake/start record for this Git hygiene repair task.
+- Suggested next step: Keep the ignore-rule changes, index cleanup, verification evidence, archive entry, and task commit aligned while `GIT-HYGIENE-002` is completed.
+- Human decision: pending
+
+### INBOX-20260403-022
+- Area: Harness audit trail
+- Related task(s): `GIT-HYGIENE-002`
+- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-03 to archive the completion of `GIT-HYGIENE-002` after repairing the tracked local-settings and coverage-artifact history.
+- Evidence: The active ledger row and section for `GIT-HYGIENE-002` were removed from `tasks.md`, its full intake/implementation/review/verification record was archived under `tasks-done.md`, and the archived evidence records the ignore-rule additions plus the non-destructive `git rm --cached` cleanup for the historically tracked local files.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edits as ad hoc bookkeeping rather than the required closeout workflow for this Git hygiene correction task.
+- Suggested next step: Keep the archived task entry, ignore-rule changes, and task commit aligned; future local-only tooling or coverage artifacts should be added to ignore rules before they get tracked.
+- Human decision: pending
+
 ### INBOX-20260403-019
 - Area: Harness audit trail
 - Related task(s): `UI-BUNDLE-002`

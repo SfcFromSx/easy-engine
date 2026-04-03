@@ -1,4 +1,5 @@
 .DS_Store
+.claude/settings.local.json
 .vscode/
 .agent/history/*.jsonl
 .agent/lock.json
@@ -7,9 +8,11 @@
 benchmark/.venv-xlsx/
 benchmark/frontend/node_modules/
 benchmark/target/
+analyze/target/
 kylin-jdbc-cache/.vscode/
 kylin-jdbc-cache/target/
 manager/frontend/node_modules/
+manager/frontend/coverage/
 manager/target/
 query/target/
 manager/qa-artifacts/

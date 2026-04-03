@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| GIT-HYGIENE-002 | STOP TRACKING LOCAL TOOLING AND COVERAGE ARTIFACTS | platform | `.claude/settings.local.json` and `manager/frontend/coverage/` are no longer tracked by Git, new ignore rules now cover those paths plus `analyze/target/`, local copies were preserved, and verification confirmed the repo now treats them as ignored local artifacts instead of release changes. |
 | TRACE-CACHE-KEY-001 | PERSIST CACHE KEYS IN TRACE RECORDS AND EXPOSE THEM IN MANAGER | query, manager, docs | Query traces now persist the exact Redis `cacheKey` used for cache-eligible requests, manager stores and exposes that field through `/api/v1/traces` with filtering support, the manager traces page shows and filters by cache key, and query/manager/frontend validations all passed. |
 | UI-BUNDLE-002 | REFRESH MANAGER EMBEDDED FRONTEND BUNDLE AND REVIEW CN QUICKSTART | manager, docs | Manager frontend assets were rebuilt and resynced into the embedded Java static directory, the packaged manager artifact now contains the new cache-console bundle, `doc-CN/quickstart.md` now documents the required build/sync/restart flow for precompiled hosting, and release-prep validation passed. |
 | UI-BUNDLE-001 | CLEAN TEMP ARTIFACTS AND REBUILD EMBEDDED FRONTENDS | frontend, docs | Removed the untracked `analyze/target` build-temp directory, restored tracked manager coverage artifacts instead of deleting them, rebuilt both `manager` and `benchmark` frontends, and synced each `dist` into its Java `resources/static` directory so embedded assets now match the latest frontend bundles. |
@@ -91,6 +92,30 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+### GIT-HYGIENE-002: STOP TRACKING LOCAL TOOLING AND COVERAGE ARTIFACTS
+
+- **Status**: done
+- **Updated**: 2026-04-03
+- **Progress log**:
+  - **2026-04-03 — intake**
+    - Human requested direct correction of the remaining local Git hygiene drift instead of leaving it as release-time cleanup advice.
+    - Investigation confirmed three problem areas: `.claude/settings.local.json` is a machine-local settings file that is still tracked, `manager/frontend/coverage/` is generated frontend coverage output that is still tracked, and `analyze/target/` is an untracked Maven output directory that is not yet ignored.
+    - Scope for this task: add the necessary ignore rules, remove the tracked local-only and generated files from the Git index without deleting the user's local copies, verify the worktree no longer reports them as release-relevant changes, and close the cleanup as its own task commit.
+  - **2026-04-03 — implementation**
+    - Files changed: `.gitignore`, task ledger/archive records, plus Git index removals for `.claude/settings.local.json` and `manager/frontend/coverage/`.
+    - Commands run: `git ls-files`, `sed -n`, `git rm --cached .claude/settings.local.json`, `git rm -r --cached manager/frontend/coverage`, `git status --short --ignored`, `git check-ignore -v`.
+    - Result: Added ignore rules for the local Claude settings file, manager frontend coverage output, and `analyze/target/`, then removed the already-tracked local-only and generated paths from the Git index while preserving the local files on disk.
+  - **2026-04-03 — review**
+    - Self-Review: [x] ignore-rule scope [x] local-file preservation [x] side-effects
+    - Notes: Kept the cleanup narrowly focused on the known local/tooling artifacts only. Did not remove or rewrite other generated directories that were already correctly ignored elsewhere in the repo.
+  - **2026-04-03 — verification**
+    - Validation status: approved
+    - Evidence: `test -f .claude/settings.local.json && test -f manager/frontend/coverage/index.html` returned `local-files-preserved`.
+    - Evidence: `git check-ignore -v .claude/settings.local.json manager/frontend/coverage/index.html analyze/target` confirmed all three paths now match `.gitignore`.
+    - Evidence: `git status --short --ignored` shows `.claude/`, `manager/frontend/coverage/`, and `analyze/target/` as ignored local artifacts after the index cleanup, with only the intended staged deletions remaining for commit.
+    - Next action: none
+    - Escalation: none
+
 ### TRACE-CACHE-KEY-001: PERSIST CACHE KEYS IN TRACE RECORDS AND EXPOSE THEM IN MANAGER
 
 - **Status**: done
