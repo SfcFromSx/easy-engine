@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| JAVA8-REVIEW-001 | AUDIT REPO FOR JAVA 8-ONLY DEV VALIDATION CI RUNTIME COMPLIANCE | platform | Added `scripts/with-java8.sh`, routed harness/init-db/docs through the Java 8 wrapper, confirmed the module POMs and spot-checked direct jars still target Java 8 classfiles, and the repo now fails fast instead of silently running Maven flows on the current Java 17/25 workstation. |
 | CONFIG-REVIEW-001 | AUDIT REPO FOR PROFILE-YAML-ONLY ENV CONFIG COMPLIANCE | platform | `manager`, `query`, and `benchmark` now keep environment-shaped test fixtures inside module `application-test.yml` files instead of `src/test/resources/application-test.properties`; the affected test helpers and Spring integration tests read YAML-backed overrides; manager/query reactor tests and benchmark backend tests pass; and the local-development docs now describe the new fixture location. |
 | CONFIG-MYSQL-001 | STANDARDIZE YAML PROFILES ON MYSQL-ONLY CONFIG | platform | `manager`, `query`, and `benchmark` `application-test.yml` files are now MySQL-first, H2-only regression fixtures moved into test-scoped `application-test.properties` overrides, `scripts/init-db.sh test ...` now follows the runtime profile classpath, and manager/query/benchmark validation plus test-profile DB init all passed. |
 | DB-AUDIT-001 | AUDIT INIT DB MIGRATIONS FOR CREATE-THEN-ALTER DRIFT | platform | Manager and benchmark fresh-schema bootstrap now create current table shapes directly where safe, retained upgrade migrations are checksum-safe and idempotent for legacy schemas, manager Flyway regression tests pass, and `init-db` smoke runs now pass for manager plus benchmark's dev/MySQL-backed test paths. |
@@ -40,6 +41,36 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | QUERY-BUG-001 | REJECT NON-QUERY REQUESTS AT QUERY BOUNDARY | query | `query` now rejects blank and non-query SQL before cache/datasource work while preserving the compatibility exception payload contract, the request docs are updated, `mvn -q -f query/pom.xml test` passes, and broader compatibility-input review is tracked in `QUERY-REVIEW-002`. |
 | BENCH-TEST-002 | EXTERNALIZE PREFLIGHT CONTROLLER TEST FIXTURES | benchmark | `PreflightControllerTest` now loads its probe fixture values from `benchmark/src/test/resources/preflight-controller-test.properties` instead of inline literals, the focused benchmark validation passes, and the broader audit follow-up is tracked in `TEST-CONFIG-001`. |
 | BENCH-CONFIG-001 | EXTERNALIZE BENCHMARK PREFLIGHT DATASOURCE PROBE SETTINGS | benchmark | `BenchmarkPreflightProperties` no longer embeds Kylin/Presto probe defaults in Java, `benchmark.preflight.*` can be overridden from environment-backed config, task-local preflight tests pass, and unrelated benchmark-suite drift is logged in `INBOX-20260402-001`. |
+
+
+### JAVA8-REVIEW-001: AUDIT REPO FOR JAVA 8-ONLY DEV VALIDATION CI RUNTIME COMPLIANCE
+
+- **Status**: done
+- **Updated**: 2026-04-03
+- **Progress log**:
+  - **2026-04-03 — intake**
+    - Follow-up generalization review task created after exporting the new Java 8 baseline rule to `docs/operations/best-practices.md`.
+    - Scope for this task: audit build config, dependencies, test tooling, local-development docs, runtime packaging, and CI/harness instructions to ensure development, validation, CI, and runtime all explicitly stay on Java 8; fix remaining drift; and record any required environment/setup changes that still assume a newer JDK.
+  - **2026-04-03 — implementation**
+    - Files changed: `scripts/with-java8.sh`, `scripts/init-db.sh`, `.agent/config.json`, `AGENTS.md`, `docs/operations/{local-development,validation-matrix,testing-standard}.md`, `docs/modules/{query,manager,benchmark}.md`, `tests/README.md`, `doc-CN/local-development.md`, `INBOX.md`, and the task archive records.
+    - Commands run: `rg`, `sed`, `git diff`, `java -version`, `mvn -version`, `bash scripts/with-java8.sh mvn -version`, `bash scripts/init-db.sh dev manager`, `javap -verbose`, `shasum -a 256`, `date -u`.
+    - Result: Added a shared Java 8 wrapper for Maven-backed commands, routed the harness validation/refresh and DB-init flows through it, and updated the canonical runbooks/module docs/E2E docs so local development and validation now explicitly require a full Java 8 JDK instead of silently inheriting whichever newer JDK the workstation defaults to.
+  - **2026-04-03 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: The repo had already adopted a Java 8-only governance rule in `docs/operations/best-practices.md`, but the actual harness/runbook commands still invoked raw `mvn`, so development and validation quietly ran under newer workstation defaults such as the current Java 17/25 setup.
+    - Cure: Added one checked-in Java 8 wrapper, wired every Maven-backed harness/init-db/doc command in scope through it, and documented that a full Java 8 JDK with `javac` is required for benchmark JDBC upload integration.
+    - Generalization: The existing Java 8 baseline rule in `docs/operations/best-practices.md` already covers this class of drift; no additional generalized rule was needed.
+  - **2026-04-03 — verification**
+    - Validation status: approved
+    - Evidence: `rg -n "<java.version>1\.8|<maven.compiler.source>1\.8|<maven.compiler.target>1\.8" analyze/pom.xml manager/pom.xml query/pom.xml benchmark/pom.xml tests/pom.xml` confirmed every module POM in scope still targets Java 8 source/bytecode.
+    - Evidence: Spot-checking direct shipped/test jars with `javap -verbose` reported `major version: 52` for `io.trino:trino-jdbc:469`, `com.facebook.presto:presto-jdbc:0.276.2`, `org.apache.poi:poi-ooxml:5.2.3`, `org.flywaydb:flyway-core:8.5.13`, `org.testcontainers:mysql:1.19.8`, and `com.mysql:mysql-connector-j:8.0.33`, so the audited dependency surface remains Java 8-compatible.
+    - Evidence: `bash scripts/with-java8.sh mvn -version` now fails fast on this workstation with `Java 8 JDK is required`, proving the repo no longer silently validates under the current non-Java-8 environment.
+    - Evidence: `bash scripts/init-db.sh dev manager` fails with the same guard before invoking Maven, proving the runtime bootstrap path is also pinned to Java 8 instead of silently using the host default JDK.
+    - Evidence: `rg -n "(^|[^[:alnum:]/_-])mvn (spring-boot:run|-q |-f )" AGENTS.md .agent/config.json docs/operations/local-development.md docs/operations/validation-matrix.md docs/operations/testing-standard.md docs/modules/query.md docs/modules/manager.md docs/modules/benchmark.md tests/README.md scripts/init-db.sh` shows the audited in-scope Maven commands now all route through `scripts/with-java8.sh`.
+    - Next action: none
+    - Escalation: none
+  - **2026-04-03 — doc-garden**
+    - Updated `docs/operations/local-development.md`, `docs/operations/validation-matrix.md`, `docs/operations/testing-standard.md`, `docs/modules/query.md`, `docs/modules/manager.md`, `docs/modules/benchmark.md`, `tests/README.md`, and the configured Chinese mirror `doc-CN/local-development.md` so the repo now states the Java 8 JDK requirement everywhere the affected Maven-backed dev/validation/init flows are documented.
 
 ### CONFIG-REVIEW-001: AUDIT REPO FOR PROFILE-YAML-ONLY ENV CONFIG COMPLIANCE
 

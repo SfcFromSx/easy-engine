@@ -9,7 +9,7 @@ Use [testing-standard.md](/Users/sfc/Documents/projects/engine/docs/operations/t
 ### Manager
 
 ```bash
-mvn -q -f manager/pom.xml test
+bash scripts/with-java8.sh mvn -q -f manager/pom.xml test
 npm --prefix manager/frontend run test
 npm --prefix manager/frontend run build
 ```
@@ -17,13 +17,13 @@ npm --prefix manager/frontend run build
 ### Query
 
 ```bash
-mvn -q -f query/pom.xml test
+bash scripts/with-java8.sh mvn -q -f query/pom.xml test
 ```
 
 ### Benchmark
 
 ```bash
-mvn -q -f benchmark/pom.xml test
+bash scripts/with-java8.sh mvn -q -f benchmark/pom.xml test
 npm --prefix benchmark/frontend run build
 ```
 

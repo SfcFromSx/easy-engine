@@ -135,9 +135,9 @@ See `.agent/config.json` `validation_commands` for the current per-module comman
 
 | Module | Commands |
 |--------|----------|
-| manager | `mvn -q -f manager/pom.xml test` · `npm --prefix manager/frontend run build` |
-| query | `mvn -q -f query/pom.xml test` |
-| benchmark | `mvn -q -f benchmark/pom.xml test` · `npm --prefix benchmark/frontend run build` |
+| manager | `bash scripts/with-java8.sh mvn -q -f manager/pom.xml test` · `npm --prefix manager/frontend run build` |
+| query | `bash scripts/with-java8.sh mvn -q -f query/pom.xml test` |
+| benchmark | `bash scripts/with-java8.sh mvn -q -f benchmark/pom.xml test` · `npm --prefix benchmark/frontend run build` |
 | smoke | `bash scripts/benchmark-smoke.sh` |
 
 ## Documentation Contract
@@ -146,4 +146,3 @@ See `.agent/config.json` `validation_commands` for the current per-module comman
 - Put durable explanations in `docs/`.
 - Update architecture or interface docs whenever behavior, boundaries, or APIs change.
 - Refresh Chinese mirrors only for the configured human-facing document set.
-

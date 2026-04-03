@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+JAVA8_WRAPPER="${ROOT_DIR}/scripts/with-java8.sh"
 
 usage() {
   echo "Usage: scripts/init-db.sh <dev|test|pro> [manager] [benchmark]" >&2
@@ -29,7 +30,7 @@ run_module() {
 
   main_class="$(main_class_for "${module}")"
   echo "Initializing ${module} schema with profile ${profile}..."
-  mvn -q -f "${ROOT_DIR}/${module}/pom.xml" \
+  bash "${JAVA8_WRAPPER}" mvn -q -f "${ROOT_DIR}/${module}/pom.xml" \
     -DskipTests \
     -Dspring.profiles.active="${profile}" \
     -Dexec.mainClass="${main_class}" \

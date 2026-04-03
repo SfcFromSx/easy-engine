@@ -34,14 +34,14 @@
   ],
   "validation_commands": {
     "manager": [
-      "mvn -q -f manager/pom.xml test",
+      "bash scripts/with-java8.sh mvn -q -f manager/pom.xml test",
       "npm --prefix manager/frontend run build"
     ],
     "query": [
-      "mvn -q -f query/pom.xml test"
+      "bash scripts/with-java8.sh mvn -q -f query/pom.xml test"
     ],
     "benchmark": [
-      "mvn -q -f benchmark/pom.xml test",
+      "bash scripts/with-java8.sh mvn -q -f benchmark/pom.xml test",
       "npm --prefix benchmark/frontend run build"
     ],
     "smoke": [
@@ -50,15 +50,15 @@
   },
   "post_task_refresh_commands": {
     "manager": [
-      "mvn -q -f manager/pom.xml -DskipTests compile",
+      "bash scripts/with-java8.sh mvn -q -f manager/pom.xml -DskipTests compile",
       "npm --prefix manager/frontend run build"
     ],
     "benchmark": [
-      "mvn -q -f benchmark/pom.xml -DskipTests compile",
+      "bash scripts/with-java8.sh mvn -q -f benchmark/pom.xml -DskipTests compile",
       "npm --prefix benchmark/frontend run build"
     ],
     "query": [
-      "mvn -q -f query/pom.xml -DskipTests compile"
+      "bash scripts/with-java8.sh mvn -q -f query/pom.xml -DskipTests compile"
     ]
   },
   "service_health_checks": {

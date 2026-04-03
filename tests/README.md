@@ -8,6 +8,12 @@ MySQL trace records, and the manager control-plane API.
 
 All services must be running before executing the tests:
 
+- Point `JAVA8_HOME` (preferred) or `JAVA_HOME` at a full Java 8 JDK before any
+  Maven-backed command. `bash scripts/with-java8.sh ...` is the canonical repo
+  wrapper and will fail fast if the active JDK is not Java 8.
+- A JRE-only install is insufficient because some benchmark integration tests
+  require `javac` from the Java 8 JDK.
+
 ```bash
 # Infrastructure + OLAP engines
 docker compose up -d mysql redis
@@ -17,21 +23,21 @@ docker compose --profile olap up -d kylin presto
 # The local Kylin image also pins Spark to local[2] so auth becomes ready
 # without waiting on the embedded standalone YARN sparder bootstrap.
 # Then start the three Java services:
-cd query   && mvn spring-boot:run &
-cd manager && mvn spring-boot:run -Dspring-boot.run.profiles=dev &
-cd benchmark && mvn spring-boot:run &
+cd query   && bash ../scripts/with-java8.sh mvn spring-boot:run &
+cd manager && bash ../scripts/with-java8.sh mvn spring-boot:run -Dspring-boot.run.profiles=dev &
+cd benchmark && bash ../scripts/with-java8.sh mvn spring-boot:run &
 ```
 
 ## Running the tests
 
 ```bash
-mvn -f tests/pom.xml test
+bash scripts/with-java8.sh mvn -f tests/pom.xml test
 ```
 
 Override service endpoints if not using default ports:
 
 ```bash
-mvn -f tests/pom.xml test \
+bash scripts/with-java8.sh mvn -f tests/pom.xml test \
   -De2e.query.url=http://localhost:8092 \
   -De2e.manager.url=http://localhost:8090 \
   -De2e.mysql.host=localhost -De2e.mysql.port=3307 \

@@ -56,9 +56,9 @@ Benchmark's default seeded/query-gateway path stays on Kylin JDBC and port `8092
 ```bash
 docker compose up -d mysql redis
 bash scripts/init-db.sh dev
-cd /Users/sfc/Documents/projects/engine/query && mvn spring-boot:run -Dspring-boot.run.profiles=dev
-cd /Users/sfc/Documents/projects/engine/manager && mvn spring-boot:run -Dspring-boot.run.profiles=dev
-cd /Users/sfc/Documents/projects/engine/benchmark && mvn spring-boot:run -Dspring-boot.run.profiles=dev
+cd /Users/sfc/Documents/projects/engine/query && bash /Users/sfc/Documents/projects/engine/scripts/with-java8.sh mvn spring-boot:run -Dspring-boot.run.profiles=dev
+cd /Users/sfc/Documents/projects/engine/manager && bash /Users/sfc/Documents/projects/engine/scripts/with-java8.sh mvn spring-boot:run -Dspring-boot.run.profiles=dev
+cd /Users/sfc/Documents/projects/engine/benchmark && bash /Users/sfc/Documents/projects/engine/scripts/with-java8.sh mvn spring-boot:run -Dspring-boot.run.profiles=dev
 cd /Users/sfc/Documents/projects/engine/benchmark/frontend && npm run dev
 ```
 
@@ -68,12 +68,14 @@ cd /Users/sfc/Documents/projects/engine/benchmark/frontend && npm run dev
 created explicitly. Benchmark runtime settings are now centralized in
 `application-dev.yml`, `application-test.yml`, and `application-pro.yml`. Those
 profile YAMLs are now MySQL-first; H2 stays confined to test-scoped override
-resources used by benchmark regression coverage.
+resources used by benchmark regression coverage. Benchmark's backend commands
+must run on a full Java 8 JDK because the JDBC upload integration test compiles
+a fixture jar via `javac`.
 
 ## Verify
 
 ```bash
-mvn -q -f benchmark/pom.xml test
+bash scripts/with-java8.sh mvn -q -f benchmark/pom.xml test
 npm --prefix benchmark/frontend run test
 npm --prefix benchmark/frontend run build
 ```

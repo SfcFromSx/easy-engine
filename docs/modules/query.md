@@ -103,7 +103,7 @@ SELECT count(*) FROM nation
 
 ```bash
 cd /Users/sfc/Documents/projects/engine/query
-mvn spring-boot:run -Dspring-boot.run.profiles=dev
+bash /Users/sfc/Documents/projects/engine/scripts/with-java8.sh mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
 `query` now keeps environment-specific runtime settings in
@@ -119,10 +119,14 @@ The default local port split is:
 - `8092`: Kylin JDBC compatibility (`/kylin/api/*`)
 - `8093`: Trino JDBC compatibility (`/v1/statement`)
 
+All Maven-backed startup and validation commands for `query` must run on a full
+Java 8 JDK. Set `JAVA8_HOME` (preferred) or `JAVA_HOME` accordingly, or let
+`scripts/with-java8.sh` auto-detect a Java 8 install on macOS.
+
 ## Verify
 
 ```bash
-mvn -q -pl analyze,query -am test
+bash scripts/with-java8.sh mvn -q -pl analyze,query -am test
 ```
 
 Because `query` now depends on the shared `analyze` module, reactor builds from the repo root are the reliable verification path.

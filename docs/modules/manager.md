@@ -45,7 +45,7 @@
 docker compose up -d mysql redis
 bash scripts/init-db.sh dev manager
 cd /Users/sfc/Documents/projects/engine/manager
-mvn spring-boot:run -Dspring-boot.run.profiles=dev
+bash /Users/sfc/Documents/projects/engine/scripts/with-java8.sh mvn spring-boot:run -Dspring-boot.run.profiles=dev
 cd /Users/sfc/Documents/projects/engine/manager/frontend
 npm run dev -- --host 127.0.0.1 --port 5173
 ```
@@ -55,11 +55,13 @@ the metadata schema first with `bash scripts/init-db.sh <dev|test|pro> manager`.
 Runtime settings now live in `application-dev.yml`, `application-test.yml`, and
 `application-pro.yml`. Those profile YAMLs are now MySQL-first; H2 remains
 limited to test-scoped override resources used by regression coverage.
+All Maven-backed startup and validation commands for `manager` must run on a
+full Java 8 JDK, which `scripts/with-java8.sh` enforces.
 
 ## Verify
 
 ```bash
-mvn -q -pl analyze,manager -am test -Dspring.mvc.pathmatch.matching-strategy=ant_path_matcher
+bash scripts/with-java8.sh mvn -q -pl analyze,manager -am test -Dspring.mvc.pathmatch.matching-strategy=ant_path_matcher
 npm --prefix manager/frontend run test
 npm --prefix manager/frontend run build
 ```
