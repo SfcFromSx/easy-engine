@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| UI-BUNDLE-001 | CLEAN TEMP ARTIFACTS AND REBUILD EMBEDDED FRONTENDS | frontend, docs | Removed the untracked `analyze/target` build-temp directory, restored tracked manager coverage artifacts instead of deleting them, rebuilt both `manager` and `benchmark` frontends, and synced each `dist` into its Java `resources/static` directory so embedded assets now match the latest frontend bundles. |
 | MGR-QA-001 | REVIEW AND VERIFY REDIS CACHE MANAGER | manager | Redis cache management was re-reviewed end to end; manager backend validation is now unblocked and green via the documented `analyze+manager` reactor path; manager frontend tests/build pass; browser QA evidence was captured for desktop and mobile cache flows; and cache list pagination/refresh behavior is now deterministic and stable. |
 | MGR-TEST-002 | ALIGN MANAGER MIGRATION TESTS WITH REDIS-ENABLED ENGINE ROUTING | manager | Manager now keeps the Redis dependency/profile wiring required by the new `ENGINE` routing path, the leftover Flyway/bootstrap tests are cleaned up and aligned with the current seeded datasource count, and the focused validation remains blocked only by the pre-existing `JdbcSqlAdvisorService` constructor issue during Spring context startup. |
 | QUERY-ENGINE-001 | SWITCH ROUTING TO ENGINE AND ADD REDIS REPORT OVERRIDES | query, manager, analyze, benchmark, docs | Routing now resolves datasource selection from parsed `ENGINE` with optional Redis override by `YH_RPTID`, `YH_TARGET_ENGINE` is parsed as legacy metadata only, normalized execution SQL and JDBC rewrite advice emit `/* ENGINE=... */`, benchmark/E2E samples were updated to the new routing hint, and focused `analyze`, `query`, `manager`, and `benchmark` validations all passed. |
@@ -87,6 +88,28 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+### UI-BUNDLE-001: CLEAN TEMP ARTIFACTS AND REBUILD EMBEDDED FRONTENDS
+
+- **Status**: done
+- **Updated**: 2026-04-03
+- **Progress log**:
+  - **2026-04-03 — intake**
+    - Human requested cleanup of deletable temporary directories and a fresh rebuild of all frontend artifacts, with the rebuilt bundles copied into the Java `resources/static` directories.
+    - Investigation confirmed `analyze/target/` is an untracked build-temp directory that can be removed safely, `manager/frontend/coverage/` is tracked generated output that should be restored instead of deleted from the repo, and both `manager` and `benchmark` embed frontend assets from their respective `frontend/dist` directories into `src/main/resources/static/`.
+    - Scope for this task: clean only the safe temporary artifacts, rebuild both frontends, sync each frontend `dist` into its Java static resources, and close the work through the required ledger/archive workflow without touching unrelated local config changes.
+  - **2026-04-03 — implementation**
+    - Files changed: tracked bundle artifacts under `benchmark/frontend/dist/` and `benchmark/src/main/resources/static/`, plus task ledger/archive records.
+    - Commands run: `rm -rf analyze/target`, `git restore manager/frontend/coverage`, `npm --prefix manager/frontend run build`, `npm --prefix benchmark/frontend run build`, `rm -rf manager/src/main/resources/static/* && cp -R manager/frontend/dist/. manager/src/main/resources/static/`, `rm -rf benchmark/src/main/resources/static/* && cp -R benchmark/frontend/dist/. benchmark/src/main/resources/static/`.
+    - Result: Deleted the untracked analyze build-temp directory, restored manager coverage output to the repo version, rebuilt both frontend apps, and replaced each module's embedded Java static assets with the latest dist output.
+  - **2026-04-03 — review**
+    - Self-Review: [x] style check [x] build artifact sync [x] side-effects
+    - Notes: Kept scope limited to temporary-artifact cleanup and bundle refresh. Existing tracked frontend dist/static assets were intentionally updated rather than removed.
+  - **2026-04-03 — verification**
+    - Validation status: approved
+    - Evidence: `npm --prefix manager/frontend run build` passed; `npm --prefix benchmark/frontend run build` passed; `analyze/target/` no longer exists; `manager/src/main/resources/static/` and `benchmark/src/main/resources/static/` now mirror their respective `frontend/dist/` directories.
+    - Next action: none
+    - Escalation: none
+
 ### MGR-QA-001: REVIEW AND VERIFY REDIS CACHE MANAGER
 
 - **Status**: done

@@ -14,6 +14,24 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Do not convert inbox entries directly into implementation tasks without explicit human confirmation.
 - For tooling or infrastructure changes, prefer logging the issue here before changing the harness.
 
+### INBOX-20260403-013
+- Area: Harness audit trail
+- Related task(s): `UI-BUNDLE-001`
+- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-03 to archive the completion of `UI-BUNDLE-001` after cleaning temporary artifacts and refreshing embedded frontend bundles.
+- Evidence: The active ledger row and section for `UI-BUNDLE-001` were removed from `tasks.md`, its full progress log and done signal were archived under `tasks-done.md`, and the archived evidence records both frontend builds plus the static-resource sync into `manager` and `benchmark`.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edits as ad hoc bookkeeping rather than the required closeout workflow for this bundle-refresh task.
+- Suggested next step: Keep the archived task entry and task commit aligned; unrelated local config changes should remain outside this commit.
+- Human decision: pending
+
+### INBOX-20260403-012
+- Area: Harness audit trail
+- Related task(s): `UI-BUNDLE-001`
+- Summary: `tasks.md` was updated on 2026-04-03 to intake a human-requested cleanup and frontend-bundle refresh task for the embedded Java static assets.
+- Evidence: The active ledger now includes `UI-BUNDLE-001` with intake notes limiting scope to temporary-artifact cleanup, rebuilding `manager` and `benchmark` frontends, and syncing their `dist` outputs into Java `resources/static`.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edit as ad hoc bookkeeping instead of the required intake for this bundle-refresh pass.
+- Suggested next step: Keep the task ledger, archive, and eventual task commit aligned while `UI-BUNDLE-001` is implemented and verified.
+- Human decision: pending
+
 ### INBOX-20260403-011
 - Area: Harness audit trail
 - Related task(s): `MGR-QA-001`
