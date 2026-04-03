@@ -7,6 +7,7 @@ import {
   Terminal,
   Server,
   Rocket,
+  Database,
   Zap
 } from 'lucide-vue-next'
 
@@ -18,6 +19,7 @@ export default defineComponent({
     Terminal,
     Server,
     Rocket,
+    Database,
     Zap
   },
   setup() {

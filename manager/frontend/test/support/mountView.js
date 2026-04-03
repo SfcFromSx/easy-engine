@@ -8,7 +8,8 @@ const ROUTES = [
   { path: '/traces', component: { template: '<div />' } },
   { path: '/patterns', component: { template: '<div />' } },
   { path: '/query-datasources', component: { template: '<div />' } },
-  { path: '/acceleration', component: { template: '<div />' } }
+  { path: '/acceleration', component: { template: '<div />' } },
+  { path: '/cache', component: { template: '<div />' } }
 ]
 
 export async function mountView(component, { route = '/', options = {} } = {}) {

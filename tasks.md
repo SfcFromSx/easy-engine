@@ -22,8 +22,18 @@ Completed task history lives in [tasks-done.md](/Users/sfc/Documents/projects/en
 
 | ID | Title | Module | Status | Updated | Dependencies |
 |----|-------|--------|--------|---------|--------------|
+| QUERY-TRINO-003 | ADD TRINO JDBC COMPATIBILITY PORT FOR BENCHMARK | query, benchmark | in_progress | 2026-04-03 | none |
 | CONFIG-REVIEW-001 | AUDIT REPO FOR PROFILE-YAML-ONLY ENV CONFIG COMPLIANCE | platform | todo | 2026-04-02 | none |
 
+
+### QUERY-TRINO-003: ADD TRINO JDBC COMPATIBILITY PORT FOR BENCHMARK
+
+- **Status**: in_progress
+- **Updated**: 2026-04-03
+- **Progress log**:
+  - **2026-04-03 — intake**
+    - Human requested a new Trino JDBC-compatible `query` port in addition to the existing Kylin JDBC surface, with benchmark regression coverage proving `benchmark` can use `io.trino.jdbc.TrinoDriver` against the new port.
+    - Scope for this task: add a default `8093` Trino JDBC compatibility port to `query`, implement the minimum `/v1/statement` behavior needed for benchmark `Statement` and `PreparedStatement` flows, keep the existing Kylin `8092` path unchanged, add focused query and benchmark regressions, update the canonical docs, and close the work through the required ledger/archive workflow.
 
 ### CONFIG-REVIEW-001: AUDIT REPO FOR PROFILE-YAML-ONLY ENV CONFIG COMPLIANCE
 

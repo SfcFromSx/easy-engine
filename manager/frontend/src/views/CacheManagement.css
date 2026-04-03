@@ -1,0 +1,131 @@
+.cache-management {
+  gap: 24px;
+}
+
+.page-header h1 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.cache-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  text-align: center;
+  border: 1px solid rgba(59, 130, 246, 0.14);
+}
+
+.summary-item {
+  padding: 8px 0;
+}
+
+.summary-label {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.summary-value {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.keys-table-card {
+  padding: 20px;
+}
+
+.card-header {
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.cache-key {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  background: #f5f7fa;
+  padding: 2px 6px;
+  border-radius: 3px;
+  word-break: break-all;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cache-mobile-record {
+  margin-top: 16px;
+}
+
+.cache-size-pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--primary-color);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+}
+
+.form-span-2 {
+  grid-column: span 2;
+}
+
+.field-note {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  color: var(--color-subtitle);
+  font-size: 13px;
+}
+
+.dialog-hint {
+  margin: 0;
+  color: var(--color-subtitle);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+@media (max-width: 900px) {
+  .page-header-actions,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header-actions {
+    width: 100%;
+  }
+
+  .page-header-actions :deep(.el-button),
+  .page-header-actions button {
+    width: 100%;
+  }
+
+  .form-span-2 {
+    grid-column: span 1;
+  }
+}

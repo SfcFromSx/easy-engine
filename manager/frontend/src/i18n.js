@@ -17,7 +17,8 @@ const messages = {
       traces: 'SQL Traces',
       patterns: 'SQL Patterns',
       datasources: 'Datasources',
-      acceleration: 'Acceleration'
+      acceleration: 'Acceleration',
+      cache: 'Cache Management'
     },
     common: {
       refresh: 'Refresh',
@@ -36,7 +37,10 @@ const messages = {
       manualOnly: 'Manual Only',
       unnamedDatasource: 'Unnamed datasource',
       noSqlText: 'SQL text unavailable',
-      noData: 'No data'
+      noData: 'No data',
+      delete: 'Delete',
+      confirm: 'Confirm',
+      actions: 'Actions'
     },
     datasources: {
       title: 'Query Datasource Catalog',
@@ -186,6 +190,40 @@ const messages = {
       disabledMsg: 'Acceleration disabled',
       saved: 'Acceleration saved',
       loadFailed: 'Acceleration data failed to load. Please try again later.'
+    },
+    cache: {
+      title: 'Cache Management',
+      subtitle: 'Inspect, create, and correct query-result cache entries stored under the managed Redis keyspace.',
+      totalSize: 'Total Cache Size',
+      keyCount: 'Cache Keys',
+      keysList: 'Cache Keys List',
+      add: 'Add Cache Key',
+      createTitle: 'Create Cache Key',
+      editTitle: 'Edit Cache Key',
+      key: 'Cache Key',
+      size: 'Size',
+      ttl: 'TTL',
+      value: 'Cache Value',
+      noExpiry: 'No Expiry',
+      edit: 'Edit',
+      keyPlaceholder: 'kylin_cache:datasource:custom-key',
+      valuePlaceholder: '{\n  "columnMetas": [],\n  "results": []\n}',
+      valueHint: 'The manager UI validates JSON syntax before saving, but the backend stores the payload as-is for query cache troubleshooting.',
+      keyRequired: 'Please enter a cache key.',
+      valueRequired: 'Please enter a cache value.',
+      invalidKey: 'Cache key must start with kylin_cache: and must not contain / or whitespace.',
+      invalidJson: 'Cache value must be valid JSON.',
+      invalidTtl: 'TTL must be greater than 0 seconds.',
+      deleteTitle: 'Delete Cache Key',
+      deleteConfirm: 'Are you sure you want to delete cache key: {key}?',
+      createSuccess: 'Cache key created successfully',
+      updateSuccess: 'Cache key updated successfully',
+      deleteSuccess: 'Cache key deleted successfully',
+      saveError: 'Failed to save cache key',
+      loadDetailError: 'Failed to load cache key detail',
+      deleteError: 'Failed to delete cache key',
+      loadInfoError: 'Failed to load cache info',
+      loadKeysError: 'Failed to load cache keys'
     }
   },
   zh: {
@@ -202,7 +240,8 @@ const messages = {
       traces: 'SQL 追踪',
       patterns: 'SQL 模式',
       datasources: '数据源',
-      acceleration: '加速实体'
+      acceleration: '加速实体',
+      cache: '缓存管理'
     },
     common: {
       refresh: '刷新',
@@ -221,7 +260,10 @@ const messages = {
       manualOnly: '仅手动',
       unnamedDatasource: '未命名数据源',
       noSqlText: '未记录 SQL 文本',
-      noData: '暂无数据'
+      noData: '暂无数据',
+      delete: '删除',
+      confirm: '确认',
+      actions: '操作'
     },
     datasources: {
       title: 'Query 数据源目录',
@@ -371,6 +413,40 @@ const messages = {
       disabledMsg: '已停用',
       saved: '已保存',
       loadFailed: '加速实体加载失败，请稍后重试。'
+    },
+    cache: {
+      title: '缓存管理',
+      subtitle: '查看、创建并修正托管 Redis 键空间中的查询结果缓存条目。',
+      totalSize: '缓存总大小',
+      keyCount: '缓存键数量',
+      keysList: '缓存键列表',
+      add: '新增缓存键',
+      createTitle: '创建缓存键',
+      editTitle: '编辑缓存键',
+      key: '缓存键',
+      size: '大小',
+      ttl: '过期时间',
+      value: '缓存值',
+      noExpiry: '永不过期',
+      edit: '编辑',
+      keyPlaceholder: 'kylin_cache:datasource:custom-key',
+      valuePlaceholder: '{\n  "columnMetas": [],\n  "results": []\n}',
+      valueHint: '管理台会在保存前校验 JSON 语法，但后端仍会按原始字符串写入 Redis，便于排查 query 缓存问题。',
+      keyRequired: '请填写缓存键。',
+      valueRequired: '请填写缓存值。',
+      invalidKey: '缓存键必须以 kylin_cache: 开头，且不能包含 / 或空白字符。',
+      invalidJson: '缓存值必须是合法 JSON。',
+      invalidTtl: 'TTL 必须大于 0 秒。',
+      deleteTitle: '删除缓存键',
+      deleteConfirm: '确定要删除缓存键：{key}？',
+      createSuccess: '缓存键创建成功',
+      updateSuccess: '缓存键更新成功',
+      deleteSuccess: '缓存键删除成功',
+      saveError: '缓存键保存失败',
+      loadDetailError: '加载缓存键详情失败',
+      deleteError: '缓存键删除失败',
+      loadInfoError: '加载缓存信息失败',
+      loadKeysError: '加载缓存键列表失败'
     }
   }
 }

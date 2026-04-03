@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| MGR-CACHE-001 | ADD REDIS CACHE MANAGER CREATE AND EDIT SUPPORT | manager | Manager cache management now supports `kylin_cache:` summary/list/detail/create/update/delete from the existing `/cache` page and `/api/v1/cache/keys*` APIs; focused backend controller tests plus frontend tests/build pass; the stock `mvn -q -f manager/pom.xml test` command remains blocked by the unrelated current-workspace `JdbcSqlAdvisorService` constructor issue. |
 | BENCH-BUG-002 | RECOVER RUNNING BENCHMARK RUNS LEFT BY SERVICE RESTARTS | benchmark | Benchmark now immediately fails any `RUNNING` rows left behind by a benchmark-service restart instead of waiting for the 15-minute stale timeout, local Kylin readiness was restored on port `17070`, run `#8` was auto-recovered to `FAILED` during benchmark restart, and `mvn -q -f benchmark/pom.xml test` plus `npm --prefix benchmark/frontend run build` passed. |
 | BENCH-BUG-001 | REMOVE SYNTHETIC ACCESSOR DEPENDENCY FROM BENCHMARK RUN DISPATCH | benchmark | Benchmark run dispatch now uses an explicit static after-commit synchronization helper instead of an anonymous inner callback, so the compiled backend no longer depends on `BenchmarkExecutionService.access$000(...)`; `mvn -q -f benchmark/pom.xml clean test` and `npm --prefix benchmark/frontend run build` both pass, and `javap` confirms the synthetic bridge method is gone. |
 | MIGRATION-001 | UPGRADE TEXT COLUMNS TO MEDIUMTEXT FOR LONG SQL SUPPORT | platform | Upgraded 10 JPA domain classes across `benchmark`, `query`, and `manager` to `MEDIUMTEXT` (16MB). Added Flyway migrations `benchmark/V18` and `manager/V11`. Verified compilation of all affected modules. |
@@ -82,6 +83,31 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+### MGR-CACHE-001: ADD REDIS CACHE MANAGER CREATE AND EDIT SUPPORT
+
+- **Status**: done
+- **Updated**: 2026-04-03
+- **Progress log**:
+  - **2026-04-03 — intake**
+    - Human requested confirmation of whether the current manager Redis cache page supports modification and, if not, implementation of the missing create/update APIs plus UI.
+    - Investigation confirmed the current manager cache surface only supports cache summary, paged key listing, and delete through `CacheManagementController` plus `/cache`; there is no single-key detail read, no create endpoint, no update endpoint, and no frontend create/edit flow.
+    - Scope for this task: keep the work inside the existing manager `/cache` page, add cache detail/create/update APIs for `kylin_cache:` keys only, support editing cache value plus TTL without key renaming, add focused backend/frontend regression coverage, and update manager/API docs.
+  - **2026-04-03 — implementation**
+    - Files changed: `manager/src/main/java/com/smartbi/engine/web/CacheManagementController.java`, new cache DTOs under `manager/src/main/java/com/smartbi/engine/web/dto/`, `manager/src/test/java/com/smartbi/engine/web/CacheManagementControllerTest.java`, manager frontend cache files under `manager/frontend/src/views/`, `manager/frontend/src/api/endpoints.js`, `manager/frontend/src/i18n.js`, `manager/frontend/test/cache-management.spec.js`, `docs/modules/manager.md`, and `docs/architecture/http-interfaces.md`.
+    - Commands run: `rg`, `sed`, `mvn -q -f manager/pom.xml -Dtest=CacheManagementControllerTest,DatasourceConfigControllerTest,ManagerControllerWebTest,RestExceptionHandlerWebTest test`, `npm --prefix manager/frontend run test -- cache-management.spec.js`, `npm --prefix manager/frontend run test`, `npm --prefix manager/frontend run build`.
+    - Result: Added cache detail/create/update APIs with key/TTL/value validation, kept delete scoped to `kylin_cache:` keys, expanded the `/cache` page with create/edit dialogs plus mobile-safe record actions, added focused backend/frontend regressions, and refreshed the embedded/static frontend bundle references.
+  - **2026-04-03 — review**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Notes: Kept the manager cache surface intentionally scoped to the managed query-cache namespace, stored cache payloads as raw strings on the backend, and prevented existing-key renames so the UI cannot silently break query-generated cache identifiers.
+  - **2026-04-03 — verification**
+    - Validation status: approved with known unrelated manager-suite blocker
+    - Evidence: Focused backend controller/web tests passed with `mvn -q -f manager/pom.xml -Dtest=CacheManagementControllerTest,DatasourceConfigControllerTest,ManagerControllerWebTest,RestExceptionHandlerWebTest test`; frontend cache regression passed with `npm --prefix manager/frontend run test -- cache-management.spec.js`; full manager frontend regression and build passed with `npm --prefix manager/frontend run test` and `npm --prefix manager/frontend run build`.
+    - Evidence: The stock `mvn -q -f manager/pom.xml test` command still fails before exercising this cache work because the current workspace has an unrelated `JdbcSqlAdvisorService` bean-instantiation problem (`NoSuchMethodException` for the default constructor) that breaks 17 Spring Boot context tests.
+    - Next action: none
+    - Escalation: none
+  - **2026-04-03 — doc-garden**
+    - Updated `docs/modules/manager.md` and `docs/architecture/http-interfaces.md` so the manager operator notes and HTTP surface now document cache summary/list/detail/create/update/delete behavior and the no-rename cache-edit constraint.
+
 ### BENCH-BUG-002: RECOVER RUNNING BENCHMARK RUNS LEFT BY SERVICE RESTARTS
 
 - **Status**: done

@@ -14,6 +14,33 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Do not convert inbox entries directly into implementation tasks without explicit human confirmation.
 - For tooling or infrastructure changes, prefer logging the issue here before changing the harness.
 
+### INBOX-20260403-005
+- Area: Harness audit trail
+- Related task(s): `MGR-CACHE-001`
+- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-03 to archive the completion of `MGR-CACHE-001` after finishing the manager Redis cache CRUD work.
+- Evidence: The active ledger row and section for `MGR-CACHE-001` were removed from `tasks.md`, the full progress log and done signal were archived under `tasks-done.md`, and the archived evidence records both the focused cache regressions and the unrelated stock-manager-suite `JdbcSqlAdvisorService` blocker note.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edits as ad hoc bookkeeping rather than the required task closeout workflow.
+- Suggested next step: Keep the archived task entry and its task commit aligned, and leave the unrelated manager-suite constructor issue outside this cache task's staged scope.
+- Human decision: pending
+
+### INBOX-20260403-003
+- Area: Harness audit trail
+- Related task(s): `QUERY-TRINO-003`
+- Summary: `tasks.md` was updated on 2026-04-03 to intake a human-requested Trino JDBC compatibility task covering a new `query` port plus benchmark regression coverage.
+- Evidence: The active ledger now includes `QUERY-TRINO-003` with intake notes describing the new `8093` Trino JDBC surface, the minimum `/v1/statement` compatibility scope, and the required benchmark verification.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edit as ad hoc bookkeeping instead of the required task intake for this cross-module implementation.
+- Suggested next step: Keep the task ledger, archive, and eventual task commit aligned while `QUERY-TRINO-003` is implemented and verified.
+- Human decision: pending
+
+### INBOX-20260403-004
+- Area: Harness audit trail
+- Related task(s): `MGR-CACHE-001`
+- Summary: `tasks.md` was updated on 2026-04-03 to intake a human-requested manager Redis cache CRUD task covering the missing cache detail, create, and update flows.
+- Evidence: The active ledger now includes `MGR-CACHE-001` with intake notes describing the current delete-only manager cache surface and the planned `/cache` page plus `/api/v1/cache/keys*` expansion.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edit as ad hoc bookkeeping instead of the required task intake for this manager implementation.
+- Suggested next step: Keep the task ledger, archive, and eventual task commit aligned while `MGR-CACHE-001` is implemented and verified.
+- Human decision: pending
+
 ### INBOX-20260403-001
 - Area: Harness audit trail
 - Related task(s): `BENCH-BUG-002`

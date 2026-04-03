@@ -1,0 +1,151 @@
+<section class="page-shell cache-management">
+  <div class="page-header">
+    <div class="title-group">
+      <h1>
+        <Database :size="28" />
+        {{ t('cache.title') }}
+      </h1>
+      <p class="subtitle">{{ t('cache.subtitle') }}</p>
+    </div>
+    <div class="page-header-actions">
+      <el-button @click="refresh" :loading="infoLoading || keysLoading" :icon="RefreshCw">
+        {{ t('common.refresh') }}
+      </el-button>
+      <el-button type="primary" @click="openCreate" :icon="Plus">
+        {{ t('cache.add') }}
+      </el-button>
+    </div>
+  </div>
+
+  <div class="cache-summary">
+    <div class="glass-card summary-card">
+      <div class="summary-item">
+        <div class="summary-label">{{ t('cache.totalSize') }}</div>
+        <div class="summary-value">{{ totalSizeMB }} MB</div>
+      </div>
+    </div>
+    <div class="glass-card summary-card">
+      <div class="summary-item">
+        <div class="summary-label">{{ t('cache.keyCount') }}</div>
+        <div class="summary-value">{{ cacheInfo.keyCount }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="glass-card table-card keys-table-card">
+    <div class="card-header">
+      <span>{{ t('cache.keysList') }}</span>
+    </div>
+    <el-table
+      :data="cacheKeys"
+      v-loading="keysLoading"
+      stripe
+      style="width: 100%"
+    >
+      <el-table-column prop="key" :label="t('cache.key')" min-width="300">
+        <template #default="{ row }">
+          <code class="cache-key">{{ row.key }}</code>
+        </template>
+      </el-table-column>
+      <el-table-column prop="sizeBytes" :label="t('cache.size')" width="120">
+        <template #default="{ row }">
+          {{ formatBytes(row.sizeBytes) }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="ttlSeconds" :label="t('cache.ttl')" width="100">
+        <template #default="{ row }">
+          {{ formatTTL(row.ttlSeconds) }}
+        </template>
+      </el-table-column>
+      <el-table-column :label="t('common.actions')" width="160" fixed="right">
+        <template #default="{ row }">
+          <div class="row-actions">
+            <el-button size="small" link :icon="Pencil" @click="openEdit(row)">
+              {{ t('cache.edit') }}
+            </el-button>
+            <el-button
+              type="danger"
+              size="small"
+              link
+              :icon="Trash2"
+              @click="deleteKey(row.key)"
+            >
+              {{ t('common.delete') }}
+            </el-button>
+          </div>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <div v-if="!keysLoading && cacheKeys.length" class="mobile-records">
+      <article v-for="row in cacheKeys" :key="row.key" class="glass-card mobile-record cache-mobile-record">
+        <div class="mobile-record-header">
+          <div>
+            <div class="mobile-record-title">{{ row.key }}</div>
+            <div class="mobile-record-subtitle">{{ formatTTL(row.ttlSeconds) }}</div>
+          </div>
+          <span class="cache-size-pill">{{ formatBytes(row.sizeBytes) }}</span>
+        </div>
+
+        <div class="mobile-record-grid">
+          <div class="mobile-record-field">
+            <span class="mobile-record-label">{{ t('cache.key') }}</span>
+            <code class="mini-code">{{ row.key }}</code>
+          </div>
+          <div class="mobile-record-field">
+            <span class="mobile-record-label">{{ t('cache.ttl') }}</span>
+            <div class="mobile-record-value">{{ formatTTL(row.ttlSeconds) }}</div>
+          </div>
+        </div>
+
+        <div class="mobile-record-actions">
+          <el-button size="small" link @click="openEdit(row)">{{ t('cache.edit') }}</el-button>
+          <el-button size="small" link type="danger" @click="deleteKey(row.key)">{{ t('common.delete') }}</el-button>
+        </div>
+      </article>
+    </div>
+
+    <div class="pagination-container">
+      <el-pagination
+        v-model:current-page="currentPage"
+        :page-size="pageSize"
+        :total="cacheInfo.keyCount"
+        layout="total, prev, pager, next"
+        @current-change="handlePageChange"
+      />
+    </div>
+  </div>
+
+  <el-dialog v-model="dialogVisible" :title="dialogTitle" width="720px">
+    <el-form :model="form" label-position="top" v-loading="detailLoading">
+      <div class="form-grid">
+        <el-form-item :label="t('cache.key')" class="form-span-2">
+          <el-input v-model="form.key" :disabled="dialogMode === 'edit'" :placeholder="t('cache.keyPlaceholder')" />
+        </el-form-item>
+        <el-form-item :label="t('cache.ttl')">
+          <el-input-number v-model="form.ttlSeconds" :min="1" :step="60" />
+        </el-form-item>
+        <el-form-item :label="t('cache.size')">
+          <div class="field-note">
+            {{ estimateValueSize(form.value) }}
+          </div>
+        </el-form-item>
+        <el-form-item :label="t('cache.value')" class="form-span-2">
+          <el-input
+            v-model="form.value"
+            type="textarea"
+            :rows="12"
+            :placeholder="valuePlaceholder"
+          />
+        </el-form-item>
+      </div>
+      <p class="dialog-hint">{{ t('cache.valueHint') }}</p>
+    </el-form>
+    <template #footer>
+      <el-button @click="dialogVisible = false">{{ t('common.cancel') }}</el-button>
+      <el-button type="primary" :loading="submitting" @click="save">
+        {{ dialogMode === 'create' ? t('common.create') : t('common.save') }}
+      </el-button>
+    </template>
+  </el-dialog>
+</section>
