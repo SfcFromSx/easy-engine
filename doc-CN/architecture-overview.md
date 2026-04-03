@@ -27,9 +27,9 @@ manager <-- 读取 MySQL，并管理数据源配置
 ## 数据流
 
 1. `benchmark`（或任意 JDBC 客户端）通过 `jdbc:kylin://query-host:8092/<project>` 连接。
-2. `query` 解析注释和保留元数据，例如 `YH_TARGET_ENGINE`。
+2. `query` 解析注释和保留元数据，例如 `ENGINE`。
 3. `query` 从 `manager` 拉取缓存的路由上下文（`GET /api/v1/query-routing-context`），其中包含数据源定义和已启用的加速规则。
-4. `query` 只使用 `YH_TARGET_ENGINE` 作为路由 hint；如果 SQL 中没有该元数据，则回退到默认数据源，并把最终执行 SQL 规范化为带有前置 `YH_TARGET_ENGINE` 注释的形式。
+4. `query` 会先按 `YH_RPTID` 查 Redis 覆盖 `ENGINE`，否则直接使用 `ENGINE`；如果仍然没有可用路由值，则回退到默认数据源，并把最终执行 SQL 规范化为带有前置 `ENGINE` 注释的形式。
 5. `query` 要么从 Redis 返回缓存命中，要么对选定数据源执行 SQL。
 6. `query` 将 `SqlExecutionRecord` 直接写入 MySQL，其中包含 `executionMode`；对失败的预编译执行，还会写入可读的 `parameterPayload`。
 7. `manager` 从 MySQL 读取 `SqlExecutionRecord`，通过 `/api/v1/traces` 暴露轨迹记录，并通过共享的 `analyze` 模块完成 SQL 解析与模式统计更新。

@@ -26,10 +26,14 @@ public class SqlRoutingAnalyzer {
     }
 
     public RoutingDecision analyze(String originalSql, ParsedSql parsed, RoutingContext context) {
-        String defaultName = context == null ? null : context.getDefaultDatasourceName();
         String requestedTarget = parsed == null || parsed.metadata == null
                 ? null
-                : parsed.metadata.extraMetadata.get("YH_TARGET_ENGINE");
+                : parsed.metadata.engine;
+        return analyze(originalSql, parsed, context, requestedTarget);
+    }
+
+    public RoutingDecision analyze(String originalSql, ParsedSql parsed, RoutingContext context, String requestedTarget) {
+        String defaultName = context == null ? null : context.getDefaultDatasourceName();
         String targetName = hasText(requestedTarget) ? requestedTarget.trim() : defaultName;
         DatasourceDescriptor descriptor = context == null ? null : context.findDatasource(targetName);
         if (descriptor == null && context != null) {
@@ -50,7 +54,8 @@ public class SqlRoutingAnalyzer {
         String cacheTable = matchedRule == null ? null : matchedRule.getQualifiedTableName();
 
         String baseExecutionSql = parsed == null || !hasText(parsed.executionSql) ? originalSql : parsed.executionSql;
-        String normalizedExecutionSql = SqlCommentParser.removeMetadataKey(baseExecutionSql, "YH_TARGET_ENGINE");
+        String normalizedExecutionSql = SqlCommentParser.removeMetadataKey(baseExecutionSql, "ENGINE");
+        normalizedExecutionSql = SqlCommentParser.removeMetadataKey(normalizedExecutionSql, "YH_TARGET_ENGINE");
         String rewrittenSql = buildLeadingComment(resolvedDatasourceName, cacheTable) + "\n"
                 + (normalizedExecutionSql == null ? "" : normalizedExecutionSql.trim());
 
@@ -86,7 +91,7 @@ public class SqlRoutingAnalyzer {
     }
 
     private static String buildLeadingComment(String datasourceName, String cacheTable) {
-        StringBuilder builder = new StringBuilder("/* YH_TARGET_ENGINE=").append(datasourceName);
+        StringBuilder builder = new StringBuilder("/* ENGINE=").append(datasourceName);
         if (hasText(cacheTable)) {
             builder.append(" cache-table=").append(cacheTable);
         }

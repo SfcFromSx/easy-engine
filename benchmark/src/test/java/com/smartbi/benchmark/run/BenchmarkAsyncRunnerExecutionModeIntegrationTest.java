@@ -228,7 +228,7 @@ class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
         routedStatement.setTestSetId(testSet.getId());
         routedStatement.setSortOrder(1);
         routedStatement.setLabel("presto_stmt_fail");
-        routedStatement.setSqlText("/* YH_TARGET_ENGINE=presto_local */ SELECT NAME FROM MISSING_PRESTO");
+        routedStatement.setSqlText("/* ENGINE=presto_local */ SELECT NAME FROM MISSING_PRESTO");
         routedStatement.setExecutionMode("STATEMENT");
         testSetItemRepository.save(routedStatement);
 

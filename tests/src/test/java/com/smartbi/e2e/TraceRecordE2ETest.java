@@ -20,7 +20,7 @@ public class TraceRecordE2ETest extends E2ETestBase {
     private static final String UNIQUE_SQL =
             "SELECT 42 AS trace_probe_" + System.currentTimeMillis();
     private static final String PRESTO_SQL =
-            "/* YH_TARGET_ENGINE=presto_local */ SELECT 1 AS presto_trace_probe";
+            "/* ENGINE=presto_local */ SELECT 1 AS presto_trace_probe";
 
     @Test
     @Order(1)

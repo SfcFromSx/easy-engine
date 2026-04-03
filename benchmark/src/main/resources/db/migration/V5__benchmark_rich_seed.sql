@@ -34,12 +34,12 @@ INSERT INTO benchmark_sql_template (name, sql_text, weight, description) VALUES
 ('nocache_rowcount', '/* no-cache */ SELECT count(*) FROM KYLIN_SALES', 3, '驱动：跳过缓存的行数'),
 ('force_refresh_rowcount', '/* force-refresh */ SELECT count(*) FROM KYLIN_SALES', 2, '驱动：强制刷新语义'),
 ('cache_refresh_rowcount', '/* cache-refresh */ SELECT count(*) FROM KYLIN_SALES', 2, '驱动：cache-refresh 注释'),
-('hint_default_count', '/* engine=default */ SELECT count(*) FROM KYLIN_SALES', 3, '路由：显式 default'),
-('presto_nation_count', '/* YH_TARGET_ENGINE=presto_local */ SELECT count(*) FROM nation', 4, 'Presto tpch.tiny：nation 行数'),
-('presto_orders_count', '/* YH_TARGET_ENGINE=presto_local */ SELECT count(*) FROM orders', 4, 'Presto tpch.tiny：orders 行数'),
-('presto_lineitem_sum', '/* YH_TARGET_ENGINE=presto_local */ SELECT sum(quantity) AS q FROM lineitem', 3, 'Presto tpch.tiny：lineitem 聚合'),
-('presto_customer_region', '/* YH_TARGET_ENGINE=presto_local */ SELECT regionkey, count(*) AS c FROM customer GROUP BY regionkey', 3, 'Presto：customer 按地区'),
-('presto_part_types', '/* YH_TARGET_ENGINE=presto_local */ SELECT type, count(*) AS c FROM part GROUP BY type ORDER BY c DESC LIMIT 5', 2, 'Presto：part 类型分布');
+('hint_default_count', '/* ENGINE=default */ SELECT count(*) FROM KYLIN_SALES', 3, '路由：显式 default'),
+('presto_nation_count', '/* ENGINE=presto_local */ SELECT count(*) FROM nation', 4, 'Presto tpch.tiny：nation 行数'),
+('presto_orders_count', '/* ENGINE=presto_local */ SELECT count(*) FROM orders', 4, 'Presto tpch.tiny：orders 行数'),
+('presto_lineitem_sum', '/* ENGINE=presto_local */ SELECT sum(quantity) AS q FROM lineitem', 3, 'Presto tpch.tiny：lineitem 聚合'),
+('presto_customer_region', '/* ENGINE=presto_local */ SELECT regionkey, count(*) AS c FROM customer GROUP BY regionkey', 3, 'Presto：customer 按地区'),
+('presto_part_types', '/* ENGINE=presto_local */ SELECT type, count(*) AS c FROM part GROUP BY type ORDER BY c DESC LIMIT 5', 2, 'Presto：part 类型分布');
 
 -- ---------------------------------------------------------------------------
 -- 3) 预置测试集 learn_kylin_regression（绑定任务走「测试集」路径）
@@ -87,23 +87,23 @@ SELECT t.id, 8, 'force_refresh', '/* force-refresh */ SELECT count(*) FROM KYLIN
 FROM benchmark_test_set t WHERE t.name = 'learn_kylin_regression';
 
 INSERT INTO benchmark_test_set_item (test_set_id, sort_order, label, sql_text, weight)
-SELECT t.id, 9, 'hint_default', '/* engine=default */ SELECT sum(price) FROM KYLIN_SALES', 3
+SELECT t.id, 9, 'hint_default', '/* ENGINE=default */ SELECT sum(price) FROM KYLIN_SALES', 3
 FROM benchmark_test_set t WHERE t.name = 'learn_kylin_regression';
 
 INSERT INTO benchmark_test_set_item (test_set_id, sort_order, label, sql_text, weight)
-SELECT t.id, 10, 'presto_nation', '/* YH_TARGET_ENGINE=presto_local */ SELECT count(*) FROM nation', 4
+SELECT t.id, 10, 'presto_nation', '/* ENGINE=presto_local */ SELECT count(*) FROM nation', 4
 FROM benchmark_test_set t WHERE t.name = 'learn_kylin_regression';
 
 INSERT INTO benchmark_test_set_item (test_set_id, sort_order, label, sql_text, weight)
-SELECT t.id, 11, 'presto_orders', '/* YH_TARGET_ENGINE=presto_local */ SELECT count(*) FROM orders', 4
+SELECT t.id, 11, 'presto_orders', '/* ENGINE=presto_local */ SELECT count(*) FROM orders', 4
 FROM benchmark_test_set t WHERE t.name = 'learn_kylin_regression';
 
 INSERT INTO benchmark_test_set_item (test_set_id, sort_order, label, sql_text, weight)
-SELECT t.id, 12, 'presto_lineitem', '/* YH_TARGET_ENGINE=presto_local */ SELECT sum(extendedprice) FROM lineitem', 3
+SELECT t.id, 12, 'presto_lineitem', '/* ENGINE=presto_local */ SELECT sum(extendedprice) FROM lineitem', 3
 FROM benchmark_test_set t WHERE t.name = 'learn_kylin_regression';
 
 INSERT INTO benchmark_test_set_item (test_set_id, sort_order, label, sql_text, weight)
-SELECT t.id, 13, 'presto_region', '/* YH_TARGET_ENGINE=presto_local */ SELECT r.name, count(*) c FROM nation n JOIN region r ON n.regionkey = r.regionkey GROUP BY r.name', 2
+SELECT t.id, 13, 'presto_region', '/* ENGINE=presto_local */ SELECT r.name, count(*) c FROM nation n JOIN region r ON n.regionkey = r.regionkey GROUP BY r.name', 2
 FROM benchmark_test_set t WHERE t.name = 'learn_kylin_regression';
 
 INSERT INTO benchmark_test_set_item (test_set_id, sort_order, label, sql_text, weight)

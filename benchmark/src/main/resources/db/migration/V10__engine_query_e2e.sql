@@ -25,11 +25,11 @@ SET jdbc_url = regexp_replace(
 WHERE driver_class = 'com.kylin.CachedKylinDriver';
 
 UPDATE benchmark_sql_template
-SET sql_text = replace(sql_text, '-- engine=presto_local', '/* YH_TARGET_ENGINE=presto_local */')
+SET sql_text = replace(sql_text, '-- engine=presto_local', '/* ENGINE=presto_local */')
 WHERE name IN ('presto_nation_count', 'presto_orders_count', 'presto_lineitem_sum', 'presto_customer_region', 'presto_part_types');
 
 UPDATE benchmark_test_set_item
-SET sql_text = replace(sql_text, '-- engine=presto_local', '/* YH_TARGET_ENGINE=presto_local */')
+SET sql_text = replace(sql_text, '-- engine=presto_local', '/* ENGINE=presto_local */')
 WHERE label IN ('presto_nation', 'presto_orders', 'presto_lineitem', 'presto_region');
 
 INSERT INTO benchmark_sql_template (name, sql_text, weight, description, execution_mode, param_json)
@@ -43,7 +43,7 @@ WHERE NOT EXISTS (SELECT 1 FROM benchmark_sql_template WHERE name = 'kylin_prepa
 
 INSERT INTO benchmark_sql_template (name, sql_text, weight, description, execution_mode, param_json)
 SELECT 'presto_prepared_nation_count',
-       '/* YH_TARGET_ENGINE=presto_local */ SELECT count(*) AS c FROM nation WHERE nationkey = ?',
+       '/* ENGINE=presto_local */ SELECT count(*) AS c FROM nation WHERE nationkey = ?',
        3,
        'Presto：PreparedStatement 参数过滤',
        'PREPARED_STATEMENT',
@@ -65,7 +65,7 @@ WHERE t.name = 'learn_kylin_regression'
 
 INSERT INTO benchmark_test_set_item (test_set_id, sort_order, label, sql_text, weight, execution_mode, param_json)
 SELECT t.id, 17, 'presto_prepared_nation_count',
-       '/* YH_TARGET_ENGINE=presto_local */ SELECT count(*) AS c FROM nation WHERE nationkey = ?',
+       '/* ENGINE=presto_local */ SELECT count(*) AS c FROM nation WHERE nationkey = ?',
        3,
        'PREPARED_STATEMENT',
        '[{"type":"INTEGER","value":1}]'

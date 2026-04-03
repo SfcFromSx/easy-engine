@@ -21,7 +21,7 @@ public class QueryHttpE2ETest extends E2ETestBase {
     private static final String INVALID_SQL = "NOT A VALID SQL !!!";
     private static final String DML_SQL     = "INSERT INTO foo VALUES (1)";
     private static final String PRESTO_SQL  =
-            "/* YH_TARGET_ENGINE=presto_local */ SELECT count(*) AS cnt FROM tpch.tiny.nation";
+            "/* ENGINE=presto_local */ SELECT count(*) AS cnt FROM tpch.tiny.nation";
 
     @Test
     @org.junit.jupiter.api.Order(1)
@@ -108,7 +108,7 @@ public class QueryHttpE2ETest extends E2ETestBase {
 
     @Test
     @org.junit.jupiter.api.Order(7)
-    @DisplayName("YH_TARGET_ENGINE hint routes to Presto and returns results")
+    @DisplayName("ENGINE hint routes to Presto and returns results")
     void testRoutingViaYhTargetEngine() {
         Response r = querySpec()
                 .body(statementRequest(PRESTO_SQL))

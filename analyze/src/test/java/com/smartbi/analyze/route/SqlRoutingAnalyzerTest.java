@@ -15,7 +15,7 @@ class SqlRoutingAnalyzerTest {
     private final SqlRoutingAnalyzer analyzer = new SqlRoutingAnalyzer();
 
     @Test
-    void usesYhTargetEngineAsTheOnlyRoutingSignal() {
+    void usesEngineAsTheOnlyRoutingSignal() {
         RoutingContext context = new RoutingContext(
                 "default",
                 Arrays.asList(
@@ -24,16 +24,18 @@ class SqlRoutingAnalyzerTest {
                 ),
                 Collections.<AccelerationRule>emptyList()
         );
-        ParsedSql parsed = SqlCommentParser.parse("/* YH_TARGET_ENGINE=presto_local */ -- engine=default\nSELECT * FROM sales");
+        ParsedSql parsed = SqlCommentParser.parse(
+                "/* ENGINE=presto_local YH_RPTSEARCHMODE=dashboard */\n/* YH_TARGET_ENGINE=default */\nSELECT * FROM sales");
 
         RoutingDecision decision = analyzer.analyze("SELECT * FROM sales", parsed, context);
 
         assertEquals("presto_local", decision.getDatasourceName());
-        assertEquals("/* YH_TARGET_ENGINE=presto_local */\nSELECT * FROM sales", decision.getExecutionSql());
+        assertEquals("/* ENGINE=presto_local */\n/* YH_RPTSEARCHMODE=dashboard */\nSELECT * FROM sales",
+                decision.getExecutionSql());
     }
 
     @Test
-    void injectsDefaultYhTargetEngineWhenQueryHasNoRouteHint() {
+    void injectsDefaultEngineWhenQueryHasNoRouteHint() {
         RoutingContext context = new RoutingContext(
                 "default",
                 Collections.singletonList(new DatasourceDescriptor("default", "h2", true)),
@@ -43,7 +45,7 @@ class SqlRoutingAnalyzerTest {
         RoutingDecision decision = analyzer.analyze("SELECT * FROM sales", SqlCommentParser.parse("SELECT * FROM sales"), context);
 
         assertEquals("default", decision.getDatasourceName());
-        assertEquals("/* YH_TARGET_ENGINE=default */\nSELECT * FROM sales", decision.getExecutionSql());
+        assertEquals("/* ENGINE=default */\nSELECT * FROM sales", decision.getExecutionSql());
     }
 
     @Test

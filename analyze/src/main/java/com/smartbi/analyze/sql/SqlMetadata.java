@@ -16,6 +16,7 @@ public class SqlMetadata implements Serializable {
     public final String cacheKey;
     public final boolean cacheRefresh;
     public final String cacheTable;
+    public final String engine;
 
     public final String queryId;
     public final String rptId;
@@ -39,6 +40,7 @@ public class SqlMetadata implements Serializable {
         this.cacheKey = builder.cacheKey;
         this.cacheRefresh = builder.cacheRefresh;
         this.cacheTable = builder.cacheTable;
+        this.engine = builder.engine;
         this.queryId = builder.queryId;
         this.rptId = builder.rptId;
         this.rptInstId = builder.rptInstId;
@@ -61,6 +63,7 @@ public class SqlMetadata implements Serializable {
         public String cacheKey;
         public boolean cacheRefresh;
         public String cacheTable;
+        public String engine;
 
         public String queryId;
         public String rptId;

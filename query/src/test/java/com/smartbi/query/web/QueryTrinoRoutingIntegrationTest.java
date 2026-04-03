@@ -33,7 +33,7 @@ class QueryTrinoRoutingIntegrationTest {
     private static final String BASIC_PREFIX = "Basic ";
     private static final String AUTH_SEPARATOR = ":";
     private static final String ROUTED_QUERY_BODY =
-            "{\"sql\":\"/* YH_TARGET_ENGINE=trino_local */ SELECT NAME FROM REGION WHERE REGIONKEY = 1\",\"project\":\"demo\"}";
+            "{\"sql\":\"/* ENGINE=trino_local */ SELECT NAME FROM REGION WHERE REGIONKEY = 1\",\"project\":\"demo\"}";
     private static final String REGION_DROP_SQL = "DROP TABLE IF EXISTS REGION";
     private static final String REGION_CREATE_SQL =
             "CREATE TABLE REGION (REGIONKEY INT PRIMARY KEY, NAME VARCHAR(32))";

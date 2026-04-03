@@ -71,7 +71,7 @@ npm --prefix benchmark/frontend run dev
 - 每个后端模块现在都维护 `application-dev.yml`、`application-test.yml`、`application-pro.yml` 三套配置。本地启动统一用 `dev`，自动化测试统一用 `test`，测试环境容器应设置 `SPRING_PROFILES_ACTIVE=test`，生产环境设置 `SPRING_PROFILES_ACTIVE=pro`。
 - 默认本地元数据库仍是 MySQL `localhost:3307`，但这些默认值现在只保存在 `dev` profile 中，不再散落在 Java、脚本或 Maven 默认参数里。
 - `manager` 和 `benchmark` 现在默认要求元数据库已提前初始化；如果跳过 `bash scripts/init-db.sh`，服务会因为缺少表而快速失败，而不是在启动阶段直接修改数据库。
-- SQL 中的保留元数据注释（例如 `YH_TARGET_ENGINE`）用于在 `query` 内部将请求路由到指定后端。
+- SQL 中的保留元数据注释（例如 `ENGINE`）用于在 `query` 内部将请求路由到指定后端。
 - 如果本地修改了已经应用过的 migration，导致 Flyway 报 checksum mismatch，需要显式修复并重新迁移：
 
 ```bash

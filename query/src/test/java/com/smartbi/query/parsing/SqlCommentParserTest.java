@@ -22,6 +22,7 @@ class SqlCommentParserTest {
         assertTrue(parsed.executionSql.contains("YH_QUERYID=abc123"));
         assertFalse(parsed.executionSql.contains("engine=presto_local"));
         assertFalse(parsed.metadata.extraMetadata.containsKey("ENGINE"));
+        assertEquals("presto_local", parsed.metadata.engine);
         assertEquals(Integer.valueOf(60), parsed.metadata.cacheTtl);
         assertEquals("abc123", parsed.metadata.queryId);
     }
@@ -65,14 +66,16 @@ class SqlCommentParserTest {
 
     // Covers SqlCommentParser#parse metadata-only comment preservation and unknown YH_* retention.
     @Test
-    void shouldPreserveMetadataOnlyCommentsAndUnknownYhMetadata() {
-        String sql = "/* YH_TARGET_ENGINE=presto_local YH_CUSTOM_FLAG=blue */\nSELECT * FROM sales";
+    void shouldPreserveMetadataOnlyCommentsAndLegacyYhRoutingMetadata() {
+        String sql = "/* YH_RPTSEARCHMODE=dashboard YH_TARGET_ENGINE=presto_local YH_CUSTOM_FLAG=blue */\nSELECT * FROM sales";
 
         SqlCommentParser.ParsedSql parsed = SqlCommentParser.parse(sql);
 
+        assertTrue(parsed.executionSql.contains("YH_RPTSEARCHMODE=dashboard"));
         assertTrue(parsed.executionSql.contains("YH_TARGET_ENGINE=presto_local"));
         assertTrue(parsed.executionSql.contains("YH_CUSTOM_FLAG=blue"));
-        assertFalse(parsed.cleanSql.contains("YH_TARGET_ENGINE"));
+        assertFalse(parsed.cleanSql.contains("YH_RPTSEARCHMODE"));
+        assertEquals("dashboard", parsed.metadata.rptSearchMode);
         assertEquals("presto_local", parsed.metadata.extraMetadata.get("YH_TARGET_ENGINE"));
         assertEquals("blue", parsed.metadata.extraMetadata.get("YH_CUSTOM_FLAG"));
     }

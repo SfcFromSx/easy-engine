@@ -57,7 +57,7 @@ class QueryWebIntegrationTest {
     private static final String PREPARED_FAILURE_BODY =
             "{\"sql\":\"SELECT NAME FROM SALES WHERE ID = ?\",\"project\":\"demo\",\"params\":[{\"className\":\"java.lang.Integer\",\"value\":\"not-a-number\"}]}";
     private static final String PRESTO_ROUTE_BODY =
-            "{\"sql\":\"/* YH_TARGET_ENGINE=presto_local */ SELECT NAME FROM NATION WHERE NATIONKEY = 1\",\"project\":\"demo\"}";
+            "{\"sql\":\"/* ENGINE=presto_local */ SELECT NAME FROM NATION WHERE NATIONKEY = 1\",\"project\":\"demo\"}";
     private static final String OPTIMIZER_HINT_BODY =
             "{\"sql\":\"/*+ INDEX(SALES IDX_SALES_NAME) */ SELECT NAME FROM SALES ORDER BY ID\",\"project\":\"demo\"}";
     private static final String QUERY_SQL_REQUIRED_MESSAGE = "Query request must include SQL";
@@ -269,9 +269,9 @@ class QueryWebIntegrationTest {
         org.junit.jupiter.api.Assertions.assertEquals(FAILED_PARAMETER_PAYLOAD, trace.path(TRACE_PARAMETER_PAYLOAD).asText());
     }
 
-    // Covers SqlRouteService#routeAndRewrite preserved-metadata routing through the HTTP path.
+    // Covers SqlRouteService#routeAndRewrite ENGINE routing through the HTTP path.
     @Test
-    void shouldRouteByPreservedMetadataHint() throws Exception {
+    void shouldRouteQueriesByEngineHint() throws Exception {
         mockMvc.perform(post(QUERY_ENDPOINT)
                         .header(AUTHORIZATION_HEADER, authHeader())
                         .contentType(MediaType.APPLICATION_JSON)

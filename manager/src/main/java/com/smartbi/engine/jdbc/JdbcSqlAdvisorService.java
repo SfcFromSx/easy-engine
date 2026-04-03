@@ -25,12 +25,20 @@ public class JdbcSqlAdvisorService {
 
     private final AccelerationTableRepository accelerationTableRepository;
     private final QueryDatasourceConfigService queryDatasourceConfigService;
+    private final EffectiveEngineResolver effectiveEngineResolver;
     private final SqlRoutingAnalyzer sqlRoutingAnalyzer = new SqlRoutingAnalyzer();
 
     public JdbcSqlAdvisorService(AccelerationTableRepository accelerationTableRepository,
-                                 QueryDatasourceConfigService queryDatasourceConfigService) {
+                                 QueryDatasourceConfigService queryDatasourceConfigService,
+                                 EffectiveEngineResolver effectiveEngineResolver) {
         this.accelerationTableRepository = accelerationTableRepository;
         this.queryDatasourceConfigService = queryDatasourceConfigService;
+        this.effectiveEngineResolver = effectiveEngineResolver;
+    }
+
+    JdbcSqlAdvisorService(AccelerationTableRepository accelerationTableRepository,
+                          QueryDatasourceConfigService queryDatasourceConfigService) {
+        this(accelerationTableRepository, queryDatasourceConfigService, new EffectiveEngineResolver(null));
     }
 
     public SqlRewriteResponse adviseRewrite(SqlRewriteRequest req) {
@@ -45,7 +53,8 @@ public class JdbcSqlAdvisorService {
         }
 
         ParsedSql parsed = SqlCommentParser.safeParse(base);
-        RoutingDecision decision = sqlRoutingAnalyzer.analyze(base, parsed, buildRoutingContext());
+        String effectiveEngine = effectiveEngineResolver.resolve(parsed);
+        RoutingDecision decision = sqlRoutingAnalyzer.analyze(base, parsed, buildRoutingContext(), effectiveEngine);
         out.setExecutionSql(decision.getExecutionSql());
         out.setHintCommentBlock(extractLeadingCommentBlock(decision.getExecutionSql()));
         out.setModified(!base.trim().equals(decision.getExecutionSql()));

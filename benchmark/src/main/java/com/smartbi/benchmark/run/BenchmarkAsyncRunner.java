@@ -59,7 +59,7 @@ public class BenchmarkAsyncRunner {
     private static final Logger log = LoggerFactory.getLogger(BenchmarkAsyncRunner.class);
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final Pattern ROUTED_ENGINE_BLOCK =
-            Pattern.compile("/\\*\\s*YH_TARGET_ENGINE\\s*=\\s*([A-Za-z0-9_.:-]+)\\s*\\*/",
+            Pattern.compile("/\\*\\s*ENGINE\\s*=\\s*([A-Za-z0-9_.:-]+)\\s*\\*/",
                     Pattern.CASE_INSENSITIVE);
     private static final Pattern ROUTED_ENGINE_LINE =
             Pattern.compile("(?m)^\\s*--\\s*engine\\s*=\\s*([A-Za-z0-9_.:-]+)\\s*$",

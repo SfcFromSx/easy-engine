@@ -46,7 +46,7 @@ mvn -f tests/pom.xml test \
 | Class | What it covers |
 |---|---|
 | `MysqlInfraE2ETest` | MySQL connectivity, schema correctness, Flyway migrations, seed data |
-| `QueryHttpE2ETest` | Statement, prepared-statement, invalid SQL, DML rejection, YH_TARGET_ENGINE routing |
+| `QueryHttpE2ETest` | Statement, prepared-statement, invalid SQL, DML rejection, ENGINE routing |
 | `TraceRecordE2ETest` | MySQL trace record fields, executionMode, failed query trace, manager API, pattern stats |
 | `CacheE2ETest` | Redis cache population, cache hit (storageCacheUsed=true), datasource isolation, key prefix |
 | `ManagerApiE2ETest` | Datasource config CRUD, trace browsing, stats summary, acceleration table lifecycle |

@@ -1,5 +1,5 @@
 sql,label,weight,execution_mode,param_json
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 select
   l_returnflag,
   l_linestatus,
@@ -15,7 +15,7 @@ from lineitem
 where  l_shipdate <= date '1998-12-01'
 group by  l_returnflag,  l_linestatus
 order by  l_returnflag,  l_linestatus;",tpch_q01,1,STATEMENT,
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 select count(*) from (
 select  s_acctbal, s_name,  n_name,  p_partkey,  p_mfgr,  s_address,  s_phone,  s_comment
 from  part,  partsupp,  supplier,  nation,  region
@@ -39,7 +39,7 @@ where
   )
 order by  s_acctbal desc, n_name,  s_name,  p_partkey
 ) as t1;",tpch_q02,1,STATEMENT,
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 select count(*) from (
     select
       l_orderkey, sum(l_extendedprice * (1 - l_discount)) as revenue, o_orderdate, o_shippriority
@@ -54,7 +54,7 @@ select count(*) from (
     group by l_orderkey, o_orderdate, o_shippriority
     order by revenue desc, o_orderdate
     ) as t1;",tpch_q03,1,STATEMENT,
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 select  o_orderpriority,  count(*) as order_count
 from  orders
 where
@@ -66,7 +66,7 @@ where
   )
 group by o_orderpriority
 order by o_orderpriority;",tpch_q04,1,STATEMENT,
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 select n_name, sum(l_extendedprice * (1 - l_discount)) as revenue
 from customer, orders, lineitem, supplier, nation, region
 where
@@ -81,7 +81,7 @@ where
   and o_orderdate < date '1994-01-01' + interval '1' year
 group by n_name
 order by revenue desc;",tpch_q05,1,STATEMENT,
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 select
   sum(l_extendedprice * l_discount) as revenue
 from
@@ -91,7 +91,7 @@ where
   and l_shipdate < date '1994-01-01' + interval '1' year
   and l_discount between .06 - 0.01 and .06 + 0.01
   and l_quantity < 24;",tpch_q06,1,STATEMENT,
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 select supp_nation, cust_nation, l_year, sum(volume) as revenue
 from (
     select
@@ -114,7 +114,7 @@ from (
   ) as shipping
 group by supp_nation, cust_nation, l_year
 order by supp_nation, cust_nation, l_year;",tpch_q07,1,STATEMENT,
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 select
   o_year, sum(case when nation = 'BRAZIL' then volume else 0 end) / sum(volume) as mkt_share
 from
@@ -138,7 +138,7 @@ from
   ) as all_nations
 group by o_year
 order by o_year;",tpch_q08,1,STATEMENT,
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 select count(*) from (
 select nation, o_year, sum(amount) as sum_profit
 from
@@ -160,7 +160,7 @@ from
 group by nation, o_year
 order by nation, o_year desc
 ) as t1;",tpch_q09,1,STATEMENT,
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 select count(*) from (
 select c_custkey, c_name, sum(l_extendedprice * (1 - l_discount)) as revenue, c_acctbal, n_name, c_address, c_phone, c_comment
     from customer, orders, lineitem, nation
@@ -174,7 +174,7 @@ select c_custkey, c_name, sum(l_extendedprice * (1 - l_discount)) as revenue, c_
     group by c_custkey, c_name, c_acctbal, c_phone, n_name, c_address, c_comment
     order by revenue desc
 ) as t1;",tpch_q10,1,STATEMENT,
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 select count(*) from (
 select ps_partkey, sum(ps_supplycost * ps_availqty) as value
 from partsupp, supplier, nation
@@ -193,7 +193,7 @@ group by ps_partkey having
     )
 order by value desc
 ) as t1;",tpch_q11,1,STATEMENT,
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 select
   l_shipmode,
   sum(case when o_orderpriority = '1-URGENT' or o_orderpriority = '2-HIGH' then 1 else 0 end) as high_line_count,
@@ -208,7 +208,7 @@ where
   and l_receiptdate < date '1994-01-01' + interval '1' year
 group by l_shipmode
 order by l_shipmode;",tpch_q12,1,STATEMENT,
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 select  c_count,  count(*) as custdist
 from (select c_custkey,count(o_orderkey) as c_count
     from customer left outer join orders on c_custkey = o_custkey and o_comment not like '%special%requests%'
@@ -216,7 +216,7 @@ from (select c_custkey,count(o_orderkey) as c_count
 ) as c_orders
 group by  c_count
 order by custdist desc, c_count desc;",tpch_q13,1,STATEMENT,
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 select
   100.00 * sum(case when p_type like 'PROMO%' then l_extendedprice * (1 - l_discount) else 0 end) / sum(l_extendedprice * (1 - l_discount)) as promo_revenue
 from lineitem, part
@@ -224,7 +224,7 @@ where
   l_partkey = p_partkey
   and l_shipdate >= date '1995-09-01'
   and l_shipdate < date '1995-09-01' + interval '1' month;",tpch_q14,1,STATEMENT,
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 with revenue0 (supplier_no, total_revenue) as (
 select
   l_suppkey,
@@ -245,7 +245,7 @@ where
     select max(total_revenue) from revenue0
   )
 order by s_suppkey;",tpch_q15,1,STATEMENT,
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 select count(*) from (
 select p_brand, p_type, p_size, count(distinct ps_suppkey) as supplier_cnt
 from partsupp, part
@@ -260,7 +260,7 @@ where
 group by p_brand, p_type, p_size
 order by supplier_cnt desc, p_brand, p_type, p_size
 ) as t1;",tpch_q16,1,STATEMENT,
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 select sum(l_extendedprice) / 7.0 as avg_yearly
 from lineitem, part
 where
@@ -270,7 +270,7 @@ where
   and l_quantity < (
     select 0.2 * avg(l_quantity) from lineitem where l_partkey = p_partkey
   );",tpch_q17,1,STATEMENT,
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 select count(*) from (
 select c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice, sum(l_quantity)
 from customer, orders, lineitem
@@ -285,7 +285,7 @@ where
 group by c_name, c_custkey, o_orderkey, o_orderdate, o_totalprice
 order by o_totalprice desc, o_orderdate
 ) as t1;",tpch_q18,1,STATEMENT,
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 select sum(l_extendedprice* (1 - l_discount)) as revenue
 from lineitem, part
 where
@@ -318,7 +318,7 @@ where
     and l_shipmode in ('AIR', 'AIR REG')
     and l_shipinstruct = 'DELIVER IN PERSON'
   );",tpch_q19,1,STATEMENT,
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 select s_name, s_address
 from supplier, nation
 where
@@ -343,7 +343,7 @@ where
   and s_nationkey = n_nationkey
   and n_name = 'CANADA'
 order by s_name;",tpch_q20,1,STATEMENT,
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 select count(*) from (
 select s_name, count(*) as numwait
 from  SUPPLIER,  LINEITEM l1,  ORDERS,  NATION
@@ -370,7 +370,7 @@ where
 group by s_name
 order by  numwait desc, s_name
 ) as t1;",tpch_q21,1,STATEMENT,
-"/* YH_TARGET_ENGINE=presto_local */
+"/* ENGINE=presto_local */
 select
   cntrycode,
   count(*) as numcust,

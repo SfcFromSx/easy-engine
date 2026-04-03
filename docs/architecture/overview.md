@@ -28,9 +28,9 @@ No standalone JDBC adapter service exists in the active architecture. JDBC clien
 ## Request Flow
 
 1. `benchmark` (or any JDBC client) connects via `jdbc:kylin://query-host:8092/<project>`.
-2. `query` uses the shared `analyze` module to parse SQL comments and preserved metadata such as `YH_TARGET_ENGINE`.
+2. `query` uses the shared `analyze` module to parse SQL comments and preserved metadata such as `ENGINE`.
 3. `query` refreshes cached routing context from `manager` via `GET /api/v1/query-routing-context`.
-4. `query` routes only by `YH_TARGET_ENGINE` when present, otherwise falls back to the default datasource, and normalizes executable SQL with a leading `YH_TARGET_ENGINE` comment.
+4. `query` resolves the routed datasource by applying any Redis override keyed by `YH_RPTID`, otherwise using `ENGINE`, then falling back to the default datasource, and normalizes executable SQL with a leading `ENGINE` comment.
 5. `query` serves a cache hit from Redis or executes the read-only SQL against Kylin, Presto, or Hive, then schedules any cacheable result write back to Redis asynchronously.
 6. `query` writes a `SqlExecutionRecord` directly to MySQL, including `executionMode` and readable failed-prepared `parameterPayload` data when applicable.
 7. `manager` reads those MySQL trace rows, exposes them through `/api/v1/traces`, uses the shared `analyze` module for SQL parsing, and updates pattern statistics.

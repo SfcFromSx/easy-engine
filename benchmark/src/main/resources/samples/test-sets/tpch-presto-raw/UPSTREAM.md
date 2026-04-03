@@ -10,4 +10,4 @@
 
 - `q01.sql` through `q22.sql` are the raw upstream TPC-H query templates copied without local edits.
 - The benchmark-ready workbook at `../tpch-presto-import.xlsx` is a local normalization of those public queries for Easy Engine's test-set import contract.
-- Normalization adds the `YH_TARGET_ENGINE=presto_local` routing comment to every SQL row and rewrites query 15 into a single statement because benchmark test-set items expect one executable SQL statement per row.
+- Normalization adds the `ENGINE=presto_local` routing comment to every SQL row and rewrites query 15 into a single statement because benchmark test-set items expect one executable SQL statement per row.

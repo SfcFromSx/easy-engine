@@ -9,7 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Verifies Trino routing:
- * - HTTP query with YH_TARGET_ENGINE hint routes to Trino.
+ * - HTTP query with ENGINE hint routes to Trino.
  * - Direct Trino JDBC connection works.
  * - Trace records show the correct datasource_name.
  */
@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TrinoRoutingE2ETest extends E2ETestBase {
 
     private static final String TRINO_SQL_HTTP =
-            "/* YH_TARGET_ENGINE=trino_local */ SELECT count(*) AS nation_cnt FROM tpch.tiny.nation";
+            "/* ENGINE=trino_local */ SELECT count(*) AS nation_cnt FROM tpch.tiny.nation";
 
     @BeforeAll
     static void loadTrinoDriver() throws ClassNotFoundException {
@@ -26,8 +26,8 @@ public class TrinoRoutingE2ETest extends E2ETestBase {
 
     @Test
     @Order(1)
-    @DisplayName("YH_TARGET_ENGINE comment routes request to Trino via query HTTP API")
-    void testYhTargetEngineRoutesToTrino() {
+    @DisplayName("ENGINE comment routes request to Trino via query HTTP API")
+    void testEngineRoutesToTrino() {
         Response r = querySpec()
                 .body(statementRequest(TRINO_SQL_HTTP))
                 .post("/kylin/api/query")

@@ -9,7 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Verifies Presto routing:
- * - HTTP query with YH_TARGET_ENGINE hint routes to Presto.
+ * - HTTP query with ENGINE hint routes to Presto.
  * - Direct Presto JDBC connection works.
  * - Trace records show the correct datasource_name.
  */
@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class PrestoRoutingE2ETest extends E2ETestBase {
 
     private static final String PRESTO_SQL_HTTP =
-            "/* YH_TARGET_ENGINE=presto_local */ SELECT count(*) AS nation_cnt FROM tpch.tiny.nation";
+            "/* ENGINE=presto_local */ SELECT count(*) AS nation_cnt FROM tpch.tiny.nation";
     private static final String PRESTO_SQL_ENGINE_HINT =
             "-- engine:presto_local\nSELECT 1 AS presto_hint_probe";
 
@@ -28,8 +28,8 @@ public class PrestoRoutingE2ETest extends E2ETestBase {
 
     @Test
     @Order(1)
-    @DisplayName("YH_TARGET_ENGINE comment routes request to Presto via query HTTP API")
-    void testYhTargetEngineRoutesToPresto() {
+    @DisplayName("ENGINE comment routes request to Presto via query HTTP API")
+    void testEngineRoutesToPresto() {
         Response r = querySpec()
                 .body(statementRequest(PRESTO_SQL_HTTP))
                 .post("/kylin/api/query")
@@ -130,7 +130,7 @@ public class PrestoRoutingE2ETest extends E2ETestBase {
     @Order(7)
     @DisplayName("Fallback to default datasource when unknown engine hint is given")
     void testFallbackToDefaultDatasource() throws Exception {
-        String sql = "/* YH_TARGET_ENGINE=nonexistent_engine */ SELECT 1 AS fallback_probe";
+        String sql = "/* ENGINE=nonexistent_engine */ SELECT 1 AS fallback_probe";
         Response r = querySpec()
                 .body(statementRequest(sql))
                 .post("/kylin/api/query")

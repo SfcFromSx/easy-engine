@@ -7,12 +7,16 @@ import com.smartbi.query.parsing.SqlCommentParser;
 import com.smartbi.query.support.QueryTestFixtures;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class SqlRouteServiceTest {
 
@@ -25,33 +29,33 @@ class SqlRouteServiceTest {
 
         assertEquals("default", routed.datasourceName);
         assertEquals("h2", routed.datasourceType);
-        assertEquals("/* YH_TARGET_ENGINE=default */\nSELECT * FROM SALES", routed.executionSql);
+        assertEquals("/* ENGINE=default */\nSELECT * FROM SALES", routed.executionSql);
     }
 
-    // Covers SqlRouteService#routeAndRewrite preserved-metadata precedence with engine hints ignored.
+    // Covers SqlRouteService#routeAndRewrite ENGINE precedence over legacy routing metadata.
     @Test
-    void shouldPreferYhTargetEngineOverDriverEngineHint() {
+    void shouldPreferEngineOverLegacyYhTargetEngine() {
         SqlRouteService service = new SqlRouteService(registry(managerConfigs("default", "h2", true, "presto_local", "PRESTO", false)));
-        SqlCommentParser.ParsedSql parsed = SqlCommentParser.parse("/* YH_TARGET_ENGINE=presto_local */ -- engine=default\nSELECT * FROM SALES");
+        SqlCommentParser.ParsedSql parsed = SqlCommentParser.parse("/* YH_TARGET_ENGINE=default */ -- engine=presto_local\nSELECT * FROM SALES");
 
         RoutedSql routed = service.routeAndRewrite("SELECT * FROM SALES", parsed);
 
         assertEquals("presto_local", routed.datasourceName);
         assertEquals("PRESTO", routed.datasourceType);
-        assertEquals("/* YH_TARGET_ENGINE=presto_local */\nSELECT * FROM SALES", routed.executionSql);
+        assertEquals("/* ENGINE=presto_local */\nSELECT * FROM SALES", routed.executionSql);
     }
 
     // Covers SqlRouteService#routeAndRewrite unknown-datasource fallback branch.
     @Test
     void shouldFallbackToDefaultDatasourceWhenTargetIsUnknown() {
         SqlRouteService service = new SqlRouteService(registry(managerConfigs("default", "h2", true)));
-        SqlCommentParser.ParsedSql parsed = SqlCommentParser.parse("/* YH_TARGET_ENGINE=missing */ SELECT * FROM SALES");
+        SqlCommentParser.ParsedSql parsed = SqlCommentParser.parse("/* ENGINE=missing */ SELECT * FROM SALES");
 
         RoutedSql routed = service.routeAndRewrite("SELECT * FROM SALES", parsed);
 
         assertEquals("default", routed.datasourceName);
         assertEquals("h2", routed.datasourceType);
-        assertEquals("/* YH_TARGET_ENGINE=default */\nSELECT * FROM SALES", routed.executionSql);
+        assertEquals("/* ENGINE=default */\nSELECT * FROM SALES", routed.executionSql);
     }
 
     // Covers SqlRouteService#routeAndRewrite adapter lookup for normalized datasource types.
@@ -62,7 +66,7 @@ class SqlRouteServiceTest {
         RoutedSql routed = service.routeAndRewrite("SELECT * FROM SALES", SqlCommentParser.parse("SELECT * FROM SALES"));
 
         assertEquals("PRESTO", routed.datasourceType);
-        assertEquals("/* YH_TARGET_ENGINE=default */\nSELECT * FROM SALES", routed.executionSql);
+        assertEquals("/* ENGINE=default */\nSELECT * FROM SALES", routed.executionSql);
     }
 
     // Covers SqlRouteService#routeAndRewrite explicit Trino adapter lookup.
@@ -74,7 +78,7 @@ class SqlRouteServiceTest {
 
         assertEquals("trino_local", routed.datasourceName);
         assertEquals("TRINO", routed.datasourceType);
-        assertEquals("/* YH_TARGET_ENGINE=trino_local */\nSELECT * FROM NATION", routed.executionSql);
+        assertEquals("/* ENGINE=trino_local */\nSELECT * FROM NATION", routed.executionSql);
     }
 
     // Covers SqlRouteService#routeAndRewrite parsed-null fallback branch.
@@ -85,7 +89,30 @@ class SqlRouteServiceTest {
         RoutedSql routed = service.routeAndRewrite("SELECT * FROM SALES", null);
 
         assertEquals("default", routed.datasourceName);
-        assertEquals("/* YH_TARGET_ENGINE=default */\nSELECT * FROM SALES", routed.executionSql);
+        assertEquals("/* ENGINE=default */\nSELECT * FROM SALES", routed.executionSql);
+    }
+
+    // Covers SqlRouteService#routeAndRewrite Redis override of explicit ENGINE by YH_RPTID.
+    @Test
+    void shouldOverrideExplicitEngineWithRedisValueForReportId() {
+        StringRedisTemplate redisTemplate = mock(StringRedisTemplate.class);
+        @SuppressWarnings("unchecked")
+        ValueOperations<String, String> valueOperations = mock(ValueOperations.class);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("report-42")).thenReturn("presto_local");
+
+        SqlRouteService service = new SqlRouteService(
+                registry(managerConfigs("default", "h2", true, "presto_local", "PRESTO", false)),
+                null,
+                new EffectiveEngineResolver(redisTemplate));
+
+        SqlCommentParser.ParsedSql parsed = SqlCommentParser.parse(
+                "/* ENGINE=default YH_RPTID=report-42 */ SELECT * FROM SALES");
+
+        RoutedSql routed = service.routeAndRewrite("SELECT * FROM SALES", parsed);
+
+        assertEquals("presto_local", routed.datasourceName);
+        assertEquals("/* ENGINE=presto_local */\n/* YH_RPTID=report-42 */ SELECT * FROM SALES", routed.executionSql);
     }
 
     private static ManagedDataSourceRegistry registry(List<ManagerConfigClient.ManagerDatasourceConfig> configs) {

@@ -54,7 +54,7 @@ Coverage evidence for this matrix is emitted by `mvn -q -f query/pom.xml test` u
 
 | Production function | Meaningful branches | Automated tests |
 |---|---|---|
-| `SqlRouteService#routeAndRewrite` | default routing; parsed `ENGINE`; legacy `YH_TARGET_ENGINE` ignored for routing; Redis override by `YH_RPTID`; unknown datasource fallback; case-insensitive adapter lookup; `parsed == null` | `SqlRouteServiceTest#shouldRouteToDefaultDatasourceWhenNoHintsArePresent`, `SqlRouteServiceTest#shouldPreferEngineOverLegacyYhTargetEngine`, `SqlRouteServiceTest#shouldOverrideExplicitEngineWithRedisValueForReportId`, `SqlRouteServiceTest#shouldFallbackToDefaultDatasourceWhenTargetIsUnknown`, `SqlRouteServiceTest#shouldUseDatasourceTypeLookupCaseInsensitively`, `SqlRouteServiceTest#shouldHandleNullParsedSqlByPassingThroughOriginalSql`, `QueryWebIntegrationTest#shouldRouteByPreservedMetadataHint` |
+| `SqlRouteService#routeAndRewrite` | default routing; parsed `ENGINE`; legacy `YH_TARGET_ENGINE` ignored for routing; Redis override by `YH_RPTID`; unknown datasource fallback; case-insensitive adapter lookup; `parsed == null` | `SqlRouteServiceTest#shouldRouteToDefaultDatasourceWhenNoHintsArePresent`, `SqlRouteServiceTest#shouldPreferEngineOverLegacyYhTargetEngine`, `SqlRouteServiceTest#shouldOverrideExplicitEngineWithRedisValueForReportId`, `SqlRouteServiceTest#shouldFallbackToDefaultDatasourceWhenTargetIsUnknown`, `SqlRouteServiceTest#shouldUseDatasourceTypeLookupCaseInsensitively`, `SqlRouteServiceTest#shouldHandleNullParsedSqlByPassingThroughOriginalSql`, `QueryWebIntegrationTest#shouldRouteQueriesByEngineHint` |
 
 ### `QueryCacheService`
 

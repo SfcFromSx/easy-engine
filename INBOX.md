@@ -23,6 +23,15 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Suggested next step: Keep the archived task entry and its task commit aligned, and leave the unrelated manager-suite constructor issue outside this cache task's staged scope.
 - Human decision: pending
 
+### INBOX-20260403-007
+- Area: Harness audit trail
+- Related task(s): `QUERY-ENGINE-001`
+- Summary: `tasks-done.md` was updated on 2026-04-03 to archive the completion of the human-requested routing-contract change that switches runtime routing to `ENGINE` and adds Redis-backed report overrides keyed by `YH_RPTID`.
+- Evidence: The archive now includes `QUERY-ENGINE-001` with the implementation, review, verification, and doc-garden evidence for the `ENGINE` routing migration plus the Redis override behavior, and the corresponding task commit stages only the routing/parser/runtime/test/doc files touched by this change.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the archive edit as ad hoc bookkeeping rather than the intended closeout record for this cross-module routing change.
+- Suggested next step: Keep the archived task entry and its focused task commit aligned; leave unrelated pre-existing frontend/config dirty worktree changes outside this commit.
+- Human decision: pending
+
 ### INBOX-20260403-003
 - Area: Harness audit trail
 - Related task(s): `QUERY-TRINO-003`

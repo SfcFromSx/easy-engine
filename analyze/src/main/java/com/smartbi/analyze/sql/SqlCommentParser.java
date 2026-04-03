@@ -165,7 +165,7 @@ public final class SqlCommentParser {
 
     private static String finalizeSql(String sql) {
         return sql.replaceAll("[ \\t]+\\n", "\n")
-                .replaceAll("\\n{3,}", "\n\n")
+                .replaceAll("\\n(?:\\s*\\n)+", "\n")
                 .replaceAll("^\\s+", "")
                 .replaceAll("\\s+$", "");
     }
@@ -195,6 +195,7 @@ public final class SqlCommentParser {
                 builder.cacheTable = value;
                 return HintType.DRIVER_HINT;
             case "ENGINE":
+                builder.engine = value;
                 return HintType.DRIVER_HINT;
             case "YH_QUERYID":
                 builder.queryId = value;

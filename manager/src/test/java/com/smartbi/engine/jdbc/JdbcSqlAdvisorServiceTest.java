@@ -8,6 +8,8 @@ import com.smartbi.engine.jdbc.dto.SqlRewriteRequest;
 import com.smartbi.engine.jdbc.dto.SqlRewriteResponse;
 import com.smartbi.engine.repo.AccelerationTableRepository;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.mockito.Mockito;
 
 import java.util.Collections;
@@ -17,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
 
 class JdbcSqlAdvisorServiceTest {
 
@@ -32,7 +35,7 @@ class JdbcSqlAdvisorServiceTest {
         req.setCleanSql("  SELECT 1  ");
         SqlRewriteResponse out = service.adviseRewrite(req);
         assertTrue(out.isModified());
-        assertEquals("/* YH_TARGET_ENGINE=default */\nSELECT 1", out.getExecutionSql());
+        assertEquals("/* ENGINE=default */\nSELECT 1", out.getExecutionSql());
     }
 
     @Test
@@ -68,11 +71,40 @@ class JdbcSqlAdvisorServiceTest {
         assertEquals("accelerated_by_mv_sales", out.getAdvisoryMessage());
     }
 
+    @Test
+    void redisReportOverrideBeatsExplicitEngine() {
+        StringRedisTemplate redisTemplate = mock(StringRedisTemplate.class);
+        @SuppressWarnings("unchecked")
+        ValueOperations<String, String> valueOperations = mock(ValueOperations.class);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("report-42")).thenReturn("presto_local");
+        when(queryDatasourceConfigService.list()).thenReturn(java.util.Arrays.asList(defaultDatasource(), namedDatasource("presto_local", "presto")));
+
+        JdbcSqlAdvisorService redisAwareService =
+                new JdbcSqlAdvisorService(repository, queryDatasourceConfigService, new EffectiveEngineResolver(redisTemplate));
+
+        SqlRewriteRequest request = new SqlRewriteRequest();
+        request.setOriginalSql("/* ENGINE=default YH_RPTID=report-42 */ SELECT 1");
+
+        SqlRewriteResponse out = redisAwareService.adviseRewrite(request);
+
+        assertEquals("/* ENGINE=presto_local */\n/* YH_RPTID=report-42 */ SELECT 1", out.getExecutionSql());
+        assertEquals("routed_to_presto_local", out.getAdvisoryMessage());
+    }
+
     private static QueryDatasourceConfig defaultDatasource() {
         QueryDatasourceConfig config = new QueryDatasourceConfig();
         config.setName("default");
         config.setType("h2");
         config.setIsDefault(Boolean.TRUE);
+        return config;
+    }
+
+    private static QueryDatasourceConfig namedDatasource(String name, String type) {
+        QueryDatasourceConfig config = new QueryDatasourceConfig();
+        config.setName(name);
+        config.setType(type);
+        config.setIsDefault(Boolean.FALSE);
         return config;
     }
 }

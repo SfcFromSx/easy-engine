@@ -1,6 +1,6 @@
 UPDATE benchmark_sql_template
 SET name = 'presto_prepared_region_count',
-    sql_text = '/* YH_TARGET_ENGINE=presto_local */ SELECT count(*) AS c FROM region WHERE regionkey = ?',
+    sql_text = '/* ENGINE=presto_local */ SELECT count(*) AS c FROM region WHERE regionkey = ?',
     description = 'Presto：PreparedStatement 参数过滤（region）',
     execution_mode = 'PREPARED_STATEMENT',
     param_json = '[{"type":"INTEGER","value":1}]'
@@ -8,7 +8,7 @@ WHERE name = 'kylin_prepared_seller_count';
 
 UPDATE benchmark_test_set_item
 SET label = 'presto_prepared_region_count',
-    sql_text = '/* YH_TARGET_ENGINE=presto_local */ SELECT count(*) AS c FROM region WHERE regionkey = ?',
+    sql_text = '/* ENGINE=presto_local */ SELECT count(*) AS c FROM region WHERE regionkey = ?',
     execution_mode = 'PREPARED_STATEMENT',
     param_json = '[{"type":"INTEGER","value":1}]'
 WHERE label = 'kylin_prepared_seller_count'

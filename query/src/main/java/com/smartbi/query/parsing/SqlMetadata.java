@@ -20,6 +20,7 @@ public class SqlMetadata extends com.smartbi.analyze.sql.SqlMetadata {
         builder.cacheKey = source.cacheKey;
         builder.cacheRefresh = source.cacheRefresh;
         builder.cacheTable = source.cacheTable;
+        builder.engine = source.engine;
         builder.queryId = source.queryId;
         builder.rptId = source.rptId;
         builder.rptInstId = source.rptInstId;

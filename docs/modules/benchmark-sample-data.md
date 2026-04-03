@@ -15,7 +15,7 @@ Easy Engine now keeps a reproducible public TPC-H / Presto-style test-set sample
 
 ### Normalization choices
 
-- Every imported SQL row is prefixed with `/* YH_TARGET_ENGINE=presto_local */` so benchmark runs can route through `query` to the local Presto target.
+- Every imported SQL row is prefixed with `/* ENGINE=presto_local */` so benchmark runs can route through `query` to the local Presto target.
 - Rows are normalized into the benchmark test-set import contract columns: `sql`, `label`, `weight`, `execution_mode`, `param_json`.
 - The committed workbook uses `STATEMENT` mode with `weight = 1` for every row.
 - Query 15 is rewritten into a single `WITH revenue0 AS (...) SELECT ...` statement because the upstream template uses create-view / drop-view scaffolding that does not fit one-row-per-statement benchmark imports.

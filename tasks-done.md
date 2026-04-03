@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| QUERY-ENGINE-001 | SWITCH ROUTING TO ENGINE AND ADD REDIS REPORT OVERRIDES | query, manager, analyze, benchmark, docs | Routing now resolves datasource selection from parsed `ENGINE` with optional Redis override by `YH_RPTID`, `YH_TARGET_ENGINE` is parsed as legacy metadata only, normalized execution SQL and JDBC rewrite advice emit `/* ENGINE=... */`, benchmark/E2E samples were updated to the new routing hint, and focused `analyze`, `query`, `manager`, and `benchmark` validations all passed. |
 | QUERY-TRINO-003 | ADD TRINO JDBC COMPATIBILITY PORT FOR BENCHMARK | query, benchmark | `query` now serves Kylin JDBC on `8092` plus a minimal Trino JDBC `/v1/statement` surface on `8093`, explicit Trino `PREPARE` / `EXECUTE ... USING ...` / `DEALLOCATE PREPARE` flows are covered against the real query service, benchmark now has Trino JDBC statement/prepared regression coverage, and `mvn -q -pl analyze,query -am test`, `mvn -q -f benchmark/pom.xml test`, and `npm --prefix benchmark/frontend run build` all passed. |
 | MGR-CACHE-001 | ADD REDIS CACHE MANAGER CREATE AND EDIT SUPPORT | manager | Manager cache management now supports `kylin_cache:` summary/list/detail/create/update/delete from the existing `/cache` page and `/api/v1/cache/keys*` APIs; focused backend controller tests plus frontend tests/build pass; the stock `mvn -q -f manager/pom.xml test` command remains blocked by the unrelated current-workspace `JdbcSqlAdvisorService` constructor issue. |
 | BENCH-BUG-002 | RECOVER RUNNING BENCHMARK RUNS LEFT BY SERVICE RESTARTS | benchmark | Benchmark now immediately fails any `RUNNING` rows left behind by a benchmark-service restart instead of waiting for the 15-minute stale timeout, local Kylin readiness was restored on port `17070`, run `#8` was auto-recovered to `FAILED` during benchmark restart, and `mvn -q -f benchmark/pom.xml test` plus `npm --prefix benchmark/frontend run build` passed. |
@@ -84,6 +85,30 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+### QUERY-ENGINE-001: SWITCH ROUTING TO ENGINE AND ADD REDIS REPORT OVERRIDES
+
+- **Status**: done
+- **Updated**: 2026-04-03
+- **Progress log**:
+  - **2026-04-03 — intake**
+    - Human requested a routing-contract change: stop using `YH_TARGET_ENGINE` for datasource routing, route by `ENGINE` instead, keep `YH_TARGET_ENGINE` as parse-only legacy metadata, and add report-driven `ENGINE` override behavior sourced from Redis by `YH_RPTID`.
+    - Scope for this task: update the shared SQL metadata/parser model, switch query and manager routing/rewrite behavior to normalized `ENGINE` comments, add lightweight Redis-backed effective-engine resolution on both runtime paths, refresh benchmark/E2E/doc samples, and verify the focused analyzer/query/manager/benchmark slices.
+  - **2026-04-03 — implementation**
+    - Files changed: shared analyzer routing/parser files under `analyze/src/main/java/com/smartbi/analyze/{sql,route}/`, new effective-engine resolvers plus service/test updates under `query/src/main/java/com/smartbi/query/route/` and `manager/src/main/java/com/smartbi/engine/jdbc/`, targeted test updates under `analyze/src/test/`, `query/src/test/`, `manager/src/test/`, benchmark SQL normalization files under `benchmark/src/main/` plus benchmark test coverage, and the related query/manager/architecture/E2E docs and samples.
+    - Commands run: `rg`, `sed`, `mvn -q -pl analyze -am test -Dtest=SqlCommentParserTest,SqlRoutingAnalyzerTest`, `mvn -q -pl query -am test -Dtest=SqlCommentParserTest,SqlRouteServiceTest,EffectiveEngineResolverTest,QueryWebIntegrationTest,QueryTrinoRoutingIntegrationTest`, `mvn -q -pl analyze install -DskipTests`, `mvn -q -pl manager test -Dtest=JdbcSqlAdvisorServiceTest,EffectiveEngineResolverTest -Dspring.mvc.pathmatch.matching-strategy=ant_path_matcher`, `mvn -q -pl benchmark test -Dtest=BenchmarkAsyncRunnerExecutionModeIntegrationTest`, `mvn -q -pl analyze,query -am test -Dspring.mvc.pathmatch.matching-strategy=ant_path_matcher -DfailIfNoTests=false`.
+    - Result: Added explicit `metadata.engine`, switched normalized execution SQL to `/* ENGINE=... */`, ignored `YH_TARGET_ENGINE` for routing while still parsing it as legacy metadata, introduced Redis-backed `YH_RPTID -> ENGINE` overrides in both query and manager flows, and aligned benchmark/E2E/doc assets to the new routing contract.
+  - **2026-04-03 — review**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: Earlier routing logic overloaded `YH_TARGET_ENGINE` as both preserved metadata and the sole routing signal, while `ENGINE` was recognized only as a stripped driver hint, leaving no clean place to apply report-driven override behavior.
+    - Cure: Promoted `ENGINE` into first-class parsed metadata plus normalized execution output, moved routing decisions onto explicit effective-engine resolution, and isolated Redis override lookups to runtime service layers instead of the shared analyze module.
+    - Generalization: "When a comment key affects runtime routing, model it as an explicit parsed field and keep legacy metadata keys parse-only rather than mixing routing semantics into `extraMetadata`."
+  - **2026-04-03 — verification**
+    - Validation status: approved
+    - Evidence: Focused analyzer tests passed; focused query parser/routing/web tests passed; focused manager JDBC rewrite tests passed after installing the shared `analyze` module locally; benchmark execution-mode integration tests passed with the new `ENGINE` pattern; and the broader `analyze,query` reactor run passed with `-DfailIfNoTests=false`.
+    - Next action: none
+    - Escalation: none
+  - **2026-04-03 — doc-garden**
+    - Updated the canonical English and Chinese architecture/query/operator docs plus benchmark sample data notes so they describe `ENGINE` routing, `YH_RPTID` Redis overrides, and legacy `YH_TARGET_ENGINE` parse-only handling.
 ### MGR-CACHE-001: ADD REDIS CACHE MANAGER CREATE AND EDIT SUPPORT
 
 - **Status**: done

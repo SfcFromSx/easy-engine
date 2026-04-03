@@ -85,7 +85,7 @@ public class CacheE2ETest extends E2ETestBase {
     @Order(4)
     @DisplayName("Presto-routed query produces a separate cache key (datasource isolation)")
     void testCacheKeyDatasourceIsolation() {
-        String sql = "/* YH_TARGET_ENGINE=presto_local */ SELECT 4 AS ds_isolation_probe";
+        String sql = "/* ENGINE=presto_local */ SELECT 4 AS ds_isolation_probe";
         long before = redisCacheKeyCount();
 
         querySpec().body(statementRequest(sql)).post("/kylin/api/query");
