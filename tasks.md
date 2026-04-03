@@ -22,15 +22,7 @@ Completed task history lives in [tasks-done.md](/Users/sfc/Documents/projects/en
 
 | ID | Title | Module | Status | Updated | Dependencies |
 |----|-------|--------|--------|---------|--------------|
-| CONFIG-REVIEW-001 | AUDIT REPO FOR PROFILE-YAML-ONLY ENV CONFIG COMPLIANCE | platform | todo | 2026-04-02 | none |
 
-### CONFIG-REVIEW-001: AUDIT REPO FOR PROFILE-YAML-ONLY ENV CONFIG COMPLIANCE
-
-- **Status**: todo
-- **Updated**: 2026-04-02
-- **Progress log**:
-  - **2026-04-02 — intake**
-    - Follow-up generalization review task created automatically from `CONFIG-PROFILE-001` after exporting the new profile-governance rule to `docs/operations/best-practices.md`: audit the repo for any remaining environment-specific configuration outside module-level `application-dev.yml`, `application-test.yml`, and `application-pro.yml`, and move or remove the remaining drift.
 
 ## Archive
 

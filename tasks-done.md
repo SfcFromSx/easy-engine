@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| CONFIG-REVIEW-001 | AUDIT REPO FOR PROFILE-YAML-ONLY ENV CONFIG COMPLIANCE | platform | `manager`, `query`, and `benchmark` now keep environment-shaped test fixtures inside module `application-test.yml` files instead of `src/test/resources/application-test.properties`; the affected test helpers and Spring integration tests read YAML-backed overrides; manager/query reactor tests and benchmark backend tests pass; and the local-development docs now describe the new fixture location. |
 | CONFIG-MYSQL-001 | STANDARDIZE YAML PROFILES ON MYSQL-ONLY CONFIG | platform | `manager`, `query`, and `benchmark` `application-test.yml` files are now MySQL-first, H2-only regression fixtures moved into test-scoped `application-test.properties` overrides, `scripts/init-db.sh test ...` now follows the runtime profile classpath, and manager/query/benchmark validation plus test-profile DB init all passed. |
 | DB-AUDIT-001 | AUDIT INIT DB MIGRATIONS FOR CREATE-THEN-ALTER DRIFT | platform | Manager and benchmark fresh-schema bootstrap now create current table shapes directly where safe, retained upgrade migrations are checksum-safe and idempotent for legacy schemas, manager Flyway regression tests pass, and `init-db` smoke runs now pass for manager plus benchmark's dev/MySQL-backed test paths. |
 | MGR-BUG-002 | FIX MYSQL CACHE KEY INDEX LENGTH IN V12 MIGRATION | manager | Manager Flyway migration `V12` now creates a MySQL-safe prefix index for `cache_key` without breaking H2-backed migration tests by using a MySQL executable comment; focused manager Flyway validation and a live MySQL 8 syntax probe both passed. |
@@ -39,6 +40,32 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | QUERY-BUG-001 | REJECT NON-QUERY REQUESTS AT QUERY BOUNDARY | query | `query` now rejects blank and non-query SQL before cache/datasource work while preserving the compatibility exception payload contract, the request docs are updated, `mvn -q -f query/pom.xml test` passes, and broader compatibility-input review is tracked in `QUERY-REVIEW-002`. |
 | BENCH-TEST-002 | EXTERNALIZE PREFLIGHT CONTROLLER TEST FIXTURES | benchmark | `PreflightControllerTest` now loads its probe fixture values from `benchmark/src/test/resources/preflight-controller-test.properties` instead of inline literals, the focused benchmark validation passes, and the broader audit follow-up is tracked in `TEST-CONFIG-001`. |
 | BENCH-CONFIG-001 | EXTERNALIZE BENCHMARK PREFLIGHT DATASOURCE PROBE SETTINGS | benchmark | `BenchmarkPreflightProperties` no longer embeds Kylin/Presto probe defaults in Java, `benchmark.preflight.*` can be overridden from environment-backed config, task-local preflight tests pass, and unrelated benchmark-suite drift is logged in `INBOX-20260402-001`. |
+
+### CONFIG-REVIEW-001: AUDIT REPO FOR PROFILE-YAML-ONLY ENV CONFIG COMPLIANCE
+
+- **Status**: done
+- **Updated**: 2026-04-03
+- **Progress log**:
+  - **2026-04-02 — intake**
+    - Follow-up generalization review task created automatically from `CONFIG-PROFILE-001` after exporting the new profile-governance rule to `docs/operations/best-practices.md`: audit the repo for any remaining environment-specific configuration outside module-level `application-dev.yml`, `application-test.yml`, and `application-pro.yml`, and move or remove the remaining drift.
+  - **2026-04-03 — implementation**
+    - Files changed: `manager/query/benchmark` `application-test.yml`, the three module test fixture loaders, the affected `manager` and `query` Spring/integration tests, `docs/operations/local-development.md`, `doc-CN/local-development.md`, plus the task ledger/archive records.
+    - Commands run: `rg`, `sed`, `git diff`, `mvn -q -pl manager -am test`, `mvn -q -pl query -am test`, `mvn -q -f benchmark/pom.xml test`.
+    - Result: Removed the remaining environment-shaped `src/test/resources/application-test.properties` files, moved their fixture values into the module `application-test.yml` files, switched the helper loaders to YAML, and replaced the hidden Spring test override layer in `query` with explicit YAML-backed `@DynamicPropertySource` wiring.
+  - **2026-04-03 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: `CONFIG-PROFILE-001` documented profile-YAML-only governance, but follow-up cleanup still relied on per-test property files and a few inline test literals to carry environment-shaped H2/JDBC settings, leaving the repo in a split state that contradicted the new rule.
+    - Cure: Consolidated the remaining test fixture URLs, credentials, and ports into module `application-test.yml` files, updated the fixture helpers to read YAML directly, and made the Spring-based `query` tests opt into YAML-backed H2 overrides explicitly instead of depending on hidden test-resource precedence.
+    - Generalization: Existing profile-governance guidance in `docs/operations/best-practices.md` already covers this drift; no new generalized rule was needed.
+  - **2026-04-03 — verification**
+    - Validation status: approved
+    - Evidence: `mvn -q -pl manager -am test` passed.
+    - Evidence: `mvn -q -pl query -am test` passed after fixing the YAML parse edge case and restoring the `query` Spring tests with YAML-backed H2 overrides.
+    - Evidence: `mvn -q -f benchmark/pom.xml test` passed; the run still emitted the existing Docker-less Testcontainers warning for the skipped Flyway seed container path and the existing JaCoCo-on-Java-25 instrumentation warning, but exited successfully.
+    - Next action: none
+    - Escalation: none
+  - **2026-04-03 — doc-garden**
+    - Updated `docs/operations/local-development.md` and the configured mirror `doc-CN/local-development.md` so the docs now state that any H2-only regression fixtures live inside module `application-test.yml` sections rather than separate test property files.
 
 ### CONFIG-MYSQL-001: STANDARDIZE YAML PROFILES ON MYSQL-ONLY CONFIG
 

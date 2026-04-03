@@ -14,6 +14,15 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Do not convert inbox entries directly into implementation tasks without explicit human confirmation.
 - For tooling or infrastructure changes, prefer logging the issue here before changing the harness.
 
+### INBOX-20260403-031
+- Area: Harness audit trail
+- Related task(s): `CONFIG-REVIEW-001`
+- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-03 to archive the completion of `CONFIG-REVIEW-001` after removing the remaining profile-governance drift from per-test property files.
+- Evidence: The active ledger row and section for `CONFIG-REVIEW-001` were removed from `tasks.md`, its full intake/implementation/review/verification/doc-garden record was archived under `tasks-done.md`, and the archived evidence records the passing `mvn -q -pl manager -am test`, `mvn -q -pl query -am test`, and `mvn -q -f benchmark/pom.xml test` commands.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the core ledger edits as ad hoc bookkeeping instead of the required closeout workflow for this profile-governance review task.
+- Suggested next step: Keep the archived task entry, YAML-backed test fixture layout, documentation updates, and single task commit aligned.
+- Human decision: pending
+
 ### INBOX-20260403-028
 - Area: Harness audit trail
 - Related task(s): CONFIG-MYSQL-001

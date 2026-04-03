@@ -71,3 +71,55 @@ engine:
 logging:
   level:
     com.smartbi.query: INFO
+
+query:
+  test:
+    meta-db:
+      url: jdbc:h2:mem:querytestmeta;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+      username: sa
+      password: ""
+      driver-class-name: org.h2.Driver
+    manager-url: http://localhost:8090
+    manager-response:
+      default-jdbc-url: jdbc:h2:mem:remote_default
+      default-driver-class: org.h2.Driver
+    result-mapper:
+      jdbc-url: jdbc:h2:mem:result_mapper;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+      jdbc-user: sa
+      jdbc-password: ""
+    registry:
+      shared:
+        driver-class: org.h2.Driver
+        username: sa
+        password: ""
+      default:
+        name: default
+        type: h2
+        driver-class: org.h2.Driver
+        jdbc-url: jdbc:h2:mem:fallback_default;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+        username: sa
+        password: ""
+      presto:
+        name: presto_local
+        type: presto
+        driver-class: org.h2.Driver
+        jdbc-url: jdbc:h2:mem:fallback_presto;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+        username: sa
+        password: ""
+      trino:
+        name: trino_local
+        type: trino
+        driver-class: org.h2.Driver
+        jdbc-url: jdbc:h2:mem:fallback_trino;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+        username: sa
+        password: ""
+      keyed:
+        jdbc-url: jdbc:h2:mem:keyed_named;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+      manager:
+        jdbc-url-prefix: "jdbc:h2:mem:"
+    trino-jdbc-compatibility:
+      server-port: 18092
+      trino-port: 18093
+      default-jdbc-url: jdbc:h2:mem:querytrinojdbcdefault;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+      trino-jdbc-url: jdbc:h2:mem:querytrinojdbcnamed;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+      direct-url: jdbc:trino://127.0.0.1:18093/test/default?user=ADMIN

@@ -1,14 +1,14 @@
 package com.smartbi.engine.support;
 
+import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.support.PropertiesLoaderUtils;
 
 import java.io.File;
 import java.util.Properties;
 
 public final class ManagerTestFixtures {
 
-    private static final String RESOURCE = "application-test.properties";
+    private static final String RESOURCE = "application-test.yml";
     private static final Properties PROPERTIES = load();
 
     private ManagerTestFixtures() {
@@ -42,7 +42,13 @@ public final class ManagerTestFixtures {
 
     private static Properties load() {
         try {
-            return PropertiesLoaderUtils.loadProperties(new ClassPathResource(RESOURCE));
+            YamlPropertiesFactoryBean factory = new YamlPropertiesFactoryBean();
+            factory.setResources(new ClassPathResource(RESOURCE));
+            Properties properties = factory.getObject();
+            if (properties == null) {
+                throw new IllegalStateException("No manager test fixtures resolved from " + RESOURCE);
+            }
+            return properties;
         } catch (Exception ex) {
             throw new IllegalStateException("Missing manager test fixture resource: " + RESOURCE, ex);
         }
