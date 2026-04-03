@@ -1,12 +1,12 @@
 ALTER TABLE benchmark_sql_template
-    ADD COLUMN execution_mode VARCHAR(32) NOT NULL DEFAULT 'STATEMENT';
+    ADD COLUMN IF NOT EXISTS execution_mode VARCHAR(32) NOT NULL DEFAULT 'STATEMENT';
 ALTER TABLE benchmark_sql_template
-    ADD COLUMN param_json TEXT;
+    ADD COLUMN IF NOT EXISTS param_json TEXT;
 
 ALTER TABLE benchmark_test_set_item
-    ADD COLUMN execution_mode VARCHAR(32) NOT NULL DEFAULT 'STATEMENT';
+    ADD COLUMN IF NOT EXISTS execution_mode VARCHAR(32) NOT NULL DEFAULT 'STATEMENT';
 ALTER TABLE benchmark_test_set_item
-    ADD COLUMN param_json TEXT;
+    ADD COLUMN IF NOT EXISTS param_json TEXT;
 
 UPDATE benchmark_job
 SET jdbc_url = regexp_replace(

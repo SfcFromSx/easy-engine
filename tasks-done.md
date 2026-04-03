@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| DB-AUDIT-001 | AUDIT INIT DB MIGRATIONS FOR CREATE-THEN-ALTER DRIFT | platform | Manager and benchmark fresh-schema bootstrap now create current table shapes directly where safe, retained upgrade migrations are checksum-safe and idempotent for legacy schemas, manager Flyway regression tests pass, and `init-db` smoke runs now pass for manager plus benchmark's dev/MySQL-backed test paths. |
 | MGR-BUG-002 | FIX MYSQL CACHE KEY INDEX LENGTH IN V12 MIGRATION | manager | Manager Flyway migration `V12` now creates a MySQL-safe prefix index for `cache_key` without breaking H2-backed migration tests by using a MySQL executable comment; focused manager Flyway validation and a live MySQL 8 syntax probe both passed. |
 | GIT-HYGIENE-002 | STOP TRACKING LOCAL TOOLING AND COVERAGE ARTIFACTS | platform | `.claude/settings.local.json` and `manager/frontend/coverage/` are no longer tracked by Git, new ignore rules now cover those paths plus `analyze/target/`, local copies were preserved, and verification confirmed the repo now treats them as ignored local artifacts instead of release changes. |
 | TRACE-CACHE-KEY-001 | PERSIST CACHE KEYS IN TRACE RECORDS AND EXPOSE THEM IN MANAGER | query, manager, docs | Query traces now persist the exact Redis `cacheKey` used for cache-eligible requests, manager stores and exposes that field through `/api/v1/traces` with filtering support, the manager traces page shows and filters by cache key, and query/manager/frontend validations all passed. |
@@ -93,6 +94,35 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+### DB-AUDIT-001: AUDIT INIT DB MIGRATIONS FOR CREATE-THEN-ALTER DRIFT
+
+- **Status**: done
+- **Updated**: 2026-04-03
+- **Progress log**:
+  - **2026-04-03 — intake**
+    - Human requested a follow-up task after spotting init-db bootstrap drift where some tables are created in an intermediate shape and then altered instead of being created correctly on a fresh schema from the start.
+    - Scope for this task: audit init-db execution paths and migration scripts for similar create-then-alter patterns, fix fresh-schema bootstrap so new environments create the intended table/index definitions directly when safe, preserve upgrade compatibility for existing schemas with forward-only migrations where needed, and verify the affected init-db flows still succeed.
+  - **2026-04-03 — investigation**
+    - Reviewed `scripts/init-db.sh`, manager/benchmark Flyway migrations, current JPA mappings, and focused Flyway integration tests.
+    - Confirmed the main fresh-schema drift lives in manager `V2`/`V7` and benchmark `V1`/`V4`, while later manager/benchmark migrations need idempotent compatibility handling because editing historical Flyway files changes checksums for already-initialized schemas.
+  - **2026-04-03 — implementation**
+    - Files changed: manager and benchmark Flyway migration chains, manager/benchmark Flyway config, focused Flyway regression tests, and the task ledger/archive records.
+    - Commands run: `rg`, `sed`, `mvn -q -pl manager -am -DfailIfNoTests=false -Dtest=ManagerDashboardBootstrapIntegrationTest,DatasourceConfigFlywayIntegrationTest,TraceFlywayExecutionModeIntegrationTest,ManagerFlywayHistoryRenameIntegrationTest test`, `mvn -q -pl benchmark -am -Dtest=BenchmarkFlywaySeedTest test`, `bash scripts/init-db.sh dev manager benchmark`, `bash scripts/init-db.sh test manager`, `BENCHMARK_TEST_DB_* bash scripts/init-db.sh test benchmark`.
+    - Result: Folded the safe fresh-schema drift back into manager `V2`/`V7` and benchmark `V1`/`V4`, converted the pre/post-rename manager repair steps plus benchmark datasource upgrade into guarded Java migrations, added checksum-repair migration strategies for init-db execution, and consolidated benchmark `V18` into one guarded Java migration so the real benchmark init path no longer fails on duplicate version discovery.
+  - **2026-04-03 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: The bootstrap chain had accumulated schema-shape fixes across later migrations without revisiting the original create steps, while some manager seed/cleanup migrations still assumed pre-prefix table names and historical Flyway SQL edits were not checksum-safe for already-initialized schemas.
+    - Cure: Updated only the safe base table definitions, made the follow-up repair migrations idempotent across legacy and fresh naming eras, and repaired Flyway checksums during init-db execution so existing schemas can continue upgrading without manual intervention.
+    - Generalization: When folding fresh-schema changes into historical Flyway migrations, audit every earlier seed/cleanup step that still references the legacy shape and provide an explicit checksum-compatibility path for already-applied schemas.
+  - **2026-04-03 — verification**
+    - Validation status: approved
+    - Evidence: `mvn -q -pl manager -am -DfailIfNoTests=false -Dtest=ManagerDashboardBootstrapIntegrationTest,DatasourceConfigFlywayIntegrationTest,TraceFlywayExecutionModeIntegrationTest,ManagerFlywayHistoryRenameIntegrationTest test` passed.
+    - Evidence: `mvn -q -pl benchmark -am -Dtest=BenchmarkFlywaySeedTest test` exited `0`; in this environment the Docker-backed seed case still short-circuits because Testcontainers cannot reach a valid Docker daemon, but the benchmark module compiled and the targeted command completed successfully.
+    - Evidence: `bash scripts/init-db.sh dev manager benchmark` passed after the migration updates, including benchmark's previously failing duplicate-`V18` Flyway path.
+    - Evidence: `bash scripts/init-db.sh test manager` passed, and `BENCHMARK_TEST_DB_JDBC_URL='jdbc:mysql://localhost:3307/engine_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC' BENCHMARK_TEST_DB_USER='engine' BENCHMARK_TEST_DB_PASSWORD='engine123' BENCHMARK_TEST_DB_DRIVER_CLASS='com.mysql.cj.jdbc.Driver' bash scripts/init-db.sh test benchmark` also passed for the documented MySQL-backed benchmark test-profile init path.
+    - Next action: none
+    - Escalation: none
+
 ### MGR-BUG-002: FIX MYSQL CACHE KEY INDEX LENGTH IN V12 MIGRATION
 
 - **Status**: done

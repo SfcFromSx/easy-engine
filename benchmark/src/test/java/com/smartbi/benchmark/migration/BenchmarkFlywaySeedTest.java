@@ -11,6 +11,7 @@ import com.smartbi.benchmark.support.BenchmarkTestFixtures;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MySQLContainer;
@@ -64,10 +65,33 @@ class BenchmarkFlywaySeedTest {
     private BenchmarkJobRepository jobRepository;
     @Autowired
     private BenchmarkDataSourceRepository dataSourceRepository;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     // Covers Flyway benchmark seed migrations for templates, jobs, and prepared-statement fixtures.
     @Test
     void flywaySeedsTemplatesJobsAndTestSet() {
+        assertEquals(Integer.valueOf(1), jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
+                        "WHERE LOWER(table_name) = 'benchmark_sql_template' AND LOWER(column_name) = 'execution_mode'",
+                Integer.class));
+        assertEquals(Integer.valueOf(1), jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
+                        "WHERE LOWER(table_name) = 'benchmark_test_set_item' AND LOWER(column_name) = 'sql_lib_id'",
+                Integer.class));
+        assertEquals(Integer.valueOf(1), jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
+                        "WHERE LOWER(table_name) = 'benchmark_run' AND LOWER(column_name) = 'job_snapshot_json'",
+                Integer.class));
+        assertEquals(Integer.valueOf(1), jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
+                        "WHERE LOWER(table_name) = 'benchmark_job' AND LOWER(column_name) = 'data_source_id'",
+                Integer.class));
+        assertEquals(Integer.valueOf(0), jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
+                        "WHERE LOWER(table_name) = 'benchmark_job' AND LOWER(column_name) = 'jdbc_url'",
+                Integer.class));
+
         long templates = sqlTemplateRepository.count();
         assertTrue(templates >= 22, "SQL Lib starter entries should remain seeded on a fresh schema, actual=" + templates);
 

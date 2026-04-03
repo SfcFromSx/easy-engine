@@ -28,6 +28,7 @@ public class FlywayConfig {
     public FlywayMigrationStrategy managerFlywayMigrationStrategy(DataSource dataSource) {
         return flyway -> {
             renameLegacyHistoryTableIfNeeded(dataSource);
+            flyway.repair();
             flyway.migrate();
         };
     }

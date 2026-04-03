@@ -1,4 +1,0 @@
-ALTER TABLE sql_execution_record RENAME TO manager_sql_execution_record;
-ALTER TABLE sql_pattern_stats RENAME TO manager_sql_pattern_stats;
-ALTER TABLE acceleration_table RENAME TO manager_acceleration_table;
-ALTER TABLE query_datasource_config RENAME TO manager_query_datasource_config;

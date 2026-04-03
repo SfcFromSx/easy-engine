@@ -1,9 +1,9 @@
-CREATE TABLE IF NOT EXISTS query_datasource_config (
+CREATE TABLE IF NOT EXISTS manager_query_datasource_config (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(256) NOT NULL,
     type VARCHAR(64) NOT NULL,
     driver_class VARCHAR(512) NOT NULL,
-    jdbc_url TEXT NOT NULL,
+    jdbc_url MEDIUMTEXT NOT NULL,
     username VARCHAR(256),
     password VARCHAR(256),
     max_pool_size INTEGER NOT NULL DEFAULT 4,
@@ -14,9 +14,9 @@ CREATE TABLE IF NOT EXISTS query_datasource_config (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX uq_query_datasource_name ON query_datasource_config (name);
+CREATE UNIQUE INDEX uq_query_datasource_name ON manager_query_datasource_config (name);
 
-INSERT INTO query_datasource_config (
+INSERT INTO manager_query_datasource_config (
     name,
     type,
     driver_class,
@@ -40,10 +40,10 @@ SELECT
     10000,
     TRUE
 WHERE NOT EXISTS (
-    SELECT 1 FROM query_datasource_config WHERE name = 'default'
+    SELECT 1 FROM manager_query_datasource_config WHERE name = 'default'
 );
 
-INSERT INTO query_datasource_config (
+INSERT INTO manager_query_datasource_config (
     name,
     type,
     driver_class,
@@ -67,5 +67,5 @@ SELECT
     10000,
     FALSE
 WHERE NOT EXISTS (
-    SELECT 1 FROM query_datasource_config WHERE name = 'presto_local'
+    SELECT 1 FROM manager_query_datasource_config WHERE name = 'presto_local'
 );
