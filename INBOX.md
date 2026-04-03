@@ -14,6 +14,24 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Do not convert inbox entries directly into implementation tasks without explicit human confirmation.
 - For tooling or infrastructure changes, prefer logging the issue here before changing the harness.
 
+### INBOX-20260403-001
+- Area: Harness audit trail
+- Related task(s): `BENCH-BUG-002`
+- Summary: `tasks.md` was updated on 2026-04-03 to intake a human-requested benchmark recovery task covering the renewed local Kylin outage plus the leftover active-run state in benchmark.
+- Evidence: The active ledger now includes `BENCH-BUG-002` with intake notes capturing the unhealthy `kylin-standalone` container, failing benchmark preflight probe, and surviving `benchmark_run` row `#8` still marked `RUNNING` after service restart.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edit as ad hoc bookkeeping instead of the required task intake for this bugfix.
+- Suggested next step: Keep the task ledger, archive, and eventual task commit aligned while `BENCH-BUG-002` is implemented and verified.
+- Human decision: pending
+
+### INBOX-20260403-002
+- Area: Harness audit trail
+- Related task(s): `BENCH-BUG-002`
+- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-03 to archive the completion of `BENCH-BUG-002` after restoring local Kylin readiness and closing the lingering benchmark active-run defect.
+- Evidence: The active ledger row/section for `BENCH-BUG-002` were removed from `tasks.md`, its full progress log and done signal were archived under `tasks-done.md`, and the archived evidence records the recovered Kylin health plus `benchmark_run.id=8` being moved from `RUNNING` to `FAILED`.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edits as ad hoc bookkeeping rather than the required task closeout workflow.
+- Suggested next step: Keep the archived task entry and the task commit aligned; the remaining active ledger should continue to track only `CONFIG-REVIEW-001`.
+- Human decision: pending
+
 ### INBOX-20260331-001
 - Area: Harness governance and audit trail
 - Related task(s): `HARNESS-GOV-001`, `ARCH-010`

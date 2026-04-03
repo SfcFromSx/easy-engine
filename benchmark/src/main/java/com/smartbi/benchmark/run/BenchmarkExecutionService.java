@@ -34,6 +34,7 @@ public class BenchmarkExecutionService {
     private final SqlTemplateRepository templateRepository;
     private final BenchmarkTestSetItemRepository testSetItemRepository;
     private final BenchmarkAsyncRunner asyncRunner;
+    private final Instant serviceStartTime;
 
     public BenchmarkExecutionService(BenchmarkJobRepository jobRepository,
                                      BenchmarkRunRepository runRepository,
@@ -45,6 +46,7 @@ public class BenchmarkExecutionService {
         this.templateRepository = templateRepository;
         this.testSetItemRepository = testSetItemRepository;
         this.asyncRunner = asyncRunner;
+        this.serviceStartTime = Instant.now();
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -85,7 +87,7 @@ public class BenchmarkExecutionService {
         Instant cutoff = Instant.now().minus(STALE_RUN_TIMEOUT);
         List<BenchmarkRun> staleRuns = new ArrayList<BenchmarkRun>();
         for (BenchmarkRun run : runRepository.findByStatus(RunStatus.RUNNING)) {
-            if (run.getStartedAt() != null && run.getStartedAt().isBefore(cutoff)) {
+            if (shouldRecoverRun(run, cutoff)) {
                 staleRuns.add(run);
             }
         }
@@ -98,6 +100,17 @@ public class BenchmarkExecutionService {
             runRepository.save(staleRun);
         }
         return staleRuns.size();
+    }
+
+    private boolean shouldRecoverRun(BenchmarkRun run, Instant cutoff) {
+        Instant startedAt = run.getStartedAt();
+        if (startedAt == null) {
+            return true;
+        }
+        if (startedAt.isBefore(serviceStartTime)) {
+            return true;
+        }
+        return startedAt.isBefore(cutoff);
     }
 
     private void triggerAsyncRunAfterCommit(Long runId) {

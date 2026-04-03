@@ -140,6 +140,24 @@ class BenchmarkExecutionServiceTest {
         assertEquals("Recovered stale RUNNING run after benchmark service restart.", savedRun.getErrorSample());
     }
 
+    // Covers BenchmarkExecutionService#reconcileStaleRuns recovery of recent runs left behind by service restart.
+    @Test
+    void shouldRecoverRecentRunningRunsStartedBeforeCurrentServiceInstance() {
+        BenchmarkRun restartedRun = new BenchmarkRun();
+        ReflectionTestUtils.setField(restartedRun, "id", 5L);
+        restartedRun.setStatus(RunStatus.RUNNING);
+        ReflectionTestUtils.setField(restartedRun, "startedAt", Instant.now().minus(1, ChronoUnit.MINUTES));
+        when(runRepository.findByStatus(RunStatus.RUNNING))
+                .thenReturn(Collections.singletonList(restartedRun));
+
+        int recovered = service.reconcileStaleRuns();
+
+        assertEquals(1, recovered);
+        ArgumentCaptor<BenchmarkRun> runCaptor = ArgumentCaptor.forClass(BenchmarkRun.class);
+        verify(runRepository).save(runCaptor.capture());
+        assertEquals(RunStatus.FAILED, runCaptor.getValue().getStatus());
+    }
+
     // Covers BenchmarkExecutionService#reconcileStaleRuns existing error-sample preservation.
     @Test
     void shouldPreserveExistingErrorSampleDuringStaleRunRecovery() {

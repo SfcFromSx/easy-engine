@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| BENCH-BUG-002 | RECOVER RUNNING BENCHMARK RUNS LEFT BY SERVICE RESTARTS | benchmark | Benchmark now immediately fails any `RUNNING` rows left behind by a benchmark-service restart instead of waiting for the 15-minute stale timeout, local Kylin readiness was restored on port `17070`, run `#8` was auto-recovered to `FAILED` during benchmark restart, and `mvn -q -f benchmark/pom.xml test` plus `npm --prefix benchmark/frontend run build` passed. |
 | BENCH-BUG-001 | REMOVE SYNTHETIC ACCESSOR DEPENDENCY FROM BENCHMARK RUN DISPATCH | benchmark | Benchmark run dispatch now uses an explicit static after-commit synchronization helper instead of an anonymous inner callback, so the compiled backend no longer depends on `BenchmarkExecutionService.access$000(...)`; `mvn -q -f benchmark/pom.xml clean test` and `npm --prefix benchmark/frontend run build` both pass, and `javap` confirms the synthetic bridge method is gone. |
 | MIGRATION-001 | UPGRADE TEXT COLUMNS TO MEDIUMTEXT FOR LONG SQL SUPPORT | platform | Upgraded 10 JPA domain classes across `benchmark`, `query`, and `manager` to `MEDIUMTEXT` (16MB). Added Flyway migrations `benchmark/V18` and `manager/V11`. Verified compilation of all affected modules. |
 | QUERY-TRINO-002 | ADD LOCAL TRINO SERVICE AND E2E COVERAGE | query | Trino service added to `docker-compose.yml`, seeded in `manager`, and verified with `TrinoRoutingE2ETest` passing 5/5 cases. Fixed repo-wide table name prefixing drift for `manager_sql_execution_record`. |
@@ -81,6 +82,31 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+### BENCH-BUG-002: RECOVER RUNNING BENCHMARK RUNS LEFT BY SERVICE RESTARTS
+
+- **Status**: done
+- **Updated**: 2026-04-03
+- **Progress log**:
+  - **2026-04-03 — intake**
+    - Human reported that local Kylin had regressed again and benchmark still showed problematic active runs. Investigation found `docker compose ps --all` reporting `kylin-standalone` as `unhealthy`, `GET /api/v1/preflight` failing the Kylin probe with `Connection reset`, and `benchmark_run` row `#8` still marked `RUNNING` with `0/0` progress even after the benchmark service restarted at 09:03 local time.
+    - Scope for this task: restore the local Kylin service to a healthy state for benchmark/query traffic, fix benchmark run recovery so service restarts immediately fail pre-restart `RUNNING` rows instead of waiting for the 15-minute stale timeout, clean up the currently stuck active run state, and verify the benchmark module behavior with regression coverage.
+  - **2026-04-03 — implementation**
+    - Files changed: `benchmark/src/main/java/com/smartbi/benchmark/run/BenchmarkExecutionService.java`, `benchmark/src/test/java/com/smartbi/benchmark/run/BenchmarkExecutionServiceTest.java`, `docs/modules/benchmark.md`, `docs/modules/benchmark-test-matrix.md`, `tasks.md`, and `INBOX.md`.
+    - Commands run: `rg`, `sed`, `curl`, `mysql`, `docker compose ps --all`, `docker restart kylin-standalone`, `mvn -q -f benchmark/pom.xml -Dtest=BenchmarkExecutionServiceTest test`, `mvn -q -f benchmark/pom.xml test`, and `npm --prefix benchmark/frontend run build`.
+    - Result: Restored local Kylin readiness by restarting the `kylin-standalone` container until `/kylin/api/user/authentication` returned `200`, changed benchmark stale-run recovery to fail any `RUNNING` row started before the current benchmark-service instance in addition to the existing 15-minute timeout, added a regression test for the restart edge case, and restarted the benchmark service so the lingering run `#8` was auto-recovered to `FAILED`.
+  - **2026-04-03 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: `BenchmarkExecutionService#reconcileStaleRuns()` only treated `RUNNING` rows older than 15 minutes as stale. When the benchmark service restarted, any younger `RUNNING` rows lost their in-memory worker immediately, but the recovery code still considered them live until the timeout elapsed, leaving a phantom active-run card and misleading `/api/v1/runs/active` output.
+    - Cure: Captured the current benchmark-service start instant and treated every `RUNNING` row started before that instant as stale immediately, while preserving the 15-minute timeout for genuinely live instances that later hang.
+    - Generalization: This bug was specific to benchmark's restart-aware recovery contract; no new repo-wide best-practice rule was added.
+  - **2026-04-03 — verification**
+    - Validation status: approved
+    - Evidence: `mvn -q -f benchmark/pom.xml test` passed; `npm --prefix benchmark/frontend run build` passed; `docker compose ps --all` reports `kylin-standalone` as `healthy`; `GET /api/v1/preflight` returns `mysql=OK`, `kylinRest=OK`, and `prestoUi=OK`; `GET /api/v1/runs/active` now returns no active run; and MySQL shows `benchmark_run.id=8` moved to `FAILED` with `ended_at` populated and the restart-recovery message recorded.
+    - Next action: none
+    - Escalation: none
+  - **2026-04-03 — doc-garden**
+    - Updated `docs/modules/benchmark.md` and `docs/modules/benchmark-test-matrix.md` so the benchmark run-recovery contract now explicitly covers immediate cleanup of pre-restart `RUNNING` rows alongside the existing stale-timeout path.
+
 ### BENCH-BUG-001: REMOVE SYNTHETIC ACCESSOR DEPENDENCY FROM BENCHMARK RUN DISPATCH
 
 - **Status**: done
