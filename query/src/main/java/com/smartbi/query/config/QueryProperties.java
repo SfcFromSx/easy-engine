@@ -11,6 +11,7 @@ public class QueryProperties {
     private final Auth auth = new Auth();
     private final Cache cache = new Cache();
     private final Trace trace = new Trace();
+    private final Trino trino = new Trino();
     private final Datasource datasource = new Datasource();
     private String managerUrl;
 
@@ -24,6 +25,10 @@ public class QueryProperties {
 
     public Trace getTrace() {
         return trace;
+    }
+
+    public Trino getTrino() {
+        return trino;
     }
 
     public Datasource getDatasource() {
@@ -125,6 +130,18 @@ public class QueryProperties {
 
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
+        }
+    }
+
+    public static class Trino {
+        private int port = 8093;
+
+        public int getPort() {
+            return port;
+        }
+
+        public void setPort(int port) {
+            this.port = port;
         }
     }
 

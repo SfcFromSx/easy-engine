@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| QUERY-TRINO-003 | ADD TRINO JDBC COMPATIBILITY PORT FOR BENCHMARK | query, benchmark | `query` now serves Kylin JDBC on `8092` plus a minimal Trino JDBC `/v1/statement` surface on `8093`, explicit Trino `PREPARE` / `EXECUTE ... USING ...` / `DEALLOCATE PREPARE` flows are covered against the real query service, benchmark now has Trino JDBC statement/prepared regression coverage, and `mvn -q -pl analyze,query -am test`, `mvn -q -f benchmark/pom.xml test`, and `npm --prefix benchmark/frontend run build` all passed. |
 | MGR-CACHE-001 | ADD REDIS CACHE MANAGER CREATE AND EDIT SUPPORT | manager | Manager cache management now supports `kylin_cache:` summary/list/detail/create/update/delete from the existing `/cache` page and `/api/v1/cache/keys*` APIs; focused backend controller tests plus frontend tests/build pass; the stock `mvn -q -f manager/pom.xml test` command remains blocked by the unrelated current-workspace `JdbcSqlAdvisorService` constructor issue. |
 | BENCH-BUG-002 | RECOVER RUNNING BENCHMARK RUNS LEFT BY SERVICE RESTARTS | benchmark | Benchmark now immediately fails any `RUNNING` rows left behind by a benchmark-service restart instead of waiting for the 15-minute stale timeout, local Kylin readiness was restored on port `17070`, run `#8` was auto-recovered to `FAILED` during benchmark restart, and `mvn -q -f benchmark/pom.xml test` plus `npm --prefix benchmark/frontend run build` passed. |
 | BENCH-BUG-001 | REMOVE SYNTHETIC ACCESSOR DEPENDENCY FROM BENCHMARK RUN DISPATCH | benchmark | Benchmark run dispatch now uses an explicit static after-commit synchronization helper instead of an anonymous inner callback, so the compiled backend no longer depends on `BenchmarkExecutionService.access$000(...)`; `mvn -q -f benchmark/pom.xml clean test` and `npm --prefix benchmark/frontend run build` both pass, and `javap` confirms the synthetic bridge method is gone. |
@@ -107,6 +108,29 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
     - Escalation: none
   - **2026-04-03 — doc-garden**
     - Updated `docs/modules/manager.md` and `docs/architecture/http-interfaces.md` so the manager operator notes and HTTP surface now document cache summary/list/detail/create/update/delete behavior and the no-rename cache-edit constraint.
+
+### QUERY-TRINO-003: ADD TRINO JDBC COMPATIBILITY PORT FOR BENCHMARK
+
+- **Status**: done
+- **Updated**: 2026-04-03
+- **Progress log**:
+  - **2026-04-03 — intake**
+    - Human requested a new Trino JDBC-compatible `query` port in addition to the existing Kylin JDBC surface, with benchmark regression coverage proving `benchmark` can use `io.trino.jdbc.TrinoDriver` against the new port.
+    - Scope for this task: add a default `8093` Trino JDBC compatibility port to `query`, implement the minimum `/v1/statement` behavior needed for benchmark `Statement` and `PreparedStatement` flows, keep the existing Kylin `8092` path unchanged, add focused query and benchmark regressions, update the canonical docs, and close the work through the required ledger/archive workflow.
+  - **2026-04-03 — implementation**
+    - Files changed: `query/src/main/java/com/smartbi/query/config/{QueryProperties,TrinoCompatibilityPortConfig}.java`, `query/src/main/java/com/smartbi/query/web/{QueryController,TrinoStatementController}.java`, `query/src/main/java/com/smartbi/query/trino/TrinoStatementService.java`, `query/src/main/resources/application-{dev,test,pro}.yml`, `query/src/test/java/com/smartbi/query/web/TrinoJdbcCompatibilityIntegrationTest.java`, `benchmark/pom.xml`, `benchmark/src/test/java/com/smartbi/benchmark/run/BenchmarkAsyncRunnerTrinoJdbcIntegrationTest.java`, `docs/modules/{query,benchmark,query-test-matrix,benchmark-test-matrix}.md`, `docs/architecture/{runtime-topology,service-capabilities}.md`, `docs/operations/local-development.md`, `tasks.md`, and `INBOX.md`.
+    - Commands run: `rg`, `sed`, `javap`, `jshell`, `mvn -q -pl analyze,query -am -Dtest=TrinoJdbcCompatibilityIntegrationTest -DfailIfNoTests=false test`, `mvn -q -f benchmark/pom.xml -Dtest=BenchmarkAsyncRunnerTrinoJdbcIntegrationTest test`.
+    - Result: Added a second embedded `query` listener on `engine.query.trino.port` (`8093` by default), implemented a minimal Trino `/v1/statement` adapter that translates plain SQL plus explicit `PREPARE` / `EXECUTE ... USING ...` / `DEALLOCATE PREPARE` flows into the existing query execution service, and added dedicated query/benchmark Trino JDBC regression coverage without changing benchmark's default Kylin datasource path.
+  - **2026-04-03 — review**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Notes: Preserved the current `ENGINE`-based routing contract already present in the dirty worktree, kept Kylin compatibility isolated to `8092`, scoped Trino compatibility to execution-only behavior with no metadata browsing, and kept benchmark's Trino regression self-contained so `mvn -q -f benchmark/pom.xml test` still works without requiring the `query` module as a compile-time dependency.
+  - **2026-04-03 — verification**
+    - Validation status: approved
+    - Evidence: `mvn -q -pl analyze,query -am test` passed; `mvn -q -f benchmark/pom.xml test` passed; `npm --prefix benchmark/frontend run build` passed. Benchmark's Trino JDBC tests still print upstream JaCoCo/JDK 25 instrumentation warnings from Trino-triggered JDK security/provider classes, but the Maven test run exits successfully and the new regression assertions pass.
+    - Next action: none
+    - Escalation: none
+  - **2026-04-03 — doc-garden**
+    - Updated the canonical English docs so runtime topology, local-development guidance, query capability contracts, and benchmark/query test matrices now describe the `8092` Kylin port, the `8093` Trino `/v1/statement` compatibility port, and benchmark's new Trino JDBC regression coverage.
 
 ### BENCH-BUG-002: RECOVER RUNNING BENCHMARK RUNS LEFT BY SERVICE RESTARTS
 

@@ -54,7 +54,7 @@ Coverage evidence for this matrix is emitted by `mvn -q -f query/pom.xml test` u
 
 | Production function | Meaningful branches | Automated tests |
 |---|---|---|
-| `SqlRouteService#routeAndRewrite` | default routing; `YH_TARGET_ENGINE` precedence over `engine`; unknown datasource fallback; case-insensitive adapter lookup; `parsed == null` | `SqlRouteServiceTest#shouldRouteToDefaultDatasourceWhenNoHintsArePresent`, `SqlRouteServiceTest#shouldPreferYhTargetEngineOverDriverEngineHint`, `SqlRouteServiceTest#shouldFallbackToDefaultDatasourceWhenTargetIsUnknown`, `SqlRouteServiceTest#shouldUseDatasourceTypeLookupCaseInsensitively`, `SqlRouteServiceTest#shouldHandleNullParsedSqlByPassingThroughOriginalSql`, `QueryWebIntegrationTest#shouldRouteByPreservedMetadataHint` |
+| `SqlRouteService#routeAndRewrite` | default routing; parsed `ENGINE`; legacy `YH_TARGET_ENGINE` ignored for routing; Redis override by `YH_RPTID`; unknown datasource fallback; case-insensitive adapter lookup; `parsed == null` | `SqlRouteServiceTest#shouldRouteToDefaultDatasourceWhenNoHintsArePresent`, `SqlRouteServiceTest#shouldPreferEngineOverLegacyYhTargetEngine`, `SqlRouteServiceTest#shouldOverrideExplicitEngineWithRedisValueForReportId`, `SqlRouteServiceTest#shouldFallbackToDefaultDatasourceWhenTargetIsUnknown`, `SqlRouteServiceTest#shouldUseDatasourceTypeLookupCaseInsensitively`, `SqlRouteServiceTest#shouldHandleNullParsedSqlByPassingThroughOriginalSql`, `QueryWebIntegrationTest#shouldRouteByPreservedMetadataHint` |
 
 ### `QueryCacheService`
 
@@ -74,6 +74,13 @@ Coverage evidence for this matrix is emitted by `mvn -q -f query/pom.xml test` u
 | `QueryExecutionService#bindParameters` | converted parameter binding to prepared statement for non-Kylin datasources | `QueryExecutionServiceTest#shouldExecutePreparedQueriesAndBindConvertedParameters`, `QueryWebIntegrationTest#shouldPublishPreparedExecutionModeInTracePayload` |
 | `QueryExecutionService#convertValue` | supported scalar/date/time/timestamp conversions; null param/value; unsupported class fallback | `QueryExecutionServiceTest#shouldConvertSupportedParameterTypesAndFallbackToRawStrings` |
 | `QueryExecutionService#resolveExecutionMode` | no params => statement; params => prepared | `QueryExecutionServiceTest#shouldResolveExecutionModeFromParameterPresence`, `QueryWebIntegrationTest#shouldPublishStatementExecutionModeInTracePayload`, `QueryWebIntegrationTest#shouldPublishPreparedExecutionModeInTracePayload` |
+
+### `TrinoStatementService`
+
+| Production function | Meaningful branches | Automated tests |
+|---|---|---|
+| `TrinoStatementService#execute` | plain statement query; explicit `PREPARE`; explicit `EXECUTE ... USING ...`; explicit `DEALLOCATE PREPARE`; `EXECUTE IMMEDIATE`; missing prepared statement; unsupported `USING` literal; non-query passthrough rejection | `TrinoJdbcCompatibilityIntegrationTest#shouldExecuteStatementQueriesThroughTrinoJdbcPort`, `TrinoJdbcCompatibilityIntegrationTest#shouldExecutePreparedQueriesThroughTrinoJdbcPort`, `TrinoJdbcCompatibilityIntegrationTest#shouldRejectMissingPreparedStatementsAndUnsupportedUsingLiterals`, `TrinoJdbcCompatibilityIntegrationTest#shouldRejectNonQuerySqlThroughTrinoJdbcPort` |
+| `TrinoStatementService#toColumns` / `#toRows` / `#finishedStats` | result-set translation into Trino JDBC response shape | `TrinoJdbcCompatibilityIntegrationTest#shouldExecuteStatementQueriesThroughTrinoJdbcPort`, `TrinoJdbcCompatibilityIntegrationTest#shouldRouteEngineTaggedQueriesThroughTrinoJdbcPort` |
 
 ### `QueryResultMapper`
 
@@ -124,7 +131,7 @@ Coverage evidence for this matrix is emitted by `mvn -q -f query/pom.xml test` u
 The following classes are excluded from the required traceability inventory because they are boilerplate value holders, Spring wiring, pass-through wrappers, or repository declarations rather than branch-heavy handwritten logic:
 
 - DTO/entity/config/value-holder boilerplate: `PreparedQueryRequestDto`, `StatementParameterDto`, `SqlResponseStubDto`, `SqlExecutionRecord`, `SqlPatternStats`, `SqlMetadata`, `TracePayload`, `RoutedSql`, `DataSourceDefinition`
-- Spring bootstrapping/wiring/pass-through code: `EngineQueryApplication`, `QueryInfrastructureConfig`, `WebConfig`, `QueryController`, `PassThroughSqlAdapter`
+- Spring bootstrapping/wiring/pass-through code: `EngineQueryApplication`, `QueryInfrastructureConfig`, `TrinoCompatibilityPortConfig`, `WebConfig`, `QueryController`, `TrinoStatementController`, `PassThroughSqlAdapter`
 - repository interfaces: `SqlExecutionRecordRepository`, `SqlPatternStatsRepository`, `QueryCacheStore`, `TraceWriter`, `SqlAdapter`
 
 ## Coverage Notes

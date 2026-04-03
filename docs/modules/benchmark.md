@@ -18,6 +18,8 @@ benchmark (Kylin JDBC) -> query -> Kylin / Presto / Hive
 
 Benchmark connects to `query` using the standard Apache Kylin JDBC driver (`jdbc:kylin://localhost:8092/<project>`). Additional JDBC driver JARs can be uploaded via the Benchmark UI under Data Sources > Upload Driver, then reused for datasource tests, debug queries, and benchmark runs.
 
+Benchmark's default seeded/query-gateway path stays on Kylin JDBC and port `8092`. For regression or operator scenarios that need Trino JDBC semantics against `query`, create a datasource with `driverClass=io.trino.jdbc.TrinoDriver` and a URL such as `jdbc:trino://localhost:8093/<catalog>/<schema>`. The Trino port is intentionally a minimal execution surface and does not provide metadata browsing.
+
 ## Prepared Execution Notes
 
 - Jobs without a linked test set execute from SQL Lib.
@@ -42,6 +44,7 @@ Benchmark connects to `query` using the standard Apache Kylin JDBC driver (`jdbc
 - `GET /api/v1/preflight` only performs live probes for Kylin REST and Presto. The returned `mysql.status=OK` row is currently a UI shortcut based on the benchmark service already starting with its configured MySQL datasource; it is not a live socket/query probe and should not be treated as standalone database liveness evidence.
 - Benchmark preflight probe endpoints and Kylin credentials are configuration-driven through `benchmark.preflight.*`. The benchmark module no longer hard-codes those probe values in Java; operators can override them with `BENCHMARK_PREFLIGHT_KYLIN_AUTH_URL`, `BENCHMARK_PREFLIGHT_KYLIN_USER`, `BENCHMARK_PREFLIGHT_KYLIN_PASSWORD`, and `BENCHMARK_PREFLIGHT_PRESTO_INFO_URL`.
 - Benchmark run diagnostics now record an explicit execution-mode summary in `jobSnapshotJson` and `evaluationJson`, including mixed-mode source sets when a run combines `STATEMENT` and `PREPARED_STATEMENT` SQL sources.
+- Benchmark regression coverage now also exercises Trino JDBC statement and prepared execution against a minimal `/v1/statement`-compatible gateway so the benchmark runner keeps working when a datasource is configured with `io.trino.jdbc.TrinoDriver`.
 - Failed or partially failed benchmark runs now persist a grouped `failureBreakdown` in `evaluationJson` and `/api/v1/runs/{id}/context`, with SQL label, execution mode, routed target, failure count, and a bounded sample message for each diagnostic group.
 - For failed runs with no valid samples, `evaluationJson.verdict`, `summary`, `phase`, `issues`, `diagnostics.failureBreakdown`, and `meta.executionModeSummary` are the stable contract. The failure-path `metrics.note` and `jdbcComparisonHints.dimensions` content remain best-effort placeholder guidance rather than measured latency/QPS output.
 - The dashboard active-run card reads `/api/v1/runs/active`; that endpoint now reconciles stale `RUNNING` rows before responding, immediately fails any `RUNNING` row left behind by a benchmark-service restart, and returns the most recently started live run when more than one exists.

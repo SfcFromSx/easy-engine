@@ -13,16 +13,18 @@ This file summarizes the current functional surface of the Easy Engine services.
 
 | Capability | Status | Notes |
 |---|---|---|
-| Accept query requests | `Implemented` | `POST /kylin/api/query` is the supported public interface. |
+| Accept Kylin compatibility requests | `Implemented` | `POST /kylin/api/query` remains the primary public interface on port `8092`. |
+| Accept minimal Trino JDBC requests | `Implemented` | `POST /v1/statement` on port `8093` supports benchmark-oriented statement / explicit-prepare / execute / deallocate flows only. |
 | Execute read-only SQL on the default datasource | `Implemented` | Statement execution is direct; prepared execution stays supported, with Kylin-routed prepared requests literalized inside `query` before execution. |
 | Reject non-query SQL | `Implemented` | Non-query statements return an exception-style response. |
-| Route queries by preserved metadata | `Implemented` | `YH_TARGET_ENGINE` is the only routing hint; executable SQL is normalized with a leading `YH_TARGET_ENGINE` comment and otherwise falls back to the default datasource. |
+| Route queries by preserved metadata | `Implemented` | Routing uses `ENGINE`, with optional Redis override by `YH_RPTID`; executable SQL is normalized with a leading `ENGINE` comment and otherwise falls back to the default datasource. |
 | Consume shared analyze module for routing and SQL parsing | `Implemented` | `query` uses the shared `analyze` jar for comment parsing, routing rewrite analysis, and dialect-adapter hooks. |
 | Redis-backed query cache | `Implemented` | Includes datasource isolation, TTL, cache key override, and bypass semantics. |
 | Prepared-parameter cache fingerprinting | `Implemented` | Prepared inputs participate in cache identity. |
 | Trace writing to MySQL | `Implemented` | Query execution writes trace records directly to MySQL with `executionMode` and an optional failed-prepared `parameterPayload`. |
 | Multiple datasource registry | `Implemented` | Default plus named routed datasources are supported. |
 | JDBC authentication handshake shim | `Implemented` | `GET`/`POST /kylin/api/user/authentication` returns a lightweight authenticated payload for Kylin JDBC clients that connect to `query`. |
+| Trino metadata browsing | `Out of Scope` | The Trino compatibility port does not implement catalog/schema/table/column browsing. |
 | Independent authentication API | `Out of Scope` | Query does not expose a standalone login/session API beyond the JDBC handshake shim. |
 | Independent metadata catalog API | `Out of Scope` | Metadata APIs were removed from query. |
 | Query cancellation controls | `Planned` | No operator kill or cancel endpoint exists today. |
@@ -67,6 +69,7 @@ This file summarizes the current functional surface of the Easy Engine services.
 | Previous-run comparison delta | `Implemented` | Context endpoint compares with prior completed runs. |
 | Stale running-run recovery on startup | `Implemented` | Orphan `RUNNING` rows are reconciled to `FAILED`. |
 | PreparedStatement benchmark execution | `Implemented` | SQL Lib and linked test sets can drive prepared execution. |
+| Benchmark execution through Trino JDBC datasource | `Implemented` | Regression coverage now verifies statement and prepared benchmark runs against a Trino-compatible `/v1/statement` gateway. |
 | Prepared SQL debug tooling in datasource query path | `Partial` | Datasource debug is still statement-oriented. |
 | Run cancel / stop / abort | `Planned` | No stop endpoint exists today. |
 
@@ -78,4 +81,5 @@ This file summarizes the current functional surface of the Easy Engine services.
 | Trace contract between `query` and `manager` | `Implemented` | Query writes directly to MySQL; manager reads from the same DB. |
 | Shared `analyze` module without a fourth service | `Implemented` | Runtime topology stays at three services while `query` and `manager` share in-process SQL analysis code. |
 | Benchmark path via Kylin JDBC to query | `Implemented` | Standard path is `benchmark (Kylin JDBC) -> query`. |
+| Optional benchmark path via Trino JDBC to query | `Implemented` | Available for datasources that point `io.trino.jdbc.TrinoDriver` at query's `8093` compatibility port. |
 | Full scheduler platform in manager | `Partial` | Architecture expects more than the current codebase exposes. |

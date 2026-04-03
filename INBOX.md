@@ -32,6 +32,15 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Suggested next step: Keep the task ledger, archive, and eventual task commit aligned while `QUERY-TRINO-003` is implemented and verified.
 - Human decision: pending
 
+### INBOX-20260403-006
+- Area: Harness audit trail
+- Related task(s): `QUERY-TRINO-003`
+- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-03 to archive the completion of `QUERY-TRINO-003` after adding the new Trino JDBC compatibility port and benchmark regression coverage.
+- Evidence: The active ledger row/section for `QUERY-TRINO-003` were removed from `tasks.md`, its full progress log and done signal were archived under `tasks-done.md`, and the archived evidence records the `8093` Trino `/v1/statement` surface plus the completed query/benchmark validation runs.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edits as ad hoc bookkeeping rather than the required task closeout workflow.
+- Suggested next step: Keep the archived task entry and the eventual task commit aligned; the active ledger should continue to track only `CONFIG-REVIEW-001`.
+- Human decision: pending
+
 ### INBOX-20260403-004
 - Area: Harness audit trail
 - Related task(s): `MGR-CACHE-001`

@@ -41,6 +41,7 @@ flowchart LR
 - `manager`: `8090`
 - `benchmark`: `8091`
 - `query`: `8092`
+- `query` Trino compatibility: `8093`
 - `mysql`: `3307`
 - `redis`: `6380`
 - `kylin`: `17070`
@@ -49,6 +50,7 @@ flowchart LR
 ## Operational Notes
 
 - `benchmark` connects to `query` using the standard Apache Kylin JDBC driver (`jdbc:kylin://localhost:8092/<project>`).
+- `query` exposes a second listener on `8093` for the minimal Trino JDBC `/v1/statement` flow used by benchmark-oriented Trino clients.
 - `query` fetches datasource configurations from `manager` on startup. It falls back to static config if manager is unreachable.
 - `query` writes execution trace records directly to MySQL; no Redis trace queue is used.
 - `query` should keep serving traffic if Redis is unavailable by degrading to direct datasource execution, and result-cache writes are scheduled asynchronously as best-effort work.

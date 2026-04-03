@@ -1,13 +1,14 @@
 # Query Module
 
-`query` is the Easy Engine query execution service. It accepts read-only query traffic via the standard Apache Kylin JDBC protocol, uses the shared `analyze` module to parse comments and preserved metadata, routes to the selected datasource, manages a Redis-backed result cache with synchronous reads plus best-effort asynchronous writes, and writes trace records directly to MySQL.
+`query` is the Easy Engine query execution service. It accepts read-only query traffic via the standard Apache Kylin JDBC protocol on port `8092`, exposes a minimal Trino JDBC compatibility surface on port `8093`, uses the shared `analyze` module to parse comments and preserved metadata, routes to the selected datasource, manages a Redis-backed result cache with synchronous reads plus best-effort asynchronous writes, and writes trace records directly to MySQL.
 
 ## Responsibilities
 
 - Serve `POST /kylin/api/query`.
+- Serve `POST /v1/statement` on the Trino compatibility port for benchmark-oriented Trino JDBC clients.
 - Preserve compatibility with `PreparedQueryRequest` and `SQLResponseStub` expectations.
 - Define the routing, caching, preserved metadata, and trace semantics that adapter layers must preserve.
-- Route only by preserved routing metadata such as `YH_TARGET_ENGINE`; driver-style `engine` hints are stripped and ignored.
+- Route only by the parsed `ENGINE` field, with optional Redis override by `YH_RPTID`; legacy `YH_TARGET_ENGINE` metadata is preserved for parsing but ignored for routing.
 - Publish trace payloads with explicit `executionMode` values so downstream operators can distinguish `STATEMENT` from `PREPARED_STATEMENT` without SQL-text inspection.
 - Publish a dedicated `parameterPayload` field for failed prepared executions, derived from the submitted `params` DTOs as readable JSON text so operators can debug bindings without stack-trace scraping or `rawPayload` inspection.
 
@@ -15,8 +16,11 @@
 
 - `query` intentionally exposes `POST /kylin/api/query` plus a lightweight `GET`/`POST /kylin/api/user/authentication` handshake shim on its Kylin-shaped surface.
 - The authentication shim returns a static authenticated payload so Kylin JDBC clients can complete their connection handshake against `query`; it is not a standalone login/session API.
+- `query` also exposes `POST /v1/statement` on `engine.query.trino.port` for the minimum Trino JDBC flow that benchmark needs: statement execution, explicit `PREPARE`, `EXECUTE ... USING ...`, and `DEALLOCATE PREPARE`.
+- The Trino compatibility surface is intentionally narrow: it returns single-response results with no `nextUri` pagination, does not implement metadata browsing, and is not a general-purpose replacement for a full Trino coordinator.
 - Compatibility endpoints such as `/kylin/api/tables_and_columns` are not implemented in `query`; requests to those paths should expect `404`.
 - Basic Auth compatibility for actual query execution remains limited to `/kylin/api/query` when `engine.query.auth.*` is configured.
+- Trino compatibility authentication is limited to checking `X-Trino-User` against `engine.query.auth.username` when that username is configured; password-oriented Trino auth flows are out of scope.
 - Metadata browsing is out of scope for `query`; use the upstream datasource or a real Kylin deployment if a client still depends on Kylin metadata endpoints.
 
 ## Request Contract
@@ -73,18 +77,21 @@
 
 Query-side routing precedence is:
 
-1. preserved metadata comments such as `YH_TARGET_ENGINE`
-2. the default datasource fallback
+1. Redis override keyed by `YH_RPTID`
+2. parsed `ENGINE`
+3. the default datasource fallback
 
-- `query` rewrites executable SQL to start with a normalized `/* YH_TARGET_ENGINE=... */` comment.
+- `query` rewrites executable SQL to start with a normalized `/* ENGINE=... */` comment.
+- Legacy `YH_TARGET_ENGINE` is parsed as metadata only and removed from normalized execution SQL.
 - Active acceleration matches can add `cache-table=<schema>.<table>` to that leading comment, while phase 1 keeps the SQL body unchanged.
 
 - The standard benchmark path is `benchmark (Kylin JDBC) -> query`.
+- Benchmark keeps that Kylin path as the default local/operator flow; the Trino port exists as an additional compatibility option when a benchmark datasource uses `io.trino.jdbc.TrinoDriver`.
 - Trino datasource configs should use `type=trino`, `driverClass=io.trino.jdbc.TrinoDriver`, and a normal Trino JDBC URL such as `jdbc:trino://host:8080/catalog/schema`.
 - When a JDBC client must select a specific engine, preserved metadata comments are the reliable mechanism:
 
 ```sql
-/* YH_TARGET_ENGINE=presto_local */
+/* ENGINE=presto_local */
 SELECT count(*) FROM nation
 ```
 
@@ -99,6 +106,11 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 `application-dev.yml`, `application-test.yml`, and `application-pro.yml`. Use
 `SPRING_PROFILES_ACTIVE=test` or `SPRING_PROFILES_ACTIVE=pro` outside local
 development instead of relying on code-level defaults.
+
+The default local port split is:
+
+- `8092`: Kylin JDBC compatibility (`/kylin/api/*`)
+- `8093`: Trino JDBC compatibility (`/v1/statement`)
 
 ## Verify
 
