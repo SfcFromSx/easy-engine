@@ -23,6 +23,11 @@ spring:
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
+  redis:
+    host: ${REDIS_HOST}
+    port: ${REDIS_PORT:6380}
+    password: ${REDIS_PASSWORD:}
+    database: ${REDIS_DATABASE:0}
 
 server:
   port: ${SERVER_PORT:8090}

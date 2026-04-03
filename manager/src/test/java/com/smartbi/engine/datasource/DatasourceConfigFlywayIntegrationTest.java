@@ -35,9 +35,12 @@ class DatasourceConfigFlywayIntegrationTest {
     @DynamicPropertySource
     static void flywayProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", DatasourceConfigFlywayIntegrationTest::baselineJdbcUrl);
-        registry.add("spring.datasource.driver-class-name", () -> ManagerTestFixtures.get("manager.test.shared.driver-class-name"));
-        registry.add("spring.datasource.username", () -> ManagerTestFixtures.get("manager.test.shared.username"));
-        registry.add("spring.datasource.password", () -> ManagerTestFixtures.get("manager.test.shared.password"));
+        registry.add("spring.datasource.driver-class-name",
+                () -> ManagerTestFixtures.get("manager.test.shared.driver-class-name"));
+        registry.add("spring.datasource.username",
+                () -> ManagerTestFixtures.get("manager.test.shared.username"));
+        registry.add("spring.datasource.password",
+                () -> ManagerTestFixtures.get("manager.test.shared.password"));
         registry.add("spring.flyway.enabled", () -> true);
         registry.add("spring.flyway.locations", () -> "classpath:db/migration");
         registry.add("spring.flyway.baseline-on-migrate", () -> true);

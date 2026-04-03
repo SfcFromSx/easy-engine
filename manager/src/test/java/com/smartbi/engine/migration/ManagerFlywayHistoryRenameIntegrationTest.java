@@ -23,16 +23,20 @@ class ManagerFlywayHistoryRenameIntegrationTest {
     @DynamicPropertySource
     static void flywayProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", ManagerFlywayHistoryRenameIntegrationTest::legacyFlywayJdbcUrl);
-        registry.add("spring.datasource.driver-class-name", () -> ManagerTestFixtures.get("manager.test.shared.driver-class-name"));
-        registry.add("spring.datasource.username", () -> ManagerTestFixtures.get("manager.test.shared.username"));
-        registry.add("spring.datasource.password", () -> ManagerTestFixtures.get("manager.test.shared.password"));
+        registry.add("spring.datasource.driver-class-name",
+                () -> ManagerTestFixtures.get("manager.test.shared.driver-class-name"));
+        registry.add("spring.datasource.username",
+                () -> ManagerTestFixtures.get("manager.test.shared.username"));
+        registry.add("spring.datasource.password",
+                () -> ManagerTestFixtures.get("manager.test.shared.password"));
         registry.add("spring.flyway.enabled", () -> true);
         registry.add("spring.flyway.locations", () -> "classpath:db/migration");
         registry.add("spring.flyway.baseline-on-migrate", () -> false);
     }
 
     @Test
-    // Covers FlywayConfig#managerFlywayMigrationStrategy against a legacy manager schema history table.
+    // Covers FlywayConfig#managerFlywayMigrationStrategy against a legacy manager
+    // schema history table.
     void shouldRenameLegacyFlywayHistoryAndPrefixManagerTables() {
         assertEquals(Integer.valueOf(1), jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE LOWER(table_name) = 'manager_flyway_schema_history'",

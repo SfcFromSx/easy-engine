@@ -39,7 +39,8 @@ class ManagerDashboardBootstrapIntegrationTest {
     @DynamicPropertySource
     static void flywayProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", ManagerDashboardBootstrapIntegrationTest::jdbcUrl);
-        registry.add("spring.datasource.driver-class-name", () -> ManagerTestFixtures.get("manager.test.shared.driver-class-name"));
+        registry.add("spring.datasource.driver-class-name",
+                () -> ManagerTestFixtures.get("manager.test.shared.driver-class-name"));
         registry.add("spring.datasource.username", () -> ManagerTestFixtures.get("manager.test.shared.username"));
         registry.add("spring.datasource.password", () -> ManagerTestFixtures.get("manager.test.shared.password"));
         registry.add("spring.flyway.enabled", () -> true);
@@ -50,32 +51,37 @@ class ManagerDashboardBootstrapIntegrationTest {
     @Test
     // Covers the default Flyway bootstrap path used by the dashboard data APIs.
     void shouldLeaveDashboardApisEmptyUntilLiveDataArrives() throws Exception {
-        assertEquals(Long.valueOf(0L), jdbcTemplate.queryForObject("SELECT COUNT(*) FROM manager_sql_execution_record", Long.class));
-        assertEquals(Long.valueOf(0L), jdbcTemplate.queryForObject("SELECT COUNT(*) FROM manager_sql_pattern_stats", Long.class));
-        assertEquals(Long.valueOf(0L), jdbcTemplate.queryForObject("SELECT COUNT(*) FROM manager_acceleration_table", Long.class));
-        assertEquals(Long.valueOf(2L), jdbcTemplate.queryForObject("SELECT COUNT(*) FROM manager_query_datasource_config", Long.class));
-        assertEquals(Long.valueOf(8L), jdbcTemplate.queryForObject("SELECT MAX(installed_rank) FROM manager_flyway_schema_history", Long.class));
+        assertEquals(Long.valueOf(0L),
+                jdbcTemplate.queryForObject("SELECT COUNT(*) FROM manager_sql_execution_record", Long.class));
+        assertEquals(Long.valueOf(0L),
+                jdbcTemplate.queryForObject("SELECT COUNT(*) FROM manager_sql_pattern_stats", Long.class));
+        assertEquals(Long.valueOf(0L),
+                jdbcTemplate.queryForObject("SELECT COUNT(*) FROM manager_acceleration_table", Long.class));
+        assertEquals(Long.valueOf(3L),
+                jdbcTemplate.queryForObject("SELECT COUNT(*) FROM manager_query_datasource_config", Long.class));
+        assertEquals(Long.valueOf(8L), jdbcTemplate
+                .queryForObject("SELECT MAX(installed_rank) FROM manager_flyway_schema_history", Long.class));
 
         JsonNode summary = JSON.readTree(mockMvc.perform(get("/api/v1/stats/summary"))
-                        .andExpect(status().isOk())
-                        .andReturn()
-                        .getResponse()
-                        .getContentAsString());
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString());
         JsonNode patterns = JSON.readTree(mockMvc.perform(get("/api/v1/patterns/top"))
-                        .andExpect(status().isOk())
-                        .andReturn()
-                        .getResponse()
-                        .getContentAsString());
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString());
         JsonNode traces = JSON.readTree(mockMvc.perform(get("/api/v1/traces"))
-                        .andExpect(status().isOk())
-                        .andReturn()
-                        .getResponse()
-                        .getContentAsString());
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString());
         JsonNode accelerations = JSON.readTree(mockMvc.perform(get("/api/v1/acceleration-tables"))
-                        .andExpect(status().isOk())
-                        .andReturn()
-                        .getResponse()
-                        .getContentAsString());
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString());
 
         assertEquals(0, summary.path("totalTraces").asInt());
         assertEquals(0, summary.path("patternCount").asInt());

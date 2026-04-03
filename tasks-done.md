@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| MGR-TEST-002 | ALIGN MANAGER MIGRATION TESTS WITH REDIS-ENABLED ENGINE ROUTING | manager | Manager now keeps the Redis dependency/profile wiring required by the new `ENGINE` routing path, the leftover Flyway/bootstrap tests are cleaned up and aligned with the current seeded datasource count, and the focused validation remains blocked only by the pre-existing `JdbcSqlAdvisorService` constructor issue during Spring context startup. |
 | QUERY-ENGINE-001 | SWITCH ROUTING TO ENGINE AND ADD REDIS REPORT OVERRIDES | query, manager, analyze, benchmark, docs | Routing now resolves datasource selection from parsed `ENGINE` with optional Redis override by `YH_RPTID`, `YH_TARGET_ENGINE` is parsed as legacy metadata only, normalized execution SQL and JDBC rewrite advice emit `/* ENGINE=... */`, benchmark/E2E samples were updated to the new routing hint, and focused `analyze`, `query`, `manager`, and `benchmark` validations all passed. |
 | QUERY-TRINO-003 | ADD TRINO JDBC COMPATIBILITY PORT FOR BENCHMARK | query, benchmark | `query` now serves Kylin JDBC on `8092` plus a minimal Trino JDBC `/v1/statement` surface on `8093`, explicit Trino `PREPARE` / `EXECUTE ... USING ...` / `DEALLOCATE PREPARE` flows are covered against the real query service, benchmark now has Trino JDBC statement/prepared regression coverage, and `mvn -q -pl analyze,query -am test`, `mvn -q -f benchmark/pom.xml test`, and `npm --prefix benchmark/frontend run build` all passed. |
 | MGR-CACHE-001 | ADD REDIS CACHE MANAGER CREATE AND EDIT SUPPORT | manager | Manager cache management now supports `kylin_cache:` summary/list/detail/create/update/delete from the existing `/cache` page and `/api/v1/cache/keys*` APIs; focused backend controller tests plus frontend tests/build pass; the stock `mvn -q -f manager/pom.xml test` command remains blocked by the unrelated current-workspace `JdbcSqlAdvisorService` constructor issue. |
@@ -85,6 +86,28 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | HARNESS-RUNLOOP-001 | IMPLEMENT A CONTINUOUS RUN-UNTIL-EMPTY HARNESS LOOP | docs | Loop implemented |
 | DOC-LOOP-001 | CONVERT LEGACY DOC REDIRECTS INTO CONCISE CANONICAL POINTERS | docs | Legacy doc/ tree removed; README shims reduced to pointers |
 | DOC-CN-001 | KEEP SELECTED CHINESE MIRRORS ALIGNED WITH ENGLISH SOURCE DOCS | docs | Mirrors synced |
+### MGR-TEST-002: ALIGN MANAGER MIGRATION TESTS WITH REDIS-ENABLED ENGINE ROUTING
+
+- **Status**: done
+- **Updated**: 2026-04-03
+- **Progress log**:
+  - **2026-04-03 — intake**
+    - Human asked to summarize the remaining uncommitted work and then commit the lingering test-related changes.
+    - Investigation confirmed the larger `QUERY-ENGINE-001` routing change is already committed as `8ddf0e2`; the remaining related drift is limited to manager-side follow-up files: `manager/pom.xml`, manager `dev`/`pro` Redis profile config, and three manager Flyway/bootstrap tests that still need formatting cleanup plus one updated seeded-datasource expectation.
+    - Scope for this task: clean up those remaining manager test/config files only, verify the focused manager slice, and close them as a separate task-local commit without staging unrelated dirty worktree changes.
+  - **2026-04-03 — implementation**
+    - Files changed: `manager/pom.xml`, `manager/src/main/resources/application-dev.yml`, `manager/src/main/resources/application-pro.yml`, `manager/src/test/java/com/smartbi/engine/datasource/DatasourceConfigFlywayIntegrationTest.java`, `manager/src/test/java/com/smartbi/engine/migration/ManagerDashboardBootstrapIntegrationTest.java`, `manager/src/test/java/com/smartbi/engine/migration/ManagerFlywayHistoryRenameIntegrationTest.java`.
+    - Commands run: `rg`, `sed`, `git diff`, `mvn -q -f manager/pom.xml -Dtest=DatasourceConfigFlywayIntegrationTest,ManagerDashboardBootstrapIntegrationTest,ManagerFlywayHistoryRenameIntegrationTest test`.
+    - Result: Kept the manager-side Redis dependency/profile wiring that the `ENGINE` routing follow-up still needed, cleaned the leftover migration/bootstrap test formatting drift, and aligned the dashboard bootstrap test with the current seeded datasource count of `3`.
+  - **2026-04-03 — review**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Notes: Scope stayed narrow to the leftover manager config/test files only; no unrelated query/benchmark/frontend changes were included.
+  - **2026-04-03 — verification**
+    - Validation status: blocked by unrelated manager bean-instantiation issue
+    - Evidence: `mvn -q -f manager/pom.xml -Dtest=DatasourceConfigFlywayIntegrationTest,ManagerDashboardBootstrapIntegrationTest,ManagerFlywayHistoryRenameIntegrationTest test` still fails during Spring context startup before reaching the updated assertions because `JdbcSqlAdvisorService` cannot be instantiated (`NoSuchMethodException` for the default constructor).
+    - Next action: none
+    - Escalation: none
+
 ### QUERY-ENGINE-001: SWITCH ROUTING TO ENGINE AND ADD REDIS REPORT OVERRIDES
 
 - **Status**: done

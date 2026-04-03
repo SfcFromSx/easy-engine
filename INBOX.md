@@ -14,6 +14,24 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Do not convert inbox entries directly into implementation tasks without explicit human confirmation.
 - For tooling or infrastructure changes, prefer logging the issue here before changing the harness.
 
+### INBOX-20260403-009
+- Area: Harness audit trail
+- Related task(s): `MGR-TEST-002`
+- Summary: `tasks.md` and `tasks-done.md` were updated on 2026-04-03 to archive the completion of `MGR-TEST-002` after committing the leftover manager test/config follow-up from the `ENGINE` routing work.
+- Evidence: The active ledger row and section for `MGR-TEST-002` were removed from `tasks.md`, its progress log and done signal were archived under `tasks-done.md`, and the archived evidence records that focused validation is still blocked by the unrelated `JdbcSqlAdvisorService` constructor issue.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edits as ad hoc bookkeeping rather than the required closeout workflow for this narrow follow-up task.
+- Suggested next step: Keep the archived task entry and task commit aligned, and leave the separate manager bean-instantiation defect outside this task's staged scope.
+- Human decision: pending
+
+### INBOX-20260403-008
+- Area: Harness audit trail
+- Related task(s): `MGR-TEST-002`
+- Summary: `tasks.md` was updated on 2026-04-03 to intake a follow-up manager test/config cleanup task for the leftover files that did not land in `QUERY-ENGINE-001`.
+- Evidence: The active ledger now includes `MGR-TEST-002` with intake notes limiting scope to the remaining manager Redis dependency/profile wiring and the three migration/bootstrap tests that still needed alignment.
+- Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edit as ad hoc bookkeeping instead of the required intake for this narrow follow-up commit.
+- Suggested next step: Keep the task ledger, archive, and eventual task commit aligned while `MGR-TEST-002` is implemented and verified.
+- Human decision: pending
+
 ### INBOX-20260403-005
 - Area: Harness audit trail
 - Related task(s): `MGR-CACHE-001`
@@ -48,6 +66,15 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Evidence: The active ledger row/section for `QUERY-TRINO-003` were removed from `tasks.md`, its full progress log and done signal were archived under `tasks-done.md`, and the archived evidence records the `8093` Trino `/v1/statement` surface plus the completed query/benchmark validation runs.
 - Impact/Risk: Without an explicit audit note, later recovery could misread the ledger edits as ad hoc bookkeeping rather than the required task closeout workflow.
 - Suggested next step: Keep the archived task entry and the eventual task commit aligned; the active ledger should continue to track only `CONFIG-REVIEW-001`.
+- Human decision: pending
+
+### INBOX-20260403-007
+- Area: Benchmark/JDK tooling compatibility
+- Related task(s): `QUERY-TRINO-003`
+- Summary: The new benchmark Trino JDBC regression passes, but running it on the current JDK 25 environment triggers noisy JaCoCo instrumentation warnings from Trino-driven JDK security/provider classes before the test suite exits successfully.
+- Evidence: `mvn -q -f benchmark/pom.xml test` on 2026-04-03 completed with exit code `0`, but stderr included repeated `IllegalClassFormatException` / `Unsupported class file major version 69` warnings while JaCoCo attempted to instrument `org/ietf/jgss/*` and `org/jcp/xml/dsig/internal/dom/*` classes loaded indirectly by `io.trino.jdbc.TrinoDriver`.
+- Impact/Risk: The benchmark suite is green today, but the warning noise can obscure real failures and signals a JDK 25 versus JaCoCo instrumentation gap that may become a hard failure in stricter environments or future Trino/JDK upgrades.
+- Suggested next step: Decide whether to upgrade or reconfigure JaCoCo for JDK 25, or explicitly exclude the affected JDK security/provider classes from instrumentation in benchmark test runs.
 - Human decision: pending
 
 ### INBOX-20260403-004
