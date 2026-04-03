@@ -1,17 +1,13 @@
 package com.smartbi.query.web;
 
 import com.smartbi.query.EngineQueryApplication;
-import com.smartbi.query.support.QuerySpringTestOverrides;
 import com.smartbi.query.support.QueryTestConfiguration;
-import com.smartbi.query.support.QueryTestFixtures;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -26,23 +22,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(
         classes = EngineQueryApplication.class,
-        webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
+        webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
+        properties = {
+                "server.port=18092",
+                "engine.query.trino.port=18093",
+                "QUERY_TEST_DEFAULT_JDBC_URL=jdbc:h2:mem:querytrinojdbcdefault;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+                "QUERY_TEST_TRINO_JDBC_URL=jdbc:h2:mem:querytrinojdbcnamed;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
+        })
 @Import(QueryTestConfiguration.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class TrinoJdbcCompatibilityIntegrationTest {
 
     private static final String H2_DRIVER_CLASS = "org.h2.Driver";
     private static final String TRINO_DRIVER_CLASS = "io.trino.jdbc.TrinoDriver";
-    private static final String TRINO_URL = QueryTestFixtures.get("query.test.trino-jdbc-compatibility.direct-url");
-
-    @DynamicPropertySource
-    static void properties(DynamicPropertyRegistry registry) {
-        QuerySpringTestOverrides.register(registry);
-        registry.add("server.port", () -> QueryTestFixtures.get("query.test.trino-jdbc-compatibility.server-port"));
-        registry.add("engine.query.trino.port", () -> QueryTestFixtures.get("query.test.trino-jdbc-compatibility.trino-port"));
-        registry.add("QUERY_TEST_DEFAULT_JDBC_URL", () -> QueryTestFixtures.get("query.test.trino-jdbc-compatibility.default-jdbc-url"));
-        registry.add("QUERY_TEST_TRINO_JDBC_URL", () -> QueryTestFixtures.get("query.test.trino-jdbc-compatibility.trino-jdbc-url"));
-    }
+    private static final String TRINO_URL = "jdbc:trino://127.0.0.1:18093/test/default?user=ADMIN";
 
     @Value("${engine.query.datasource.default.jdbc-url}")
     private String defaultJdbcUrl;

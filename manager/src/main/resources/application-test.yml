@@ -30,39 +30,3 @@ server:
 logging:
   level:
     com.smartbi.engine: INFO
-
-manager:
-  test:
-    shared:
-      driver-class-name: org.h2.Driver
-      username: sa
-      password: ""
-      jdbc-options: MODE=MySQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    datasource-config-service:
-      driver-class: com.mysql.jdbc.Driver
-      jdbc-url: jdbc:mysql://example-host/test-db
-      username: svc_user
-      password: ""
-    datasource-lifecycle:
-      default:
-        name: default
-        type: kylin
-        driver-class: org.apache.kylin.jdbc.Driver
-        jdbc-url: jdbc:kylin://localhost:17070/learn_kylin
-        username: ADMIN
-        password: KYLIN
-      presto:
-        name: presto_local
-        type: presto
-        driver-class: com.facebook.presto.jdbc.PrestoDriver
-        jdbc-url: jdbc:presto://localhost:18081/tpch/tiny
-        username: admin
-        password: ""
-        promoted-username: svc_presto
-    flyway:
-      dashboard-db-name: managerdashboardbootstrap
-      datasource-db-name: managerdatasourceflyway
-      trace-db-name: managertraceflyway
-      legacy-db-name: managerlegacyflyway
-      baseline-v4-resource: db/manager-v4-baseline.sql
-      legacy-v8-resource: db/manager-v8-legacy-flyway-baseline.sql

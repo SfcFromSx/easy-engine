@@ -1,7 +1,6 @@
 package com.smartbi.engine.web;
 
 import com.smartbi.engine.datasource.QueryDatasourceConfigRepository;
-import com.smartbi.engine.support.ManagerTestFixtures;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,20 +24,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 class DatasourceConfigLifecycleTest {
 
-    private static final String DEFAULT_NAME = ManagerTestFixtures.get("manager.test.datasource-lifecycle.default.name");
-    private static final String DEFAULT_TYPE = ManagerTestFixtures.get("manager.test.datasource-lifecycle.default.type");
-    private static final String DEFAULT_DRIVER = ManagerTestFixtures.get("manager.test.datasource-lifecycle.default.driver-class");
-    private static final String DEFAULT_JDBC_URL = ManagerTestFixtures.get("manager.test.datasource-lifecycle.default.jdbc-url");
-    private static final String DEFAULT_USERNAME = ManagerTestFixtures.get("manager.test.datasource-lifecycle.default.username");
-    private static final String DEFAULT_PASSWORD = ManagerTestFixtures.get("manager.test.datasource-lifecycle.default.password");
-    private static final String PRESTO_NAME = ManagerTestFixtures.get("manager.test.datasource-lifecycle.presto.name");
-    private static final String PRESTO_TYPE = ManagerTestFixtures.get("manager.test.datasource-lifecycle.presto.type");
-    private static final String PRESTO_DRIVER = ManagerTestFixtures.get("manager.test.datasource-lifecycle.presto.driver-class");
-    private static final String PRESTO_JDBC_URL = ManagerTestFixtures.get("manager.test.datasource-lifecycle.presto.jdbc-url");
-    private static final String PRESTO_USERNAME = ManagerTestFixtures.get("manager.test.datasource-lifecycle.presto.username");
-    private static final String PRESTO_PASSWORD = ManagerTestFixtures.get("manager.test.datasource-lifecycle.presto.password");
-    private static final String PRESTO_PROMOTED_USERNAME = ManagerTestFixtures.get("manager.test.datasource-lifecycle.presto.promoted-username");
-
     @Autowired
     private MockMvc mockMvc;
 
@@ -53,17 +38,18 @@ class DatasourceConfigLifecycleTest {
     @Test
     // Covers DatasourceConfigController#create, DatasourceConfigController#update, and DatasourceConfigController#delete.
     void shouldManageDatasourceCrudLifecycle() throws Exception {
-        String defaultJson = datasourceJson(
-                DEFAULT_NAME,
-                DEFAULT_TYPE,
-                DEFAULT_DRIVER,
-                DEFAULT_JDBC_URL,
-                DEFAULT_USERNAME,
-                DEFAULT_PASSWORD,
-                4,
-                1,
-                10000,
-                true);
+        String defaultJson = "{" +
+                "\"name\":\"default\"," +
+                "\"type\":\"kylin\"," +
+                "\"driverClass\":\"org.apache.kylin.jdbc.Driver\"," +
+                "\"jdbcUrl\":\"jdbc:kylin://localhost:17070/learn_kylin\"," +
+                "\"username\":\"ADMIN\"," +
+                "\"password\":\"KYLIN\"," +
+                "\"maxPoolSize\":4," +
+                "\"minIdle\":1," +
+                "\"connectionTimeoutMs\":10000," +
+                "\"isDefault\":true" +
+                "}";
 
         mockMvc.perform(post("/api/v1/query-datasources")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -72,17 +58,18 @@ class DatasourceConfigLifecycleTest {
                 .andExpect(jsonPath("$.name").value("default"))
                 .andExpect(jsonPath("$.isDefault").value(true));
 
-        String prestoJson = datasourceJson(
-                PRESTO_NAME,
-                PRESTO_TYPE,
-                PRESTO_DRIVER,
-                PRESTO_JDBC_URL,
-                PRESTO_USERNAME,
-                PRESTO_PASSWORD,
-                4,
-                1,
-                10000,
-                false);
+        String prestoJson = "{" +
+                "\"name\":\"presto_local\"," +
+                "\"type\":\"presto\"," +
+                "\"driverClass\":\"com.facebook.presto.jdbc.PrestoDriver\"," +
+                "\"jdbcUrl\":\"jdbc:presto://localhost:18081/tpch/tiny\"," +
+                "\"username\":\"admin\"," +
+                "\"password\":\"\"," +
+                "\"maxPoolSize\":4," +
+                "\"minIdle\":1," +
+                "\"connectionTimeoutMs\":10000," +
+                "\"isDefault\":false" +
+                "}";
 
         mockMvc.perform(post("/api/v1/query-datasources")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -95,56 +82,33 @@ class DatasourceConfigLifecycleTest {
                 .andExpect(jsonPath("$[0].name").value("default"))
                 .andExpect(jsonPath("$[1].name").value("presto_local"));
 
-        long prestoId = repository.findByName(PRESTO_NAME).orElseThrow(AssertionError::new).getId();
+        long prestoId = repository.findByName("presto_local").orElseThrow(AssertionError::new).getId();
         mockMvc.perform(put("/api/v1/query-datasources/{id}", prestoId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(datasourceJson(
-                                PRESTO_NAME,
-                                PRESTO_TYPE,
-                                PRESTO_DRIVER,
-                                PRESTO_JDBC_URL,
-                                PRESTO_PROMOTED_USERNAME,
-                                PRESTO_PASSWORD,
-                                8,
-                                2,
-                                15000,
-                                true)))
+                        .content("{" +
+                                "\"name\":\"presto_local\"," +
+                                "\"type\":\"presto\"," +
+                                "\"driverClass\":\"com.facebook.presto.jdbc.PrestoDriver\"," +
+                                "\"jdbcUrl\":\"jdbc:presto://localhost:18081/tpch/tiny\"," +
+                                "\"username\":\"svc_presto\"," +
+                                "\"password\":\"\"," +
+                                "\"maxPoolSize\":8," +
+                                "\"minIdle\":2," +
+                                "\"connectionTimeoutMs\":15000," +
+                                "\"isDefault\":true" +
+                                "}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value(PRESTO_PROMOTED_USERNAME))
+                .andExpect(jsonPath("$.username").value("svc_presto"))
                 .andExpect(jsonPath("$.maxPoolSize").value(8))
                 .andExpect(jsonPath("$.isDefault").value(true));
 
-        assertEquals(Boolean.FALSE, repository.findByName(DEFAULT_NAME).orElseThrow(AssertionError::new).getIsDefault());
-        assertEquals(Boolean.TRUE, repository.findByName(PRESTO_NAME).orElseThrow(AssertionError::new).getIsDefault());
+        assertEquals(Boolean.FALSE, repository.findByName("default").orElseThrow(AssertionError::new).getIsDefault());
+        assertEquals(Boolean.TRUE, repository.findByName("presto_local").orElseThrow(AssertionError::new).getIsDefault());
 
         mockMvc.perform(delete("/api/v1/query-datasources/{id}", prestoId))
                 .andExpect(status().isNoContent());
 
         assertEquals(1L, repository.count());
-        assertTrue(repository.findByName(DEFAULT_NAME).orElseThrow(AssertionError::new).getIsDefault());
-    }
-
-    private String datasourceJson(String name,
-                                  String type,
-                                  String driverClass,
-                                  String jdbcUrl,
-                                  String username,
-                                  String password,
-                                  int maxPoolSize,
-                                  int minIdle,
-                                  int connectionTimeoutMs,
-                                  boolean isDefault) {
-        return "{"
-                + "\"name\":\"" + name + "\","
-                + "\"type\":\"" + type + "\","
-                + "\"driverClass\":\"" + driverClass + "\","
-                + "\"jdbcUrl\":\"" + jdbcUrl + "\","
-                + "\"username\":\"" + username + "\","
-                + "\"password\":\"" + password + "\","
-                + "\"maxPoolSize\":" + maxPoolSize + ","
-                + "\"minIdle\":" + minIdle + ","
-                + "\"connectionTimeoutMs\":" + connectionTimeoutMs + ","
-                + "\"isDefault\":" + isDefault
-                + "}";
+        assertTrue(repository.findByName("default").orElseThrow(AssertionError::new).getIsDefault());
     }
 }

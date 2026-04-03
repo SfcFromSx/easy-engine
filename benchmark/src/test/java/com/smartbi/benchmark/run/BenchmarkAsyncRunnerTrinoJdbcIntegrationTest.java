@@ -17,7 +17,6 @@ import com.smartbi.benchmark.repo.BenchmarkTestSetItemRepository;
 import com.smartbi.benchmark.repo.BenchmarkTestSetRepository;
 import com.smartbi.benchmark.repo.SqlTemplateRepository;
 import com.smartbi.benchmark.report.BenchmarkRunReportService;
-import com.smartbi.benchmark.support.BenchmarkTestFixtures;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -59,15 +58,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class BenchmarkAsyncRunnerTrinoJdbcIntegrationTest {
 
     private static final ObjectMapper JSON = new ObjectMapper();
-    private static final String TRINO_GATEWAY_HOST = BenchmarkTestFixtures.get("benchmark.test.trino-jdbc-gateway.host");
-    private static final int TRINO_GATEWAY_PORT = Integer.parseInt(
-            BenchmarkTestFixtures.get("benchmark.test.trino-jdbc-gateway.port"));
-    private static final String BENCHMARK_TRINO_JDBC_URL = BenchmarkTestFixtures.get(
-            "benchmark.test.trino-jdbc-gateway.jdbc-url");
-    private static final String DIRECT_TRINO_URL = BenchmarkTestFixtures.get(
-            "benchmark.test.trino-jdbc-gateway.direct-url");
-    private static final String INFO_URI_PREFIX = BenchmarkTestFixtures.get(
-            "benchmark.test.trino-jdbc-gateway.info-uri-prefix");
+    private static final String BENCHMARK_TRINO_JDBC_URL = "jdbc:trino://127.0.0.1:28093/test/default";
+    private static final String DIRECT_TRINO_URL = BENCHMARK_TRINO_JDBC_URL + "?user=ADMIN";
     private static final Pattern PREPARE_PATTERN = Pattern.compile(
             "(?is)^PREPARE\\s+([A-Za-z_][A-Za-z0-9_]*)\\s+FROM\\s+(.+?)\\s*;?\\s*$");
     private static final Pattern EXECUTE_PATTERN = Pattern.compile(
@@ -105,7 +97,7 @@ class BenchmarkAsyncRunnerTrinoJdbcIntegrationTest {
     @BeforeAll
     void startGateway() throws Exception {
         Class.forName("io.trino.jdbc.TrinoDriver");
-        trinoGateway = HttpServer.create(new InetSocketAddress(TRINO_GATEWAY_HOST, TRINO_GATEWAY_PORT), 0);
+        trinoGateway = HttpServer.create(new InetSocketAddress("127.0.0.1", 28093), 0);
         trinoGateway.createContext("/v1/statement", new TrinoStatementHandler());
         trinoGateway.setExecutor(Executors.newCachedThreadPool());
         trinoGateway.start();
@@ -230,7 +222,7 @@ class BenchmarkAsyncRunnerTrinoJdbcIntegrationTest {
             Map<String, Object> response = baseResponse();
             String queryId = "bench_trino_" + System.nanoTime();
             response.put("id", queryId);
-            response.put("infoUri", INFO_URI_PREFIX + queryId);
+            response.put("infoUri", "http://127.0.0.1:28093/v1/statement/" + queryId);
 
             Matcher prepareMatcher = PREPARE_PATTERN.matcher(sql);
             if (prepareMatcher.matches()) {

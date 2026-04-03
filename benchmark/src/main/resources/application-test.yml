@@ -36,51 +36,6 @@ benchmark:
     kylin-user: ADMIN
     kylin-password: KYLIN
     presto-info-url: http://presto/info
-  test:
-    datasource:
-      update:
-        jdbc-url: jdbc:h2:mem:new
-        jdbc-user: sa
-        jdbc-password: pw
-        driver-class: org.h2.Driver
-    smoke:
-      test-datasource:
-        name: test_ds
-        type: h2
-        driver-class: org.h2.Driver
-        jdbc-url: jdbc:h2:mem:test
-        jdbc-user: sa
-        jdbc-password: ""
-    jdbc-upload:
-      test-datasource:
-        name: uploaded-driver
-        driver-class: com.example.uploaded.UploadedH2Driver
-        jdbc-url: jdbc:h2:mem:uploadeddriver;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-        jdbc-user: sa
-        jdbc-password: ""
-    async-runner:
-      target:
-        driver-class: org.h2.Driver
-        jdbc-url: jdbc:h2:mem:benchmarkrunnerexec;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-        jdbc-user: sa
-        jdbc-password: ""
-    query-service:
-      driver-class: org.h2.Driver
-      jdbc-url-prefix: jdbc:h2:mem:benchmark-query-
-      jdbc-url-suffix: ;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-      jdbc-user: sa
-      jdbc-password: ""
-    flyway-seed:
-      mysql-image: mysql:8.4
-      mysql-database: engine_db
-      mysql-username: engine
-      mysql-password: engine123
-    trino-jdbc-gateway:
-      host: 127.0.0.1
-      port: 28093
-      jdbc-url: jdbc:trino://127.0.0.1:28093/test/default
-      direct-url: jdbc:trino://127.0.0.1:28093/test/default?user=ADMIN
-      info-uri-prefix: http://127.0.0.1:28093/v1/statement/
 
 logging:
   level:
