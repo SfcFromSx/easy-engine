@@ -7,6 +7,7 @@ import com.smartbi.query.domain.SqlPatternStats;
 import com.smartbi.query.integration.QueryCacheStore;
 import com.smartbi.query.repo.SqlExecutionRecordRepository;
 import com.smartbi.query.repo.SqlPatternStatsRepository;
+import com.smartbi.query.support.QuerySpringTestOverrides;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.charset.StandardCharsets;
@@ -76,6 +79,11 @@ class QueryTracePersistenceIntegrationTest {
 
     @Value("${engine.query.auth.password}")
     private String authPassword;
+
+    @DynamicPropertySource
+    static void properties(DynamicPropertyRegistry registry) {
+        QuerySpringTestOverrides.register(registry);
+    }
 
     @BeforeEach
     void setUp() throws Exception {

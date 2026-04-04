@@ -9,6 +9,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
 | BP-AUDIT-001 | AUDIT YAML-ONLY / MYSQL-ONLY / REBUILD-FIRST DB GOVERNANCE | platform | Audited the current working tree against the three governance rules, confirmed `.properties` config drift is gone, identified remaining H2 and manager DDL rebuild debt, and split the findings into four follow-up tasks in `tasks.md`. |
+| TEST-CONFIG-003 | KEEP YAML TEST FIXTURES EXPLICIT AND REMOVE HIDDEN SPRING OVERRIDES | tests | `query`, `manager`, and `benchmark` now keep YAML test fixtures as explicit inputs instead of hidden Spring environment mutation; the test-only post-processors and `spring.factories` hooks are gone; focused query/manager/benchmark validation passes under Java 8; and the benchmark stale-resource false positive was eliminated by clean verification. |
 | DDL-REVIEW-001 | AUDIT DB MIGRATIONS FOR PATCH-STYLE SCHEMA DRIFT | platform | Added a repo-wide rule against patch-style schema drift, converted manager trace-column compatibility to rebuild-based normalization, removed audited `ADD COLUMN` remnants from manager/benchmark fresh-schema paths, and verified the focused Flyway plus manager init-db flows. |
 | JAVA8-REVIEW-001 | AUDIT REPO FOR JAVA 8-ONLY DEV VALIDATION CI RUNTIME COMPLIANCE | platform | Added `scripts/with-java8.sh`, routed harness/init-db/docs through the Java 8 wrapper, confirmed the module POMs and spot-checked direct jars still target Java 8 classfiles, and the repo now fails fast instead of silently running Maven flows on the current Java 17/25 workstation. |
 | CONFIG-REVIEW-001 | AUDIT REPO FOR PROFILE-YAML-ONLY ENV CONFIG COMPLIANCE | platform | `manager`, `query`, and `benchmark` now keep environment-shaped test fixtures inside module `application-test.yml` files instead of `src/test/resources/application-test.properties`; the affected test helpers and Spring integration tests read YAML-backed overrides; manager/query reactor tests and benchmark backend tests pass; and the local-development docs now describe the new fixture location. |
@@ -177,6 +178,41 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
     - Evidence: Added `QUERY-MYSQL-TEST-002`, `MANAGER-MYSQL-TEST-002`, `BENCH-MYSQL-TEST-002`, and `MGR-DDL-REBUILD-002` to `tasks.md` so each non-compliant area now has an isolated remediation task.
     - Next action: execute the four follow-up tasks independently so each cleanup can be verified and committed without broad cross-module coupling.
     - Escalation: none
+
+### TEST-CONFIG-003: KEEP YAML TEST FIXTURES EXPLICIT AND REMOVE HIDDEN SPRING OVERRIDES
+
+- **Status**: done
+- **Updated**: 2026-04-04
+- **Module**: tests
+- **Dependencies**: none
+- **Scope**:
+  - Keep `test-fixtures.yml` as the shared checked-in test fixture format for `query`, `manager`, and `benchmark`.
+  - Remove the hidden `EnvironmentPostProcessor` + `spring.factories` injection path so test fixtures are no longer silently merged into the Spring `Environment`.
+  - Replace the hidden path with explicit Spring test overrides where needed, while preserving the non-Spring helper loaders.
+- **Progress log**:
+  - **2026-04-04 — intake**
+    - Human accepted the design direction that YAML fixtures are fine, but they should remain explicit test data rather than a hidden Spring configuration layer.
+    - Initial audit confirmed all three modules currently use `test-fixtures.yml` plus `EnvironmentPostProcessor` entries under `src/test/resources/META-INF/spring.factories`, which is the exact hidden override mechanism this task should remove.
+  - **2026-04-04 — implementation**
+    - Files changed: deleted the three test-only `EnvironmentPostProcessor` classes and their `src/test/resources/META-INF/spring.factories` registrations, added explicit Spring override helpers under `query/src/test/java/com/smartbi/query/support/` and `benchmark/src/test/java/com/smartbi/benchmark/support/`, kept the YAML-backed helper loaders for all three modules, reverted `QueryTestConfiguration` to a single in-memory infrastructure bean, updated the affected Spring tests to use explicit `@DynamicPropertySource` wiring, and applied the Java 8 compatibility fixes needed to run the focused validation path in `query` and `benchmark`.
+    - Commands run: `rg`, `sed`, `git diff`, `find benchmark -path '*/target/test-classes/*' \( -name 'spring.factories' -o -name '*BenchmarkTestEnvironmentPostProcessor*' \) -print`, `bash scripts/with-java8.sh mvn -q -f benchmark/pom.xml clean -Dtest=BenchmarkSmokeTest,JdbcDriverUploadIntegrationTest,BenchmarkAsyncRunnerExecutionModeIntegrationTest test`, `bash scripts/with-java8.sh mvn -q -f query/pom.xml -Dtest=QueryWebIntegrationTest,QueryTracePersistenceIntegrationTest,QueryResultMapperTest,ManagerConfigClientTest,ManagedDataSourceRegistryTest,SqlRouteServiceTest,QueryTrinoRoutingIntegrationTest test`, `bash scripts/with-java8.sh mvn -q -f manager/pom.xml -Dtest=DatasourceConfigFlywayIntegrationTest,ManagerDashboardBootstrapIntegrationTest,ManagerFlywayHistoryRenameIntegrationTest,TraceFlywayExecutionModeIntegrationTest,QueryDatasourceConfigServiceTest test`, `git diff --check`, `python3 scripts/task_audit.py --check`.
+    - Result: YAML fixtures remain checked in and reusable, but Spring tests now opt into them explicitly instead of inheriting them through hidden classpath metadata; the stale benchmark `spring.factories` false positive was traced to leftover build output and removed by clean verification.
+  - **2026-04-04 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: The earlier YAML-fixture cleanup changed the file format but kept a hidden `EnvironmentPostProcessor` plus `spring.factories` layer, so Spring tests still depended on implicit classpath mutation rather than visible test wiring, and stale `target/test-classes` output could keep deleted registrations alive long enough to mislead debugging.
+    - Cure: Removed the hidden post-processors and registrations, switched Spring-backed tests to explicit `@DynamicPropertySource` helpers, kept non-Spring fixture access on direct YAML loaders, and made the focused benchmark Java compiler path work on both Java 8 and newer JDKs so validation reflects the actual source state instead of toolchain drift.
+    - Generalization: "Keep checked-in test fixtures as explicit inputs. Spring tests that need fixture-backed properties should wire them through visible test configuration such as `@DynamicPropertySource`, not hidden `EnvironmentPostProcessor` or `spring.factories` hooks that silently mutate the `Environment`." (added to `docs/operations/best-practices.md`)
+  - **2026-04-04 — verification**
+    - Validation status: approved with unrelated audit drift
+    - Evidence: `bash scripts/with-java8.sh mvn -q -f benchmark/pom.xml clean -Dtest=BenchmarkSmokeTest,JdbcDriverUploadIntegrationTest,BenchmarkAsyncRunnerExecutionModeIntegrationTest test` passed, and `find benchmark/target/test-classes -path '*/META-INF/spring.factories' -print -exec sed -n '1,60p' {} \;` returned no lingering benchmark test `spring.factories` registration after the clean run.
+    - Evidence: `bash scripts/with-java8.sh mvn -q -f query/pom.xml -Dtest=QueryWebIntegrationTest,QueryTracePersistenceIntegrationTest,QueryResultMapperTest,ManagerConfigClientTest,ManagedDataSourceRegistryTest,SqlRouteServiceTest,QueryTrinoRoutingIntegrationTest test` passed with the explicit YAML-backed Spring overrides in place.
+    - Evidence: `bash scripts/with-java8.sh mvn -q -f manager/pom.xml -Dtest=DatasourceConfigFlywayIntegrationTest,ManagerDashboardBootstrapIntegrationTest,ManagerFlywayHistoryRenameIntegrationTest,TraceFlywayExecutionModeIntegrationTest,QueryDatasourceConfigServiceTest test` passed, confirming the manager-side explicit fixture helpers still behave correctly without hidden post-processors.
+    - Evidence: `git diff --check` passed for the task-local file set.
+    - Evidence: `python3 scripts/task_audit.py --check` still reports the pre-existing done-row commit-subject gaps `BENCH-UX-007`, `HARNESS-VALIDATION-001`, `MYSQL-ONLY-001`, and `TEST-CONFIG-002`; no new audit failure specific to this task's ledger wording was introduced.
+    - Next action: none
+    - Escalation: none
+  - **2026-04-04 — doc-garden**
+    - Updated `docs/operations/best-practices.md` with the new explicit test-fixture wiring rule. No additional product or architecture docs needed changes because the task is limited to test support behavior.
 
 ### DDL-REVIEW-001: AUDIT DB MIGRATIONS FOR PATCH-STYLE SCHEMA DRIFT
 

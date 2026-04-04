@@ -479,11 +479,19 @@ public class TrinoStatementService {
     }
 
     private String urlEncode(String value) {
-        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
+        try {
+            return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8.name());
+        } catch (Exception ex) {
+            throw new IllegalStateException("Failed to URL-encode Trino prepared statement payload", ex);
+        }
     }
 
     private String urlDecode(String value) {
-        return URLDecoder.decode(value == null ? "" : value, StandardCharsets.UTF_8);
+        try {
+            return URLDecoder.decode(value == null ? "" : value, StandardCharsets.UTF_8.name());
+        } catch (Exception ex) {
+            throw new IllegalStateException("Failed to URL-decode Trino prepared statement payload", ex);
+        }
     }
 
     private String unescapeSingleQuoted(String value) {

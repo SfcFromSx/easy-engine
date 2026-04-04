@@ -243,7 +243,7 @@ class BenchmarkAsyncRunnerTrinoJdbcIntegrationTest {
                 response.put("updateType", "DEALLOCATE PREPARE");
                 response.put("updateCount", Long.valueOf(0L));
                 headers.add(HEADER_DEALLOCATED_PREPARE,
-                        URLEncoder.encode(deallocateMatcher.group(1), StandardCharsets.UTF_8));
+                        URLEncoder.encode(deallocateMatcher.group(1), StandardCharsets.UTF_8.name()));
                 write(exchange, response);
                 return;
             }
@@ -285,17 +285,27 @@ class BenchmarkAsyncRunnerTrinoJdbcIntegrationTest {
                 if (separator <= 0) {
                     continue;
                 }
-                String name = URLDecoder.decode(value.substring(0, separator), StandardCharsets.UTF_8);
-                String sql = URLDecoder.decode(value.substring(separator + 1), StandardCharsets.UTF_8);
+                String name;
+                String sql;
+                try {
+                    name = URLDecoder.decode(value.substring(0, separator), StandardCharsets.UTF_8.name());
+                    sql = URLDecoder.decode(value.substring(separator + 1), StandardCharsets.UTF_8.name());
+                } catch (Exception ex) {
+                    throw new IllegalStateException("Failed to decode prepared statement header", ex);
+                }
                 statements.put(name, sql);
             }
             return statements;
         }
 
         private String encodePreparedStatement(String name, String sql) {
-            return URLEncoder.encode(name, StandardCharsets.UTF_8)
-                    + "="
-                    + URLEncoder.encode(sql, StandardCharsets.UTF_8);
+            try {
+                return URLEncoder.encode(name, StandardCharsets.UTF_8.name())
+                        + "="
+                        + URLEncoder.encode(sql, StandardCharsets.UTF_8.name());
+            } catch (Exception ex) {
+                throw new IllegalStateException("Failed to encode prepared statement header", ex);
+            }
         }
 
         private void write(HttpExchange exchange, Map<String, Object> payload) throws IOException {

@@ -18,6 +18,7 @@ import com.smartbi.benchmark.repo.BenchmarkTestSetItemRepository;
 import com.smartbi.benchmark.repo.BenchmarkTestSetRepository;
 import com.smartbi.benchmark.repo.SqlTemplateRepository;
 import com.smartbi.benchmark.report.BenchmarkRunReportService;
+import com.smartbi.benchmark.support.BenchmarkSpringTestOverrides;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +26,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.charset.StandardCharsets;
@@ -84,6 +87,11 @@ class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
 
     @Value("${benchmark.test.async-runner.target.jdbc-password:}")
     private String targetJdbcPassword;
+
+    @DynamicPropertySource
+    static void properties(DynamicPropertyRegistry registry) {
+        BenchmarkSpringTestOverrides.register(registry);
+    }
 
     private BenchmarkAsyncRunner runner;
 

@@ -1,5 +1,6 @@
 package com.smartbi.benchmark.web;
 
+import com.smartbi.benchmark.support.BenchmarkSpringTestOverrides;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,6 +9,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import javax.tools.JavaCompiler;
@@ -18,7 +21,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.stream.Stream;
@@ -54,7 +59,10 @@ class JdbcDriverUploadIntegrationTest {
             "package com.example.uploaded;\n"
                     + "public class UploadedH2Driver extends org.h2.Driver {\n"
                     + "}\n";
+    private static final String JAVA_SPECIFICATION_VERSION = "java.specification.version";
     private static final String JAVA_RELEASE_FLAG = "--release";
+    private static final String JAVA_SOURCE_FLAG = "-source";
+    private static final String JAVA_TARGET_FLAG = "-target";
     private static final String JAVA_VERSION = "8";
     private static final String CLASSPATH_FLAG = "-cp";
     private static final String OUTPUT_DIR_FLAG = "-d";
@@ -83,6 +91,11 @@ class JdbcDriverUploadIntegrationTest {
 
     @Value("${benchmark.test.jdbc-upload.test-datasource.jdbc-password:}")
     private String datasourceJdbcPassword;
+
+    @DynamicPropertySource
+    static void properties(DynamicPropertyRegistry registry) {
+        BenchmarkSpringTestOverrides.register(registry);
+    }
 
     @BeforeEach
     void setUp() throws Exception {
@@ -147,18 +160,8 @@ class JdbcDriverUploadIntegrationTest {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         assertNotNull(compiler, JDK_COMPILER_REQUIRED);
 
-        int compileResult = compiler.run(
-                null,
-                null,
-                null,
-                JAVA_RELEASE_FLAG,
-                JAVA_VERSION,
-                CLASSPATH_FLAG,
-                System.getProperty(JAVA_CLASS_PATH),
-                OUTPUT_DIR_FLAG,
-                classesDir.toString(),
-                sourceFile.toString()
-        );
+        List<String> compilerArgs = compilerArgs(classesDir, sourceFile);
+        int compileResult = compiler.run(null, null, null, compilerArgs.toArray(new String[0]));
         if (compileResult != 0) {
             throw new IllegalStateException(COMPILE_ERROR);
         }
@@ -178,6 +181,29 @@ class JdbcDriverUploadIntegrationTest {
         jarOutputStream.putNextEntry(new JarEntry(relativePath));
         jarOutputStream.write(Files.readAllBytes(classesDir.resolve(relativePath)));
         jarOutputStream.closeEntry();
+    }
+
+    private List<String> compilerArgs(Path classesDir, Path sourceFile) {
+        List<String> args = new ArrayList<>();
+        if (isJava8Compiler()) {
+            args.add(JAVA_SOURCE_FLAG);
+            args.add(JAVA_VERSION);
+            args.add(JAVA_TARGET_FLAG);
+            args.add(JAVA_VERSION);
+        } else {
+            args.add(JAVA_RELEASE_FLAG);
+            args.add(JAVA_VERSION);
+        }
+        args.add(CLASSPATH_FLAG);
+        args.add(System.getProperty(JAVA_CLASS_PATH));
+        args.add(OUTPUT_DIR_FLAG);
+        args.add(classesDir.toString());
+        args.add(sourceFile.toString());
+        return args;
+    }
+
+    private boolean isJava8Compiler() {
+        return "1.8".equals(System.getProperty(JAVA_SPECIFICATION_VERSION));
     }
 
     private void deleteDirectory(Path path) throws IOException {

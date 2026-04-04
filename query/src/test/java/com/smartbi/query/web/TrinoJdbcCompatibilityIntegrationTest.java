@@ -1,6 +1,7 @@
 package com.smartbi.query.web;
 
 import com.smartbi.query.EngineQueryApplication;
+import com.smartbi.query.support.QuerySpringTestOverrides;
 import com.smartbi.query.support.QueryTestConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,6 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -54,6 +57,11 @@ class TrinoJdbcCompatibilityIntegrationTest {
 
     @Value("${engine.query.datasource.named.trino_local.password:}")
     private String trinoJdbcPassword;
+
+    @DynamicPropertySource
+    static void properties(DynamicPropertyRegistry registry) {
+        QuerySpringTestOverrides.register(registry);
+    }
 
     @BeforeEach
     void setUp() throws Exception {
