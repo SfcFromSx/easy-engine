@@ -64,7 +64,7 @@
 ## Prepared Parameter Contract
 
 - Typed conversion is supported for `java.lang.String`, `java.lang.Integer`, `java.lang.Long`, `java.lang.Short`, `java.lang.Double`, `java.lang.Float`, `java.math.BigDecimal`, `java.lang.Boolean`, `java.sql.Date`, `java.sql.Time`, and `java.sql.Timestamp`.
-- For non-Kylin datasources such as H2, Presto, and Trino, `query` preserves the current JDBC prepared path and passes converted values through `PreparedStatement#setObject(...)`.
+- For non-Kylin datasources such as MySQL, Presto, and Trino, `query` preserves the current JDBC prepared path and passes converted values through `PreparedStatement#setObject(...)`.
 - For routed Kylin datasources, `query` renders prepared parameters into SQL literals before execution because downstream Kylin planning rejects `?` placeholders; numerics stay unquoted, booleans render as `TRUE`/`FALSE`, strings/date/time/timestamp values are single-quoted, and `null` renders as `NULL`.
 - Unsupported `className` values also fall back to the raw string value, so execution may still succeed if the driver coerces it, but prepared-result cache fingerprinting is disabled for those requests.
 - `java.util.Date` is intentionally treated as unsupported today because the service does not define a canonical string-to-`java.util.Date` conversion format.
@@ -109,10 +109,10 @@ bash /Users/sfc/Documents/projects/engine/scripts/with-java8.sh mvn spring-boot:
 `query` now keeps environment-specific runtime settings in
 `application-dev.yml`, `application-test.yml`, and `application-pro.yml`. Use
 `SPRING_PROFILES_ACTIVE=test` or `SPRING_PROFILES_ACTIVE=pro` outside local
-development instead of relying on code-level defaults. Those profile YAMLs are
-now MySQL-first for control-plane persistence and normal routed datasource
-defaults; any H2-backed regression fixtures live only in test-scoped override
-resources.
+development instead of relying on code-level defaults. Those profile YAMLs and
+the checked-in test fixtures are MySQL-first; if a test needs different
+datasource wiring, provide it explicitly through test-scoped overrides instead
+of relying on alternate database defaults in the repo.
 
 The default local port split is:
 

@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(QueryTestConfiguration.class)
 class QueryTrinoRoutingIntegrationTest {
 
-    private static final String H2_DRIVER_CLASS = "org.h2.Driver";
+    private static final String MYSQL_DRIVER_CLASS = "com.mysql.cj.jdbc.Driver";
     private static final String QUERY_ENDPOINT = "/kylin/api/query";
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BASIC_PREFIX = "Basic ";
@@ -69,7 +69,7 @@ class QueryTrinoRoutingIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        Class.forName(H2_DRIVER_CLASS);
+        Class.forName(MYSQL_DRIVER_CLASS);
         try (Connection connection = DriverManager.getConnection(trinoJdbcUrl, trinoJdbcUser, trinoJdbcPassword);
              Statement statement = connection.createStatement()) {
             statement.execute(REGION_DROP_SQL);

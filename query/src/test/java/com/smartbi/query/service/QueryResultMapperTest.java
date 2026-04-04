@@ -15,7 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class QueryResultMapperTest {
 
-    private static final String H2_DRIVER_CLASS = "org.h2.Driver";
+    private static final String MYSQL_DRIVER_CLASS = "com.mysql.cj.jdbc.Driver";
+    private static final String SALES_DROP_SQL = "DROP TABLE IF EXISTS SALES";
     private static final String SALES_CREATE_SQL = "CREATE TABLE SALES (ID INT PRIMARY KEY, NAME VARCHAR(32))";
     private static final String SALES_INSERT_SQL =
             "INSERT INTO SALES (ID, NAME) VALUES (1, 'alpha'), (2, 'beta')";
@@ -30,7 +31,7 @@ class QueryResultMapperTest {
     // Covers QueryResultMapper#toResponse happy-path result and metadata mapping.
     @Test
     void shouldMapResultSetRowsAndColumnMetadata() throws Exception {
-        Class.forName(H2_DRIVER_CLASS);
+        Class.forName(MYSQL_DRIVER_CLASS);
         QueryResultMapper mapper = new QueryResultMapper();
 
         try (Connection connection = DriverManager.getConnection(
@@ -38,6 +39,7 @@ class QueryResultMapperTest {
                 QueryTestFixtures.get("query.test.result-mapper.jdbc-user"),
                 QueryTestFixtures.get("query.test.result-mapper.jdbc-password"));
              Statement statement = connection.createStatement()) {
+            statement.execute(SALES_DROP_SQL);
             statement.execute(SALES_CREATE_SQL);
             statement.execute(SALES_INSERT_SQL);
 

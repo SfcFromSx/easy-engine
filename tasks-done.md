@@ -10,6 +10,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 |----|-------|--------|-------------|
 | BP-AUDIT-001 | AUDIT YAML-ONLY / MYSQL-ONLY / REBUILD-FIRST DB GOVERNANCE | platform | Audited the current working tree against the three governance rules, confirmed `.properties` config drift is gone, identified remaining H2 and manager DDL rebuild debt, and split the findings into four follow-up tasks in `tasks.md`. |
 | TEST-CONFIG-003 | KEEP YAML TEST FIXTURES EXPLICIT AND REMOVE HIDDEN SPRING OVERRIDES | tests | `query`, `manager`, and `benchmark` now keep YAML test fixtures as explicit inputs instead of hidden Spring environment mutation; the test-only post-processors and `spring.factories` hooks are gone; focused query/manager/benchmark validation passes under Java 8; and the benchmark stale-resource false positive was eliminated by clean verification. |
+| QUERY-MYSQL-TEST-002 | REMOVE REMAINING H2 TEST FIXTURES FROM QUERY | query | `query` no longer carries the H2 test dependency or H2-backed checked-in fixtures; query tests now use explicit MySQL-backed fixture URLs on the Java 8 path; the query module docs describe MySQL-only checked-in fixtures; and both focused plus full `query` validation passed against the local MySQL test setup. |
 | DDL-REVIEW-001 | AUDIT DB MIGRATIONS FOR PATCH-STYLE SCHEMA DRIFT | platform | Added a repo-wide rule against patch-style schema drift, converted manager trace-column compatibility to rebuild-based normalization, removed audited `ADD COLUMN` remnants from manager/benchmark fresh-schema paths, and verified the focused Flyway plus manager init-db flows. |
 | JAVA8-REVIEW-001 | AUDIT REPO FOR JAVA 8-ONLY DEV VALIDATION CI RUNTIME COMPLIANCE | platform | Added `scripts/with-java8.sh`, routed harness/init-db/docs through the Java 8 wrapper, confirmed the module POMs and spot-checked direct jars still target Java 8 classfiles, and the repo now fails fast instead of silently running Maven flows on the current Java 17/25 workstation. |
 | CONFIG-REVIEW-001 | AUDIT REPO FOR PROFILE-YAML-ONLY ENV CONFIG COMPLIANCE | platform | `manager`, `query`, and `benchmark` now keep environment-shaped test fixtures inside module `application-test.yml` files instead of `src/test/resources/application-test.properties`; the affected test helpers and Spring integration tests read YAML-backed overrides; manager/query reactor tests and benchmark backend tests pass; and the local-development docs now describe the new fixture location. |
@@ -213,6 +214,42 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
     - Escalation: none
   - **2026-04-04 — doc-garden**
     - Updated `docs/operations/best-practices.md` with the new explicit test-fixture wiring rule. No additional product or architecture docs needed changes because the task is limited to test support behavior.
+
+### QUERY-MYSQL-TEST-002: REMOVE REMAINING H2 TEST FIXTURES FROM QUERY
+
+- **Status**: done
+- **Updated**: 2026-04-04
+- **Module**: query
+- **Dependencies**: none
+- **Scope**:
+  - Remove the remaining H2 test dependency from `query/pom.xml`.
+  - Replace H2 defaults in `query/src/test/resources/test-fixtures.yml` with MySQL-first or engine-appropriate explicit fixtures.
+  - Rewrite remaining `query` tests and helpers that still hard-code `org.h2.Driver`, `jdbc:h2:`, or `type=h2`.
+  - Update any query documentation that still describes H2 as an allowed checked-in regression fixture.
+- **Progress log**:
+  - **2026-04-04 — intake**
+    - `BP-AUDIT-001` re-audited the current working tree and found remaining H2 references in `query/pom.xml`, `query/src/test/resources/test-fixtures.yml`, multiple query tests, and `docs/modules/query.md`.
+    - Scope is limited to the query module so the MySQL-only cleanup can be validated and committed independently from manager and benchmark follow-ups.
+  - **2026-04-04 — implementation**
+    - Files changed: `query/pom.xml`, `query/src/test/resources/test-fixtures.yml`, `query` test classes under `config/`, `datasource/`, `route/`, `service/`, `trace/`, and `web/`, plus `docs/modules/query.md`.
+    - Commands run: `rg`, `sed`, `git diff`, `lsof -Pan -iTCP:3307 -sTCP:LISTEN`, `bash scripts/with-java8.sh mvn -q -f query/pom.xml -Dtest=QueryResultMapperTest,ManagerConfigClientTest,ManagedDataSourceRegistryTest,SqlRouteServiceTest,QueryWebIntegrationTest,QueryTracePersistenceIntegrationTest,QueryTrinoRoutingIntegrationTest test`, `bash scripts/with-java8.sh mvn -q -f query/pom.xml -Dtest=TrinoJdbcCompatibilityIntegrationTest test`, `bash scripts/with-java8.sh mvn -q -f query/pom.xml test`.
+    - Result: Removed the H2 test dependency from `query`, switched the checked-in query test fixtures to explicit MySQL URLs and driver classes, updated the route/registry/web/trace/result-mapper tests to assert MySQL-backed fixture behavior, and kept the Trino compatibility path working on the same MySQL-backed fixture database.
+  - **2026-04-04 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: Earlier repo-wide config cleanup left `query` with an inconsistent split: runtime `application-test.yml` was already MySQL-first, but the checked-in shared test fixtures, helper constants, and one test-only dependency still silently depended on H2.
+    - Cure: Removed the H2 dependency, rewired every checked-in `query` fixture and assertion to MySQL, and converged the focused plus full module validation onto the same Java 8 + local MySQL path that the module test profile already documents.
+    - Generalization: Existing profile-governance, fixture-governance, and Java 8 rules already cover this class of drift, so no new `docs/operations/best-practices.md` entry was needed.
+  - **2026-04-04 — verification**
+    - Validation status: approved
+    - Evidence: `rg -n "jdbc:h2|org\\.h2|\\bH2\\b|type=h2|type: h2|com\\.h2database" query query/pom.xml docs/modules/query.md -g '!**/target/**'` returned no matches after the cleanup.
+    - Evidence: `bash scripts/with-java8.sh mvn -q -f query/pom.xml -Dtest=QueryResultMapperTest,ManagerConfigClientTest,ManagedDataSourceRegistryTest,SqlRouteServiceTest,QueryWebIntegrationTest,QueryTracePersistenceIntegrationTest,QueryTrinoRoutingIntegrationTest test` passed when rerun outside the sandbox against the local MySQL service on port `3307`.
+    - Evidence: `bash scripts/with-java8.sh mvn -q -f query/pom.xml -Dtest=TrinoJdbcCompatibilityIntegrationTest test` passed outside the sandbox, confirming the explicit Trino JDBC compatibility port still works with the MySQL-backed query fixtures.
+    - Evidence: `bash scripts/with-java8.sh mvn -q -f query/pom.xml test` passed on the full query module suite.
+    - Evidence: `git diff --check -- query/pom.xml query/src/test/resources/test-fixtures.yml query/src/test/java/com/smartbi/query/config/ManagerConfigClientTest.java query/src/test/java/com/smartbi/query/datasource/ManagedDataSourceRegistryTest.java query/src/test/java/com/smartbi/query/route/SqlRouteServiceTest.java query/src/test/java/com/smartbi/query/service/QueryResultMapperTest.java query/src/test/java/com/smartbi/query/trace/QueryTracePersistenceIntegrationTest.java query/src/test/java/com/smartbi/query/web/QueryTrinoRoutingIntegrationTest.java query/src/test/java/com/smartbi/query/web/QueryWebIntegrationTest.java query/src/test/java/com/smartbi/query/web/TrinoJdbcCompatibilityIntegrationTest.java docs/modules/query.md` passed.
+    - Next action: none
+    - Escalation: none
+  - **2026-04-04 — doc-garden**
+    - Updated `docs/modules/query.md` so the module runbook now states that the checked-in query fixtures are MySQL-first and that alternate datasource wiring must be provided explicitly by tests instead of relying on H2 defaults.
 
 ### DDL-REVIEW-001: AUDIT DB MIGRATIONS FOR PATCH-STYLE SCHEMA DRIFT
 

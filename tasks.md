@@ -22,26 +22,9 @@ Completed task history lives in [tasks-done.md](/Users/sfc/Documents/projects/en
 
 | ID | Title | Module | Status | Updated | Dependencies |
 |----|-------|--------|--------|---------|--------------|
-| QUERY-MYSQL-TEST-002 | REMOVE REMAINING H2 TEST FIXTURES FROM QUERY | query | todo | 2026-04-04 | none |
 | MANAGER-MYSQL-TEST-002 | REMOVE REMAINING H2 TEST FIXTURES FROM MANAGER | manager | todo | 2026-04-04 | none |
 | BENCH-MYSQL-TEST-002 | REMOVE REMAINING H2 TEST FIXTURES FROM BENCHMARK | benchmark | todo | 2026-04-04 | none |
 | MGR-DDL-REBUILD-002 | REPLACE PATCH-STYLE COLUMN UPGRADES IN MANAGER MIGRATIONS | manager | todo | 2026-04-04 | none |
-
-### QUERY-MYSQL-TEST-002: REMOVE REMAINING H2 TEST FIXTURES FROM QUERY
-
-- **Status**: todo
-- **Updated**: 2026-04-04
-- **Module**: query
-- **Dependencies**: none
-- **Scope**:
-  - Remove the remaining H2 test dependency from `query/pom.xml`.
-  - Replace H2 defaults in `query/src/test/resources/test-fixtures.yml` with MySQL-first or engine-appropriate explicit fixtures.
-  - Rewrite remaining `query` tests and helpers that still hard-code `org.h2.Driver`, `jdbc:h2:`, or `type=h2`.
-  - Update any query documentation that still describes H2 as an allowed checked-in regression fixture.
-- **Progress log**:
-  - **2026-04-04 — intake**
-    - `BP-AUDIT-001` re-audited the current working tree and found remaining H2 references in `query/pom.xml`, `query/src/test/resources/test-fixtures.yml`, multiple query tests, and `docs/modules/query.md`.
-    - Scope is limited to the query module so the MySQL-only cleanup can be validated and committed independently from manager and benchmark follow-ups.
 
 ### MANAGER-MYSQL-TEST-002: REMOVE REMAINING H2 TEST FIXTURES FROM MANAGER
 

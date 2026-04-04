@@ -45,7 +45,7 @@ class ManagerConfigClientTest {
         MockRestServiceServer server = bind(client);
 
         server.expect(requestTo(MANAGER_URL + "/api/v1/query-routing-context"))
-                .andRespond(withSuccess("{\"datasources\":[{\"name\":\"default\",\"type\":\"h2\",\"jdbcUrl\":\"" + DATASOURCE_URL
+                .andRespond(withSuccess("{\"datasources\":[{\"name\":\"default\",\"type\":\"mysql\",\"jdbcUrl\":\"" + DATASOURCE_URL
                                 + "\",\"driverClass\":\"" + DRIVER_CLASS + "\"}],\"accelerationRules\":[]}",
                         MediaType.APPLICATION_JSON));
 

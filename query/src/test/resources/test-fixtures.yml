@@ -1,9 +1,9 @@
 spring:
   datasource:
-    url: "${QUERY_TEST_META_DB_JDBC_URL:jdbc:h2:mem:querytestmeta;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}"
-    username: "${QUERY_TEST_META_DB_USER:sa}"
-    password: "${QUERY_TEST_META_DB_PASSWORD:}"
-    driver-class-name: "${QUERY_TEST_META_DB_DRIVER_CLASS:org.h2.Driver}"
+    url: "${QUERY_TEST_META_DB_JDBC_URL:jdbc:mysql://localhost:3307/engine_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+    username: "${QUERY_TEST_META_DB_USER:engine}"
+    password: "${QUERY_TEST_META_DB_PASSWORD:engine123}"
+    driver-class-name: "${QUERY_TEST_META_DB_DRIVER_CLASS:com.mysql.cj.jdbc.Driver}"
 
 engine:
   query:
@@ -11,11 +11,11 @@ engine:
     datasource:
       default:
         name: default
-        type: "${QUERY_TEST_DEFAULT_TYPE:h2}"
-        driver-class: "${QUERY_TEST_DEFAULT_DRIVER_CLASS:org.h2.Driver}"
-        jdbc-url: "${QUERY_TEST_DEFAULT_JDBC_URL:jdbc:h2:mem:querytestdefault;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}"
-        username: "${QUERY_TEST_DEFAULT_JDBC_USER:sa}"
-        password: "${QUERY_TEST_DEFAULT_JDBC_PASSWORD:}"
+        type: "${QUERY_TEST_DEFAULT_TYPE:mysql}"
+        driver-class: "${QUERY_TEST_DEFAULT_DRIVER_CLASS:com.mysql.cj.jdbc.Driver}"
+        jdbc-url: "${QUERY_TEST_DEFAULT_JDBC_URL:jdbc:mysql://localhost:3307/engine_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+        username: "${QUERY_TEST_DEFAULT_JDBC_USER:engine}"
+        password: "${QUERY_TEST_DEFAULT_JDBC_PASSWORD:engine123}"
         max-pool-size: 4
         min-idle: 1
         connection-timeout-ms: 10000
@@ -23,20 +23,20 @@ engine:
         presto_local:
           name: presto_local
           type: "${QUERY_TEST_PRESTO_TYPE:presto}"
-          driver-class: "${QUERY_TEST_PRESTO_DRIVER_CLASS:org.h2.Driver}"
-          jdbc-url: "${QUERY_TEST_PRESTO_JDBC_URL:jdbc:h2:mem:querytestpresto;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}"
-          username: "${QUERY_TEST_PRESTO_JDBC_USER:sa}"
-          password: "${QUERY_TEST_PRESTO_JDBC_PASSWORD:}"
+          driver-class: "${QUERY_TEST_PRESTO_DRIVER_CLASS:com.mysql.cj.jdbc.Driver}"
+          jdbc-url: "${QUERY_TEST_PRESTO_JDBC_URL:jdbc:mysql://localhost:3307/engine_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+          username: "${QUERY_TEST_PRESTO_JDBC_USER:engine}"
+          password: "${QUERY_TEST_PRESTO_JDBC_PASSWORD:engine123}"
           max-pool-size: 4
           min-idle: 1
           connection-timeout-ms: 10000
         trino_local:
           name: trino_local
           type: "${QUERY_TEST_TRINO_TYPE:trino}"
-          driver-class: "${QUERY_TEST_TRINO_DRIVER_CLASS:org.h2.Driver}"
-          jdbc-url: "${QUERY_TEST_TRINO_JDBC_URL:jdbc:h2:mem:querytesttrino;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}"
-          username: "${QUERY_TEST_TRINO_JDBC_USER:sa}"
-          password: "${QUERY_TEST_TRINO_JDBC_PASSWORD:}"
+          driver-class: "${QUERY_TEST_TRINO_DRIVER_CLASS:com.mysql.cj.jdbc.Driver}"
+          jdbc-url: "${QUERY_TEST_TRINO_JDBC_URL:jdbc:mysql://localhost:3307/engine_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+          username: "${QUERY_TEST_TRINO_JDBC_USER:engine}"
+          password: "${QUERY_TEST_TRINO_JDBC_PASSWORD:engine123}"
           max-pool-size: 4
           min-idle: 1
           connection-timeout-ms: 10000
@@ -45,32 +45,32 @@ query:
   test:
     manager-url: "http://localhost:8090"
     manager-response:
-      default-jdbc-url: "jdbc:h2:mem:remote_default"
-      default-driver-class: "org.h2.Driver"
+      default-jdbc-url: "jdbc:mysql://localhost:3307/engine_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+      default-driver-class: "com.mysql.cj.jdbc.Driver"
     result-mapper:
-      jdbc-url: "jdbc:h2:mem:result_mapper;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
-      jdbc-user: "sa"
-      jdbc-password: ""
+      jdbc-url: "jdbc:mysql://localhost:3307/engine_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+      jdbc-user: "engine"
+      jdbc-password: "engine123"
     registry:
       shared:
-        driver-class: "org.h2.Driver"
-        username: "sa"
-        password: ""
+        driver-class: "com.mysql.cj.jdbc.Driver"
+        username: "engine"
+        password: "engine123"
       default:
         name: default
-        type: "h2"
-        driver-class: "org.h2.Driver"
-        jdbc-url: "jdbc:h2:mem:fallback_default"
-        username: "sa"
-        password: ""
+        type: "mysql"
+        driver-class: "com.mysql.cj.jdbc.Driver"
+        jdbc-url: "jdbc:mysql://localhost:3307/engine_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+        username: "engine"
+        password: "engine123"
       presto:
         name: presto_local
         type: "presto"
-        driver-class: "org.h2.Driver"
-        jdbc-url: "jdbc:h2:mem:fallback_presto"
-        username: "sa"
-        password: ""
+        driver-class: "com.mysql.cj.jdbc.Driver"
+        jdbc-url: "jdbc:mysql://localhost:3307/engine_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+        username: "engine"
+        password: "engine123"
       keyed:
-        jdbc-url: "jdbc:h2:mem:keyed_named"
+        jdbc-url: "jdbc:mysql://localhost:3307/engine_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
       manager:
-        jdbc-url-prefix: "jdbc:h2:mem:"
+        jdbc-url-prefix: "jdbc:mysql://localhost:3307/engine_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&name="

@@ -23,19 +23,19 @@ class SqlRouteServiceTest {
     // Covers SqlRouteService#routeAndRewrite default-routing branch.
     @Test
     void shouldRouteToDefaultDatasourceWhenNoHintsArePresent() {
-        SqlRouteService service = new SqlRouteService(registry(managerConfigs("default", "h2", true, "presto_local", "PRESTO", false)));
+        SqlRouteService service = new SqlRouteService(registry(managerConfigs("default", "mysql", true, "presto_local", "PRESTO", false)));
 
         RoutedSql routed = service.routeAndRewrite("SELECT * FROM SALES", SqlCommentParser.parse("SELECT * FROM SALES"));
 
         assertEquals("default", routed.datasourceName);
-        assertEquals("h2", routed.datasourceType);
+        assertEquals("mysql", routed.datasourceType);
         assertEquals("/* ENGINE=default */\nSELECT * FROM SALES", routed.executionSql);
     }
 
     // Covers SqlRouteService#routeAndRewrite ENGINE precedence over legacy routing metadata.
     @Test
     void shouldPreferEngineOverLegacyYhTargetEngine() {
-        SqlRouteService service = new SqlRouteService(registry(managerConfigs("default", "h2", true, "presto_local", "PRESTO", false)));
+        SqlRouteService service = new SqlRouteService(registry(managerConfigs("default", "mysql", true, "presto_local", "PRESTO", false)));
         SqlCommentParser.ParsedSql parsed = SqlCommentParser.parse("/* YH_TARGET_ENGINE=default */ -- engine=presto_local\nSELECT * FROM SALES");
 
         RoutedSql routed = service.routeAndRewrite("SELECT * FROM SALES", parsed);
@@ -48,13 +48,13 @@ class SqlRouteServiceTest {
     // Covers SqlRouteService#routeAndRewrite unknown-datasource fallback branch.
     @Test
     void shouldFallbackToDefaultDatasourceWhenTargetIsUnknown() {
-        SqlRouteService service = new SqlRouteService(registry(managerConfigs("default", "h2", true)));
+        SqlRouteService service = new SqlRouteService(registry(managerConfigs("default", "mysql", true)));
         SqlCommentParser.ParsedSql parsed = SqlCommentParser.parse("/* ENGINE=missing */ SELECT * FROM SALES");
 
         RoutedSql routed = service.routeAndRewrite("SELECT * FROM SALES", parsed);
 
         assertEquals("default", routed.datasourceName);
-        assertEquals("h2", routed.datasourceType);
+        assertEquals("mysql", routed.datasourceType);
         assertEquals("/* ENGINE=default */\nSELECT * FROM SALES", routed.executionSql);
     }
 
@@ -84,7 +84,7 @@ class SqlRouteServiceTest {
     // Covers SqlRouteService#routeAndRewrite parsed-null fallback branch.
     @Test
     void shouldHandleNullParsedSqlByPassingThroughOriginalSql() {
-        SqlRouteService service = new SqlRouteService(registry(managerConfigs("default", "h2", true)));
+        SqlRouteService service = new SqlRouteService(registry(managerConfigs("default", "mysql", true)));
 
         RoutedSql routed = service.routeAndRewrite("SELECT * FROM SALES", null);
 
@@ -102,7 +102,7 @@ class SqlRouteServiceTest {
         when(valueOperations.get("report-42")).thenReturn("presto_local");
 
         SqlRouteService service = new SqlRouteService(
-                registry(managerConfigs("default", "h2", true, "presto_local", "PRESTO", false)),
+                registry(managerConfigs("default", "mysql", true, "presto_local", "PRESTO", false)),
                 null,
                 new EffectiveEngineResolver(redisTemplate));
 

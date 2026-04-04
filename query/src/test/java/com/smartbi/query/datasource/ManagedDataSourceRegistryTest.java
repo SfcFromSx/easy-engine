@@ -28,12 +28,12 @@ class ManagedDataSourceRegistryTest {
         QueryProperties queryProperties = fallbackProperties();
         ManagedDataSourceRegistry registry = new ManagedDataSourceRegistry(
                 queryProperties,
-                new StubManagerConfigClient(Arrays.asList(managerConfig("remote_default", "h2", true),
+                new StubManagerConfigClient(Arrays.asList(managerConfig("remote_default", "mysql", true),
                         managerConfig("remote_presto", "presto", false)))
         );
 
         assertEquals("remote_default", registry.getDefaultName());
-        assertEquals(QueryTestFixtures.get("query.test.manager-response.default-jdbc-url"),
+        assertEquals(managerJdbcUrl("remote_default"),
                 registry.getDefinition("remote_default").getJdbcUrl());
         assertEquals("presto", registry.getDefinition("remote_presto").getType());
         assertEquals("remote_default", registry.getDefinition("missing").getName());
@@ -63,8 +63,8 @@ class ManagedDataSourceRegistryTest {
                 queryProperties,
                 new StubManagerConfigClient(Arrays.asList(
                         null,
-                        managerConfig("  ", "h2", false),
-                        managerConfig("remote_default", "h2", false),
+                        managerConfig("  ", "mysql", false),
+                        managerConfig("remote_default", "mysql", false),
                         managerConfig("remote_explicit", "presto", true)))
         );
 
@@ -79,7 +79,7 @@ class ManagedDataSourceRegistryTest {
         QueryProperties queryProperties = fallbackProperties();
         ManagedDataSourceRegistry registry = new ManagedDataSourceRegistry(
                 queryProperties,
-                new StubManagerConfigClient(Arrays.asList(managerConfig(" ", "h2", true)))
+                new StubManagerConfigClient(Arrays.asList(managerConfig(" ", "mysql", true)))
         );
 
         assertEquals("default", registry.getDefaultName());
@@ -208,6 +208,10 @@ class ManagedDataSourceRegistryTest {
         config.setConnectionTimeoutMs(Long.valueOf(10000L));
         config.setIsDefault(Boolean.valueOf(isDefault));
         return config;
+    }
+
+    private static String managerJdbcUrl(String name) {
+        return QueryTestFixtures.get("query.test.registry.manager.jdbc-url-prefix") + name;
     }
 
     private static class StubManagerConfigClient extends ManagerConfigClient {

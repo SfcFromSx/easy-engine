@@ -29,14 +29,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         properties = {
                 "server.port=18092",
                 "engine.query.trino.port=18093",
-                "QUERY_TEST_DEFAULT_JDBC_URL=jdbc:h2:mem:querytrinojdbcdefault;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-                "QUERY_TEST_TRINO_JDBC_URL=jdbc:h2:mem:querytrinojdbcnamed;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
+                "QUERY_TEST_DEFAULT_JDBC_URL=jdbc:mysql://localhost:3307/engine_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC",
+                "QUERY_TEST_TRINO_JDBC_URL=jdbc:mysql://localhost:3307/engine_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
         })
 @Import(QueryTestConfiguration.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class TrinoJdbcCompatibilityIntegrationTest {
 
-    private static final String H2_DRIVER_CLASS = "org.h2.Driver";
+    private static final String MYSQL_DRIVER_CLASS = "com.mysql.cj.jdbc.Driver";
     private static final String TRINO_DRIVER_CLASS = "io.trino.jdbc.TrinoDriver";
     private static final String TRINO_URL = "jdbc:trino://127.0.0.1:18093/test/default?user=ADMIN";
 
@@ -65,7 +65,7 @@ class TrinoJdbcCompatibilityIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        Class.forName(H2_DRIVER_CLASS);
+        Class.forName(MYSQL_DRIVER_CLASS);
         Class.forName(TRINO_DRIVER_CLASS);
         try (Connection connection = DriverManager.getConnection(defaultJdbcUrl, defaultJdbcUser, defaultJdbcPassword);
              Statement statement = connection.createStatement()) {
