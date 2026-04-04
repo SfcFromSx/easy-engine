@@ -1,20 +1,25 @@
 spring:
   datasource:
-    url: "${MANAGER_TEST_DB_JDBC_URL:jdbc:h2:mem:managertest;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}"
-    username: "${MANAGER_TEST_DB_USER:sa}"
-    password: "${MANAGER_TEST_DB_PASSWORD:}"
-    driver-class-name: "${MANAGER_TEST_DB_DRIVER_CLASS:org.h2.Driver}"
+    url: "${MANAGER_TEST_DB_JDBC_URL:jdbc:mysql://localhost:3307/engine_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+    username: "${MANAGER_TEST_DB_USER:engine}"
+    password: "${MANAGER_TEST_DB_PASSWORD:engine123}"
+    driver-class-name: "${MANAGER_TEST_DB_DRIVER_CLASS:com.mysql.cj.jdbc.Driver}"
 
 manager:
   test:
     shared:
-      driver-class-name: "org.h2.Driver"
-      username: "sa"
-      password: ""
-      jdbc-options: "MODE=MySQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
+      driver-class-name: "com.mysql.cj.jdbc.Driver"
+      username: "engine"
+      password: "engine123"
+      jdbc-url-prefix: "jdbc:mysql://localhost:3307/"
+      jdbc-url-suffix: "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+    admin:
+      jdbc-url: "jdbc:mysql://localhost:3307/mysql?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+      username: "root"
+      password: "engine_root_123"
     datasource-config-service:
-      driver-class: "com.mysql.jdbc.Driver"
-      jdbc-url: "jdbc:mysql://example-host/test-db"
+      driver-class: "com.mysql.cj.jdbc.Driver"
+      jdbc-url: "jdbc:mysql://example-host/test-db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
       username: "svc_user"
       password: ""
     flyway:

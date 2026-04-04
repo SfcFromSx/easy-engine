@@ -39,30 +39,40 @@ class ManagerFlywayHistoryRenameIntegrationTest {
     // schema history table.
     void shouldRenameLegacyFlywayHistoryAndPrefixManagerTables() {
         assertEquals(Integer.valueOf(1), jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE LOWER(table_name) = 'manager_flyway_schema_history'",
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES "
+                        + "WHERE LOWER(table_schema) = LOWER(DATABASE()) "
+                        + "AND LOWER(table_name) = 'manager_flyway_schema_history'",
                 Integer.class));
         assertEquals(Integer.valueOf(1), jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM manager_flyway_schema_history WHERE version = '9'",
                 Integer.class));
         assertEquals(Integer.valueOf(1), jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE LOWER(table_name) = 'manager_sql_execution_record'",
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES "
+                        + "WHERE LOWER(table_schema) = LOWER(DATABASE()) "
+                        + "AND LOWER(table_name) = 'manager_sql_execution_record'",
                 Integer.class));
         assertEquals(Integer.valueOf(1), jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE LOWER(table_name) = 'manager_sql_pattern_stats'",
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES "
+                        + "WHERE LOWER(table_schema) = LOWER(DATABASE()) "
+                        + "AND LOWER(table_name) = 'manager_sql_pattern_stats'",
                 Integer.class));
         assertEquals(Integer.valueOf(1), jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE LOWER(table_name) = 'manager_acceleration_table'",
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES "
+                        + "WHERE LOWER(table_schema) = LOWER(DATABASE()) "
+                        + "AND LOWER(table_name) = 'manager_acceleration_table'",
                 Integer.class));
         assertEquals(Integer.valueOf(1), jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE LOWER(table_name) = 'manager_query_datasource_config'",
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES "
+                        + "WHERE LOWER(table_schema) = LOWER(DATABASE()) "
+                        + "AND LOWER(table_name) = 'manager_query_datasource_config'",
                 Integer.class));
-        assertEquals(Long.valueOf(3L), jdbcTemplate.queryForObject(
+        assertEquals(Long.valueOf(2L), jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM manager_query_datasource_config",
                 Long.class));
     }
 
     private static String legacyFlywayJdbcUrl() {
-        return ManagerTestFixtures.h2JdbcUrlWithInit(
+        return ManagerTestFixtures.mysqlJdbcUrlWithInit(
                 "manager.test.flyway.legacy-db-name",
                 "manager.test.flyway.legacy-v8-resource");
     }

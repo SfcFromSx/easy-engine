@@ -68,8 +68,8 @@ class AccelerationLifecycleTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].name").value("mv_table1"));
 
-        // 3. (Manual) Note: We won't test ACTIVE status here because it triggers physical DDL 
-        // which might fail in H2 due to missing tables like KYLIN_SALES.
+        // 3. (Manual) Note: We won't test ACTIVE status here because it triggers physical DDL
+        // against external warehouse tables like KYLIN_SALES.
         // We will just verify it stays DRAFT for now or test a simple manual creation.
     }
 

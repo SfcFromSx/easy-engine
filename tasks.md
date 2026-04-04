@@ -22,24 +22,7 @@ Completed task history lives in [tasks-done.md](/Users/sfc/Documents/projects/en
 
 | ID | Title | Module | Status | Updated | Dependencies |
 |----|-------|--------|--------|---------|--------------|
-| MANAGER-MYSQL-TEST-002 | REMOVE REMAINING H2 TEST FIXTURES FROM MANAGER | manager | todo | 2026-04-04 | none |
 | MGR-DDL-REBUILD-002 | REPLACE PATCH-STYLE COLUMN UPGRADES IN MANAGER MIGRATIONS | manager | todo | 2026-04-04 | none |
-
-### MANAGER-MYSQL-TEST-002: REMOVE REMAINING H2 TEST FIXTURES FROM MANAGER
-
-- **Status**: todo
-- **Updated**: 2026-04-04
-- **Module**: manager
-- **Dependencies**: none
-- **Scope**:
-  - Remove the remaining H2 test dependency from `manager/pom.xml`.
-  - Replace H2 defaults in `manager/src/test/resources/test-fixtures.yml` and `ManagerTestFixtures` with MySQL-backed explicit fixtures.
-  - Rewrite remaining manager tests and helpers that still hard-code `org.h2.Driver` or `jdbc:h2:`.
-  - Update any manager documentation that still describes H2 as an allowed checked-in regression fixture.
-- **Progress log**:
-  - **2026-04-04 — intake**
-    - `BP-AUDIT-001` found manager-side H2 residue in `manager/pom.xml`, `manager/src/test/resources/test-fixtures.yml`, `manager/src/test/java/com/smartbi/engine/support/ManagerTestFixtures.java`, and `docs/modules/manager.md`.
-    - The task stays manager-only so fixture cleanup and migration-chain work do not get coupled into one wide commit.
 
 ### MGR-DDL-REBUILD-002: REPLACE PATCH-STYLE COLUMN UPGRADES IN MANAGER MIGRATIONS
 

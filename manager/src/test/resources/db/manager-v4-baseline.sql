@@ -17,9 +17,9 @@ CREATE TABLE IF NOT EXISTS sql_execution_record (
     sql_fingerprint VARCHAR(64)
 );
 
-CREATE INDEX IF NOT EXISTS idx_sql_exec_received ON sql_execution_record (received_at);
-CREATE INDEX IF NOT EXISTS idx_sql_exec_fingerprint ON sql_execution_record (sql_fingerprint);
-CREATE INDEX IF NOT EXISTS idx_sql_exec_ds ON sql_execution_record (datasource_name);
+CREATE INDEX idx_sql_exec_received ON sql_execution_record (received_at);
+CREATE INDEX idx_sql_exec_fingerprint ON sql_execution_record (sql_fingerprint);
+CREATE INDEX idx_sql_exec_ds ON sql_execution_record (datasource_name);
 
 CREATE TABLE IF NOT EXISTS acceleration_table (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS acceleration_table (
     recommendation_note TEXT
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_accel_name_schema ON acceleration_table (name, schema_name);
+CREATE UNIQUE INDEX uq_accel_name_schema ON acceleration_table (name, schema_name);
 
 CREATE TABLE IF NOT EXISTS sql_pattern_stats (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -47,4 +47,4 @@ CREATE TABLE IF NOT EXISTS sql_pattern_stats (
     signature_json TEXT
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_pattern_fingerprint ON sql_pattern_stats (sql_fingerprint);
+CREATE UNIQUE INDEX uq_pattern_fingerprint ON sql_pattern_stats (sql_fingerprint);

@@ -51,11 +51,11 @@ public class FlywayConfig {
 
     private boolean tableExists(Connection connection, String tableName) throws SQLException {
         DatabaseMetaData metadata = connection.getMetaData();
-        return matchesTable(metadata, connection.getCatalog(), tableName) || matchesTable(metadata, null, tableName);
+        return matchesTable(metadata, connection.getCatalog(), tableName);
     }
 
     private boolean matchesTable(DatabaseMetaData metadata, String catalog, String tableName) throws SQLException {
-        try (ResultSet resultSet = metadata.getTables(catalog, null, null, new String[]{"TABLE"})) {
+        try (ResultSet resultSet = metadata.getTables(catalog, null, tableName, new String[]{"TABLE"})) {
             while (resultSet.next()) {
                 String currentName = resultSet.getString("TABLE_NAME");
                 if (currentName != null && currentName.toLowerCase(Locale.ROOT).equals(tableName)) {

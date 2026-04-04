@@ -16,6 +16,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | TEST-CONFIG-003 | KEEP YAML TEST FIXTURES EXPLICIT AND REMOVE HIDDEN SPRING OVERRIDES | tests | `query`, `manager`, and `benchmark` now keep YAML test fixtures as explicit inputs instead of hidden Spring environment mutation; the test-only post-processors and `spring.factories` hooks are gone; focused query/manager/benchmark validation passes under Java 8; and the benchmark stale-resource false positive was eliminated by clean verification. |
 | QUERY-MYSQL-TEST-002 | REMOVE REMAINING H2 TEST FIXTURES FROM QUERY | query | `query` no longer carries the H2 test dependency or H2-backed checked-in fixtures; query tests now use explicit MySQL-backed fixture URLs on the Java 8 path; the query module docs describe MySQL-only checked-in fixtures; and both focused plus full `query` validation passed against the local MySQL test setup. |
 | BENCH-MYSQL-TEST-002 | REMOVE REMAINING H2 TEST FIXTURES FROM BENCHMARK | benchmark | `benchmark` no longer carries the H2 test dependency or H2-backed checked-in fixtures; benchmark regression tests now use explicit MySQL-backed fixture URLs plus a clean uploaded-driver test directory; and `mvn -q -f benchmark/pom.xml test` plus `npm --prefix benchmark/frontend run build` passed. |
+| MANAGER-MYSQL-TEST-002 | REMOVE REMAINING H2 TEST FIXTURES FROM MANAGER | manager | `manager` no longer carries the H2 test dependency or H2-backed checked-in fixtures; manager Flyway regression fixtures now provision isolated MySQL schemas with schema-scoped migration metadata checks; and both the focused migration suite plus the full manager validation/build commands passed. |
 | DDL-REVIEW-001 | AUDIT DB MIGRATIONS FOR PATCH-STYLE SCHEMA DRIFT | platform | Added a repo-wide rule against patch-style schema drift, converted manager trace-column compatibility to rebuild-based normalization, removed audited `ADD COLUMN` remnants from manager/benchmark fresh-schema paths, and verified the focused Flyway plus manager init-db flows. |
 | JAVA8-REVIEW-001 | AUDIT REPO FOR JAVA 8-ONLY DEV VALIDATION CI RUNTIME COMPLIANCE | platform | Added `scripts/with-java8.sh`, routed harness/init-db/docs through the Java 8 wrapper, confirmed the module POMs and spot-checked direct jars still target Java 8 classfiles, and the repo now fails fast instead of silently running Maven flows on the current Java 17/25 workstation. |
 | CONFIG-REVIEW-001 | AUDIT REPO FOR PROFILE-YAML-ONLY ENV CONFIG COMPLIANCE | platform | `manager`, `query`, and `benchmark` now keep environment-shaped test fixtures inside module `application-test.yml` files instead of `src/test/resources/application-test.properties`; the affected test helpers and Spring integration tests read YAML-backed overrides; manager/query reactor tests and benchmark backend tests pass; and the local-development docs now describe the new fixture location. |
@@ -88,6 +89,41 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
     - Escalation: none
   - **2026-04-04 — doc-garden**
     - Updated `docs/modules/benchmark.md` so the benchmark module docs now describe the checked-in benchmark regression fixtures as MySQL-only instead of allowing test-scoped H2 residue.
+
+### MANAGER-MYSQL-TEST-002: REMOVE REMAINING H2 TEST FIXTURES FROM MANAGER
+
+- **Status**: done
+- **Updated**: 2026-04-04
+- **Module**: manager
+- **Dependencies**: none
+- **Scope**:
+  - Remove the remaining H2 test dependency from `manager/pom.xml`.
+  - Replace H2 defaults in `manager/src/test/resources/test-fixtures.yml` and `ManagerTestFixtures` with MySQL-backed explicit fixtures.
+  - Rewrite remaining manager tests and helpers that still hard-code `org.h2.Driver` or `jdbc:h2:`.
+  - Update any manager documentation that still describes H2 as an allowed checked-in regression fixture.
+- **Progress log**:
+  - **2026-04-04 — intake**
+    - `BP-AUDIT-001` found manager-side H2 residue in `manager/pom.xml`, `manager/src/test/resources/test-fixtures.yml`, `manager/src/test/java/com/smartbi/engine/support/ManagerTestFixtures.java`, and `docs/modules/manager.md`.
+    - The task stays manager-only so fixture cleanup and migration-chain work do not get coupled into one wide commit.
+  - **2026-04-04 — implementation**
+    - Files changed: `manager/pom.xml`, `manager/src/test/resources/test-fixtures.yml`, `manager/src/test/resources/db/manager-v4-baseline.sql`, `manager/src/test/java/com/smartbi/engine/support/ManagerTestFixtures.java`, `manager/src/test/java/com/smartbi/engine/migration/ManagerDashboardBootstrapIntegrationTest.java`, `manager/src/test/java/com/smartbi/engine/migration/ManagerFlywayHistoryRenameIntegrationTest.java`, `manager/src/test/java/com/smartbi/engine/trace/TraceFlywayExecutionModeIntegrationTest.java`, `manager/src/test/java/com/smartbi/engine/datasource/DatasourceConfigFlywayIntegrationTest.java`, `manager/src/test/java/com/smartbi/engine/web/AccelerationLifecycleTest.java`, `manager/src/main/java/db/migration/MigrationSupport.java`, `manager/src/main/java/com/smartbi/engine/config/FlywayConfig.java`, `docs/modules/manager.md`, and the task ledger/archive records.
+    - Commands run: `rg`, `sed`, `git diff`, `mysql -h127.0.0.1 -P3307 -uengine -pengine123 -e "SHOW TABLES ..."`.
+    - Result: Removed the manager H2 test dependency, switched the checked-in manager Flyway fixtures to isolated MySQL schemas, updated the remaining manager migration tests to use MySQL-backed fixture databases and schema-scoped `INFORMATION_SCHEMA` checks, refreshed the V4 baseline SQL for MySQL, and fixed manager migration metadata lookups so MySQL upgrade logic no longer reads similarly named tables from other schemas.
+  - **2026-04-04 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: Earlier MySQL-only cleanup stopped at manager runtime profiles and left the checked-in migration-fixture path on H2 assumptions; once the task switched those tests onto MySQL, the migration helpers also exposed a second bug where server-wide metadata scans could mis-detect tables from other schemas and choose the wrong upgrade path.
+    - Cure: Replaced the remaining H2 fixture/config path with explicit MySQL-backed test setup, rewrote the affected Flyway regression tests and baseline fixture SQL for MySQL, and constrained manager migration metadata checks to the current schema so Flyway upgrade compatibility logic behaves correctly on a shared MySQL server.
+    - Generalization: The existing explicit-fixture and rebuild-first database rules already cover the durable lesson here, so no new `docs/operations/best-practices.md` entry was needed for this task.
+  - **2026-04-04 — verification**
+    - Validation status: approved
+    - Evidence: `bash scripts/with-java8.sh mvn -q -pl analyze,manager -am clean -DfailIfNoTests=false -Dtest=ManagerDashboardBootstrapIntegrationTest,ManagerFlywayHistoryRenameIntegrationTest,TraceFlywayExecutionModeIntegrationTest,DatasourceConfigFlywayIntegrationTest test -Dspring.mvc.pathmatch.matching-strategy=ant_path_matcher` passed against the local MySQL server after rerunning outside the sandbox.
+    - Evidence: `bash scripts/with-java8.sh mvn -q -pl analyze,manager -am test -Dspring.mvc.pathmatch.matching-strategy=ant_path_matcher` passed.
+    - Evidence: `npm --prefix manager/frontend run build` passed.
+    - Evidence: `rg -n "jdbc:h2:|org\\.h2\\.Driver|com\\.h2database|com\\.mysql\\.jdbc\\.Driver|\\bH2\\b" manager docs/modules/manager.md -g '!manager/target/**' -g '!manager/frontend/dist/**' -g '!manager/src/main/resources/static/assets/*'` returned no matches.
+    - Next action: none
+    - Escalation: none
+  - **2026-04-04 — doc-garden**
+    - Updated `docs/modules/manager.md` so the manager module docs now describe the checked-in manager regression fixtures as MySQL-only instead of allowing H2-backed test residue.
 
 ### HARNESS-GOV-002: TIGHTEN INBOX ESCALATION AND BEST-PRACTICE CURATION RULES
 

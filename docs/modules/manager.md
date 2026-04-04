@@ -53,8 +53,8 @@ npm run dev -- --host 127.0.0.1 --port 5173
 `manager` no longer applies Flyway migrations during normal startup. Initialize
 the metadata schema first with `bash scripts/init-db.sh <dev|test|pro> manager`.
 Runtime settings now live in `application-dev.yml`, `application-test.yml`, and
-`application-pro.yml`. Those profile YAMLs are now MySQL-first; H2 remains
-limited to test-scoped override resources used by regression coverage.
+`application-pro.yml`. Those profile YAMLs and the checked-in regression
+fixtures are now MySQL-only.
 All Maven-backed startup and validation commands for `manager` must run on a
 full Java 8 JDK, which `scripts/with-java8.sh` enforces.
 

@@ -23,19 +23,17 @@ final class MigrationSupport {
 
     static boolean tableExists(Connection connection, String tableName) throws SQLException {
         DatabaseMetaData metadata = connection.getMetaData();
-        return matchesTable(metadata, connection.getCatalog(), tableName) || matchesTable(metadata, null, tableName);
+        return matchesTable(metadata, connection.getCatalog(), tableName);
     }
 
     static boolean columnExists(Connection connection, String tableName, String columnName) throws SQLException {
         DatabaseMetaData metadata = connection.getMetaData();
-        return matchesColumn(metadata, connection.getCatalog(), tableName, columnName)
-                || matchesColumn(metadata, null, tableName, columnName);
+        return matchesColumn(metadata, connection.getCatalog(), tableName, columnName);
     }
 
     static boolean indexExists(Connection connection, String tableName, String indexName) throws SQLException {
         DatabaseMetaData metadata = connection.getMetaData();
-        return matchesIndex(metadata, connection.getCatalog(), tableName, indexName)
-                || matchesIndex(metadata, null, tableName, indexName);
+        return matchesIndex(metadata, connection.getCatalog(), tableName, indexName);
     }
 
     static void execute(Connection connection, String sql) throws SQLException {
@@ -78,7 +76,7 @@ final class MigrationSupport {
     }
 
     private static boolean matchesTable(DatabaseMetaData metadata, String catalog, String tableName) throws SQLException {
-        try (ResultSet resultSet = metadata.getTables(catalog, null, null, new String[]{"TABLE"})) {
+        try (ResultSet resultSet = metadata.getTables(catalog, null, tableName, new String[]{"TABLE"})) {
             while (resultSet.next()) {
                 String currentName = resultSet.getString("TABLE_NAME");
                 if (equalsIgnoreCase(currentName, tableName)) {
@@ -93,7 +91,7 @@ final class MigrationSupport {
                                          String catalog,
                                          String tableName,
                                          String columnName) throws SQLException {
-        try (ResultSet resultSet = metadata.getColumns(catalog, null, null, null)) {
+        try (ResultSet resultSet = metadata.getColumns(catalog, null, tableName, columnName)) {
             while (resultSet.next()) {
                 String currentTable = resultSet.getString("TABLE_NAME");
                 String currentColumn = resultSet.getString("COLUMN_NAME");
@@ -114,15 +112,6 @@ final class MigrationSupport {
                 String currentName = resultSet.getString("INDEX_NAME");
                 if (equalsIgnoreCase(currentName, indexName)) {
                     return true;
-                }
-            }
-        } catch (SQLException ignored) {
-            try (ResultSet resultSet = metadata.getIndexInfo(null, null, tableName, false, false)) {
-                while (resultSet.next()) {
-                    String currentName = resultSet.getString("INDEX_NAME");
-                    if (equalsIgnoreCase(currentName, indexName)) {
-                        return true;
-                    }
                 }
             }
         }

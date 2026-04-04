@@ -52,22 +52,32 @@ class ManagerDashboardBootstrapIntegrationTest {
     // Covers the default Flyway bootstrap path used by the dashboard data APIs.
     void shouldLeaveDashboardApisEmptyUntilLiveDataArrives() throws Exception {
         assertEquals(Integer.valueOf(1), jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE LOWER(table_name) = 'manager_sql_execution_record'",
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES "
+                        + "WHERE LOWER(table_schema) = LOWER(DATABASE()) "
+                        + "AND LOWER(table_name) = 'manager_sql_execution_record'",
                 Integer.class));
         assertEquals(Integer.valueOf(0), jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE LOWER(table_name) = 'sql_execution_record'",
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES "
+                        + "WHERE LOWER(table_schema) = LOWER(DATABASE()) "
+                        + "AND LOWER(table_name) = 'sql_execution_record'",
                 Integer.class));
         assertEquals(Integer.valueOf(1), jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
-                        "WHERE LOWER(table_name) = 'manager_sql_execution_record' AND LOWER(column_name) = 'execution_mode'",
+                        "WHERE LOWER(table_schema) = LOWER(DATABASE()) " +
+                        "AND LOWER(table_name) = 'manager_sql_execution_record' " +
+                        "AND LOWER(column_name) = 'execution_mode'",
                 Integer.class));
         assertEquals(Integer.valueOf(1), jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
-                        "WHERE LOWER(table_name) = 'manager_sql_execution_record' AND LOWER(column_name) = 'parameter_payload'",
+                        "WHERE LOWER(table_schema) = LOWER(DATABASE()) " +
+                        "AND LOWER(table_name) = 'manager_sql_execution_record' " +
+                        "AND LOWER(column_name) = 'parameter_payload'",
                 Integer.class));
         assertEquals(Integer.valueOf(1), jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
-                        "WHERE LOWER(table_name) = 'manager_sql_execution_record' AND LOWER(column_name) = 'cache_key'",
+                        "WHERE LOWER(table_schema) = LOWER(DATABASE()) " +
+                        "AND LOWER(table_name) = 'manager_sql_execution_record' " +
+                        "AND LOWER(column_name) = 'cache_key'",
                 Integer.class));
         assertEquals(Long.valueOf(0L),
                 jdbcTemplate.queryForObject("SELECT COUNT(*) FROM manager_sql_execution_record", Long.class));
@@ -111,6 +121,6 @@ class ManagerDashboardBootstrapIntegrationTest {
     }
 
     private static String jdbcUrl() {
-        return ManagerTestFixtures.h2JdbcUrl("manager.test.flyway.dashboard-db-name");
+        return ManagerTestFixtures.mysqlJdbcUrl("manager.test.flyway.dashboard-db-name");
     }
 }

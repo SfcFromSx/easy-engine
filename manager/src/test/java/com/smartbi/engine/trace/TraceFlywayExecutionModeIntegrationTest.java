@@ -73,22 +73,28 @@ class TraceFlywayExecutionModeIntegrationTest {
     void shouldApplyFlywayTraceColumnsAndExposeStoredValues() throws Exception {
         Integer executionModeColumnCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
-                        "WHERE LOWER(table_name) = 'manager_sql_execution_record' AND LOWER(column_name) = 'execution_mode'",
+                        "WHERE LOWER(table_schema) = LOWER(DATABASE()) " +
+                        "AND LOWER(table_name) = 'manager_sql_execution_record' " +
+                        "AND LOWER(column_name) = 'execution_mode'",
                 Integer.class);
         Integer parameterPayloadColumnCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
-                        "WHERE LOWER(table_name) = 'manager_sql_execution_record' AND LOWER(column_name) = 'parameter_payload'",
+                        "WHERE LOWER(table_schema) = LOWER(DATABASE()) " +
+                        "AND LOWER(table_name) = 'manager_sql_execution_record' " +
+                        "AND LOWER(column_name) = 'parameter_payload'",
                 Integer.class);
         Integer cacheKeyColumnCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
-                        "WHERE LOWER(table_name) = 'manager_sql_execution_record' AND LOWER(column_name) = 'cache_key'",
+                        "WHERE LOWER(table_schema) = LOWER(DATABASE()) " +
+                        "AND LOWER(table_name) = 'manager_sql_execution_record' " +
+                        "AND LOWER(column_name) = 'cache_key'",
                 Integer.class);
         assertEquals(Integer.valueOf(1), executionModeColumnCount);
         assertEquals(Integer.valueOf(1), parameterPayloadColumnCount);
         assertEquals(Integer.valueOf(1), cacheKeyColumnCount);
 
-        ingestionService.ingestJson("{\"datasourceName\":\"default\",\"datasourceType\":\"h2\",\"originalSql\":\"SELECT 1\",\"parameterPayload\":\"[{\\\"position\\\":1,\\\"className\\\":\\\"java.lang.Integer\\\",\\\"value\\\":\\\"7\\\"}]\",\"executionMode\":\"PREPARED_STATEMENT\",\"success\":false,\"cacheKey\":\"kylin_cache:default:select-1\",\"durationMs\":12}");
-        ingestionService.ingestJson("{\"datasourceName\":\"default\",\"datasourceType\":\"h2\",\"originalSql\":\"SELECT 2\",\"success\":true,\"durationMs\":8}");
+        ingestionService.ingestJson("{\"datasourceName\":\"default\",\"datasourceType\":\"mysql\",\"originalSql\":\"SELECT 1\",\"parameterPayload\":\"[{\\\"position\\\":1,\\\"className\\\":\\\"java.lang.Integer\\\",\\\"value\\\":\\\"7\\\"}]\",\"executionMode\":\"PREPARED_STATEMENT\",\"success\":false,\"cacheKey\":\"kylin_cache:default:select-1\",\"durationMs\":12}");
+        ingestionService.ingestJson("{\"datasourceName\":\"default\",\"datasourceType\":\"mysql\",\"originalSql\":\"SELECT 2\",\"success\":true,\"durationMs\":8}");
 
         SqlExecutionRecord prepared = recordRepository.findAll().stream()
                 .filter(record -> "SELECT 1".equals(record.getOriginalSql()))
@@ -140,7 +146,7 @@ class TraceFlywayExecutionModeIntegrationTest {
     }
 
     private static String baselineJdbcUrl() {
-        return ManagerTestFixtures.h2JdbcUrlWithInit(
+        return ManagerTestFixtures.mysqlJdbcUrlWithInit(
                 "manager.test.flyway.trace-db-name",
                 "manager.test.flyway.baseline-v4-resource");
     }

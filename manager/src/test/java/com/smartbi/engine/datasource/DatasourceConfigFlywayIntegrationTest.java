@@ -52,11 +52,15 @@ class DatasourceConfigFlywayIntegrationTest {
     void shouldCreateDatasourceConfigTableAndSeedQueryDefaults() throws Exception {
         Integer defaultColumnCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
-                        "WHERE LOWER(table_name) = 'manager_query_datasource_config' AND LOWER(column_name) = 'is_default'",
+                        "WHERE LOWER(table_schema) = LOWER(DATABASE()) " +
+                        "AND LOWER(table_name) = 'manager_query_datasource_config' " +
+                        "AND LOWER(column_name) = 'is_default'",
                 Integer.class);
         Integer updatedAtColumnCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
-                        "WHERE LOWER(table_name) = 'manager_query_datasource_config' AND LOWER(column_name) = 'updated_at'",
+                        "WHERE LOWER(table_schema) = LOWER(DATABASE()) " +
+                        "AND LOWER(table_name) = 'manager_query_datasource_config' " +
+                        "AND LOWER(column_name) = 'updated_at'",
                 Integer.class);
 
         assertEquals(Integer.valueOf(1), defaultColumnCount);
@@ -83,7 +87,7 @@ class DatasourceConfigFlywayIntegrationTest {
     }
 
     private static String baselineJdbcUrl() {
-        return ManagerTestFixtures.h2JdbcUrlWithInit(
+        return ManagerTestFixtures.mysqlJdbcUrlWithInit(
                 "manager.test.flyway.datasource-db-name",
                 "manager.test.flyway.baseline-v4-resource");
     }
