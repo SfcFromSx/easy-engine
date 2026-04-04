@@ -74,7 +74,6 @@ Completed task history lives in [tasks-done.md](/Users/sfc/Documents/projects/en
     - `BP-AUDIT-001` confirmed that audited `ADD COLUMN` drift is already gone, but manager still keeps one structure-shaping compatibility migration in `V11__upgrade_text_to_mediumtext.sql`.
     - The follow-up task is therefore narrowly scoped to replacing that residual column-patch chain with a rebuild-first migration path and re-verifying manager Flyway upgrade coverage.
 
-
 ## Archive
 
 

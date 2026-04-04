@@ -40,13 +40,13 @@ npm --prefix benchmark/frontend run build
 ### Query
 
 ```bash
-bash scripts/with-java8.sh mvn -q -f query/pom.xml test
+bash scripts/with-java8.sh mvn -q -pl analyze,query -am test
 ```
 
 ### Manager
 
 ```bash
-bash scripts/with-java8.sh mvn -q -f manager/pom.xml test
+bash scripts/with-java8.sh mvn -q -pl analyze,manager -am test -Dspring.mvc.pathmatch.matching-strategy=ant_path_matcher
 npm --prefix manager/frontend run test
 npm --prefix manager/frontend run build
 ```
@@ -103,7 +103,7 @@ Query-specific checklist:
 - For routing, cache, prepared execution, or trace changes, prefer extending `QueryWebIntegrationTest` so the executed request path is realistic.
 - Assert both the direct query response and the published trace payload when trace or execution metadata changes.
 - If the change affects downstream manager ingestion contracts, verify the manager-side persistence/API path too, not only query-side output.
-- When running `bash scripts/with-java8.sh mvn -q -f query/pom.xml test`, record the JaCoCo report path under `query/target/site/jacoco/` and summarize any remaining uncovered inventoried branches or explicit exclusions from the matrix.
+- When running `bash scripts/with-java8.sh mvn -q -pl analyze,query -am test`, record the JaCoCo report path under `query/target/site/jacoco/` and summarize any remaining uncovered inventoried branches or explicit exclusions from the matrix.
 
 ### Manager
 

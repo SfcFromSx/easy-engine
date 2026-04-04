@@ -137,8 +137,8 @@ See `.agent/config.json` `validation_commands` for the current per-module comman
 
 | Module | Commands |
 |--------|----------|
-| manager | `bash scripts/with-java8.sh mvn -q -f manager/pom.xml test` · `npm --prefix manager/frontend run build` |
-| query | `bash scripts/with-java8.sh mvn -q -f query/pom.xml test` |
+| manager | `bash scripts/with-java8.sh mvn -q -pl analyze,manager -am test -Dspring.mvc.pathmatch.matching-strategy=ant_path_matcher` · `npm --prefix manager/frontend run build` |
+| query | `bash scripts/with-java8.sh mvn -q -pl analyze,query -am test` |
 | benchmark | `bash scripts/with-java8.sh mvn -q -f benchmark/pom.xml test` · `npm --prefix benchmark/frontend run build` |
 | smoke | `bash scripts/benchmark-smoke.sh` |
 

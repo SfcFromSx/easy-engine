@@ -34,11 +34,11 @@
   ],
   "validation_commands": {
     "manager": [
-      "bash scripts/with-java8.sh mvn -q -f manager/pom.xml test",
+      "bash scripts/with-java8.sh mvn -q -pl analyze,manager -am test -Dspring.mvc.pathmatch.matching-strategy=ant_path_matcher",
       "npm --prefix manager/frontend run build"
     ],
     "query": [
-      "bash scripts/with-java8.sh mvn -q -f query/pom.xml test"
+      "bash scripts/with-java8.sh mvn -q -pl analyze,query -am test"
     ],
     "benchmark": [
       "bash scripts/with-java8.sh mvn -q -f benchmark/pom.xml test",
@@ -50,7 +50,7 @@
   },
   "post_task_refresh_commands": {
     "manager": [
-      "bash scripts/with-java8.sh mvn -q -f manager/pom.xml -DskipTests compile",
+      "bash scripts/with-java8.sh mvn -q -pl analyze,manager -am -DskipTests compile",
       "npm --prefix manager/frontend run build"
     ],
     "benchmark": [
@@ -58,7 +58,7 @@
       "npm --prefix benchmark/frontend run build"
     ],
     "query": [
-      "bash scripts/with-java8.sh mvn -q -f query/pom.xml -DskipTests compile"
+      "bash scripts/with-java8.sh mvn -q -pl analyze,query -am -DskipTests compile"
     ]
   },
   "service_health_checks": {

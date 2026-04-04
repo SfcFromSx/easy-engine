@@ -9,7 +9,7 @@ Use [testing-standard.md](/Users/sfc/Documents/projects/engine/docs/operations/t
 ### Manager
 
 ```bash
-bash scripts/with-java8.sh mvn -q -f manager/pom.xml test
+bash scripts/with-java8.sh mvn -q -pl analyze,manager -am test -Dspring.mvc.pathmatch.matching-strategy=ant_path_matcher
 npm --prefix manager/frontend run test
 npm --prefix manager/frontend run build
 ```
@@ -17,7 +17,7 @@ npm --prefix manager/frontend run build
 ### Query
 
 ```bash
-bash scripts/with-java8.sh mvn -q -f query/pom.xml test
+bash scripts/with-java8.sh mvn -q -pl analyze,query -am test
 ```
 
 ### Benchmark
@@ -34,6 +34,9 @@ bash scripts/benchmark-smoke.sh
 ```
 
 ## Escalate Validation Scope When
+
+Run the Maven commands above from the repo root so the reactor can build shared
+module `analyze` alongside `query` or `manager`.
 
 - a task changes cross-service interfaces,
 - a task changes routing or cache semantics,
