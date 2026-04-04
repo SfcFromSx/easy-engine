@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| BP-AUDIT-001 | AUDIT YAML-ONLY / MYSQL-ONLY / REBUILD-FIRST DB GOVERNANCE | platform | Audited the current working tree against the three governance rules, confirmed `.properties` config drift is gone, identified remaining H2 and manager DDL rebuild debt, and split the findings into four follow-up tasks in `tasks.md`. |
 | DDL-REVIEW-001 | AUDIT DB MIGRATIONS FOR PATCH-STYLE SCHEMA DRIFT | platform | Added a repo-wide rule against patch-style schema drift, converted manager trace-column compatibility to rebuild-based normalization, removed audited `ADD COLUMN` remnants from manager/benchmark fresh-schema paths, and verified the focused Flyway plus manager init-db flows. |
 | JAVA8-REVIEW-001 | AUDIT REPO FOR JAVA 8-ONLY DEV VALIDATION CI RUNTIME COMPLIANCE | platform | Added `scripts/with-java8.sh`, routed harness/init-db/docs through the Java 8 wrapper, confirmed the module POMs and spot-checked direct jars still target Java 8 classfiles, and the repo now fails fast instead of silently running Maven flows on the current Java 17/25 workstation. |
 | CONFIG-REVIEW-001 | AUDIT REPO FOR PROFILE-YAML-ONLY ENV CONFIG COMPLIANCE | platform | `manager`, `query`, and `benchmark` now keep environment-shaped test fixtures inside module `application-test.yml` files instead of `src/test/resources/application-test.properties`; the affected test helpers and Spring integration tests read YAML-backed overrides; manager/query reactor tests and benchmark backend tests pass; and the local-development docs now describe the new fixture location. |
@@ -147,6 +148,36 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | BENCH-ACTIVE-001 | RECOVER STALE ACTIVE RUN STATE ON BENCHMARK DASHBOARD | benchmark | Live MySQL evidence confirmed stale `benchmark_run` rows `#2` and `#3` were still `RUNNING` hours later with `ended_at = NULL` and `0/0` progress; `/api/v1/runs/active` now reconciles stale rows on read, returns the most recently started remaining active run deterministically, docs reflect the new contract, and `mvn -q -f benchmark/pom.xml test` passes |
 | BENCH-RUNS-API-001 | FIX THE `/api/v1/runs` LIST CONTRACT SO BENCHMARK PAGES LOAD WITHOUT A BACKEND 500 | benchmark | `GET /api/v1/runs` now accepts an omitted `jobId` and returns the newest global run history instead of throwing `Required request parameter 'jobId' ... is not present`; per-job paging still uses the existing filter when `jobId` is supplied, controller coverage now asserts both branches in `RunControllerTest` and `RunControllerContextTest`, docs describe the updated contract, and `mvn -q -f benchmark/pom.xml test`, `npm --prefix benchmark/frontend run test`, and `npm --prefix benchmark/frontend run build` all pass |
 | BENCH-FILTER-001 | IMPROVE BENCHMARK PAGE QUERY CONDITIONS | benchmark | Benchmark list/history filters now match the operator-visible columns more closely: Data Sources add a driver-class filter, Jobs add strategy/test-set filters and broader keyword matching, Test Sets keep keyword plus source only, Templates add request-backed `executionMode` filtering plus broader keyword search across `name`/`sqlText`/`description`/`executionMode`/`paramJson`, and Runs add request-backed optional `status` alongside clearable `jobId` global history. Docs describe the refined filter behavior and request params, and `mvn -q -f benchmark/pom.xml test`, `npm --prefix benchmark/frontend run test`, and `npm --prefix benchmark/frontend run build` all pass |
+### BP-AUDIT-001: AUDIT YAML-ONLY / MYSQL-ONLY / REBUILD-FIRST DB GOVERNANCE
+
+- **Status**: done
+- **Updated**: 2026-04-04
+- **Module**: platform
+- **Dependencies**: none
+- **Scope**:
+  - Audit the current working tree against three governance rules: YAML-only checked-in config files, MySQL-only checked-in database config, and rebuild-first database shape evolution.
+  - Record both passing and failing findings with concrete evidence.
+  - Split the failing findings into focused follow-up remediation tasks in `tasks.md`.
+- **Progress log**:
+  - **2026-04-04 — intake**
+    - Human requested a best-practice audit over the current working tree and asked that any findings be decomposed into concrete follow-up tasks in the active ledger.
+    - Audit scope was locked to checked-in source and docs only, excluding build outputs such as `target`, `dist`, and `node_modules`.
+  - **2026-04-04 — implementation**
+    - Files changed: `tasks.md`, `tasks-done.md`.
+    - Commands run: `find . -path '*/target' -prune -o -path '*/dist' -prune -o -path '*/node_modules' -prune -o -name '*.properties' -print | sort`, `rg -n "jdbc:h2|org\\.h2\\.Driver|\\bh2\\b" manager/src query/src benchmark/src manager/pom.xml query/pom.xml benchmark/pom.xml docs`, `rg -n "ALTER TABLE .*ADD COLUMN|MODIFY COLUMN|RENAME TO" manager/src/main/resources/db/migration manager/src/main/java/db/migration benchmark/src/main/resources/db/migration benchmark/src/main/java/db/migration`, `sed`, `git diff`.
+    - Result: Confirmed the repo no longer contains checked-in `.properties` configuration files outside build outputs, found remaining H2 residue in query/manager/benchmark test fixtures plus module docs, found residual manager structure-patch debt in `V11__upgrade_text_to_mediumtext.sql`, and decomposed the non-compliant areas into four follow-up tasks.
+  - **2026-04-04 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Post-mortem: audit-only task; no new generalized coding rule was required beyond the existing governance already recorded in `docs/operations/best-practices.md`.
+  - **2026-04-04 — verification**
+    - Validation status: approved
+    - Evidence: `find . -path '*/target' -prune -o -path '*/dist' -prune -o -path '*/node_modules' -prune -o -name '*.properties' -print | sort` returned no checked-in `.properties` config files in the audited source tree.
+    - Evidence: `rg -n "jdbc:h2|org\\.h2\\.Driver|\\bh2\\b" manager/src query/src benchmark/src manager/pom.xml query/pom.xml benchmark/pom.xml docs` still reports H2 references in `query`, `manager`, and `benchmark` test fixtures, test code, POM files, and module docs, so the MySQL-only rule remains incomplete in the current working tree.
+    - Evidence: `rg -n "ALTER TABLE .*ADD COLUMN|MODIFY COLUMN|RENAME TO" manager/src/main/resources/db/migration manager/src/main/java/db/migration benchmark/src/main/resources/db/migration benchmark/src/main/java/db/migration` shows no remaining `ADD COLUMN` fresh-schema drift in the audited paths, but manager still carries `V11__upgrade_text_to_mediumtext.sql` as a column-modifying compatibility migration and `V9__prefix_manager_tables.java` as a table-rename compatibility step.
+    - Evidence: Added `QUERY-MYSQL-TEST-002`, `MANAGER-MYSQL-TEST-002`, `BENCH-MYSQL-TEST-002`, and `MGR-DDL-REBUILD-002` to `tasks.md` so each non-compliant area now has an isolated remediation task.
+    - Next action: execute the four follow-up tasks independently so each cleanup can be verified and committed without broad cross-module coupling.
+    - Escalation: none
+
 ### DDL-REVIEW-001: AUDIT DB MIGRATIONS FOR PATCH-STYLE SCHEMA DRIFT
 
 - **Status**: done
