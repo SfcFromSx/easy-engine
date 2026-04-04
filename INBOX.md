@@ -67,8 +67,8 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Summary: Running `scripts/task_audit.py --check` during `QUERY-BUG-001` closeout revealed unrelated governance drift: `BENCH-UX-007` still has a `tasks-done.md` entry with no matching task-id commit subject in Git history.
 - Evidence: `python3 scripts/task_audit.py --check` on 2026-04-02 reported `BENCH-UX-007: tasks-done.md entry has no git commit subject containing the task id`; the same run also flagged the in-progress `QUERY-BUG-001` row before its commit existed.
 - Impact/Risk: The repo-level task audit cannot return green after unrelated query work until the older `BENCH-UX-007` audit trail is reconciled or explicitly grandfathered.
-- Suggested next step: Decide whether `BENCH-UX-007` should be grandfathered into the audit script like the other legacy gaps in `INBOX-20260331-001` or whether a recoverable task-id commit link still exists and should be restored.
-- Human decision: pending
+- Suggested next step: Grandfather the remaining missing task-id commit links (`BENCH-UX-007`, `MYSQL-ONLY-001`, and `TEST-CONFIG-002`) into the audit allowlist instead of trying to reconstruct non-recoverable historical commit subjects.
+- Human decision: approved 2026-04-04 — use the grandfather path for `BENCH-UX-007`, `MYSQL-ONLY-001`, and `TEST-CONFIG-002`; do not spend more time reconstructing historical commit links.
 
 ### INBOX-20260402-016
 - Area: Harness audit trail (Git Rules)
@@ -85,8 +85,8 @@ This is the canonical repo-root inbox for agent-found issues and suggestions tha
 - Summary: The new shared `benchmark` `application-test.yml` works for automated tests and for MySQL-backed test-environment deployment overrides, but its raw H2 default cannot replay the full benchmark Flyway chain because migration `V17__dedupe_seeded_benchmark_datasources.sql` uses MySQL-specific multi-table `UPDATE ... JOIN` syntax.
 - Evidence: `bash scripts/init-db.sh test manager benchmark` on 2026-04-02 succeeded for `manager` but failed for `benchmark` on H2 with `Syntax error in SQL statement ... expected "SET"` inside `V17__dedupe_seeded_benchmark_datasources.sql`; the same path passed when the benchmark test-profile datasource was overridden to local MySQL via `BENCHMARK_TEST_DB_*` environment variables.
 - Impact/Risk: Benchmark's unified `test` profile currently needs DB env overrides for deployment-like DB initialization, so the out-of-the-box H2 defaults are only suitable for automated benchmark tests that keep Flyway disabled.
-- Suggested next step: Decide whether benchmark `test` profile should keep H2-first defaults for automated tests or move to MySQL-first defaults with a separate shared test bootstrap override for local automated runs.
-- Human decision: pending
+- Suggested next step: Keep the benchmark cleanup on a `MYSQL-only` checked-in test-fixture path and execute the existing follow-up task `BENCH-MYSQL-TEST-002` to remove the remaining H2 defaults instead of introducing any new H2 fallback or MySQL-first compromise.
+- Human decision: approved 2026-04-04 — keep the benchmark follow-up on a `MYSQL-only` path by executing `BENCH-MYSQL-TEST-002`; do not pursue an H2 fallback or a mixed `MySQL-first` approach.
 
 ### INBOX-20260402-018
 - Area: Config governance

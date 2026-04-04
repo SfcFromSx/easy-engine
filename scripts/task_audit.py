@@ -16,8 +16,8 @@ ROOT = Path(__file__).resolve().parent.parent
 TASKS_PATH = ROOT / "tasks.md"
 TASKS_DONE_PATH = ROOT / "tasks-done.md"
 CONFIG_PATH = ROOT / ".agent" / "config.json"
-LEGACY_INBOX_ID = "INBOX-20260331-001"
-LEGACY_MISSING_COMMIT_IDS = {
+GRANDFATHERED_MISSING_COMMIT_SOURCE = "INBOX-20260331-001, INBOX-20260402-006"
+GRANDFATHERED_MISSING_COMMIT_IDS = {
     "ARCH-011",
     "ARCH-012",
     "ARCH-013",
@@ -28,12 +28,15 @@ LEGACY_MISSING_COMMIT_IDS = {
     "BENCH-REVIEW-001",
     "BENCH-TEST-001",
     "BENCH-UX-005",
+    "BENCH-UX-007",
     "MGR-BUG-001",
     "MGR-DASH-002",
+    "MYSQL-ONLY-001",
     "MGR-REVIEW-001",
     "MGR-TEST-001",
     "MGR-UX-003",
     "QUERY-REVIEW-001",
+    "TEST-CONFIG-002",
 }
 
 
@@ -142,23 +145,23 @@ def audit() -> tuple[list[str], list[str]]:
 
     subjects = git_subjects()
     missing_commit_ids = sorted(task_id for task_id in done_ids if task_id not in subjects)
-    legacy_missing = sorted(task_id for task_id in missing_commit_ids if task_id in LEGACY_MISSING_COMMIT_IDS)
-    unexpected_missing = sorted(task_id for task_id in missing_commit_ids if task_id not in LEGACY_MISSING_COMMIT_IDS)
+    legacy_missing = sorted(task_id for task_id in missing_commit_ids if task_id in GRANDFATHERED_MISSING_COMMIT_IDS)
+    unexpected_missing = sorted(task_id for task_id in missing_commit_ids if task_id not in GRANDFATHERED_MISSING_COMMIT_IDS)
 
     for task_id in unexpected_missing:
         issues.append(f"{task_id}: tasks-done.md entry has no git commit subject containing the task id")
 
     if legacy_missing:
         notes.append(
-            "Grandfathered legacy Done rows without task-id commit subjects: "
+            "Grandfathered Done rows without task-id commit subjects: "
             + ", ".join(legacy_missing)
-            + f" ({LEGACY_INBOX_ID})"
+            + f" ({GRANDFATHERED_MISSING_COMMIT_SOURCE})"
         )
 
-    stale_allowlist = sorted(task_id for task_id in LEGACY_MISSING_COMMIT_IDS if task_id not in done_ids)
+    stale_allowlist = sorted(task_id for task_id in GRANDFATHERED_MISSING_COMMIT_IDS if task_id not in done_ids)
     if stale_allowlist:
         notes.append(
-            "Legacy allowlist ids no longer present in tasks-done.md: " + ", ".join(stale_allowlist)
+            "Grandfather allowlist ids no longer present in tasks-done.md: " + ", ".join(stale_allowlist)
         )
 
     return issues, notes
