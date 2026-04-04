@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| HARNESS-GOV-002 | TIGHTEN INBOX ESCALATION AND BEST-PRACTICE CURATION RULES | platform | Tightened the harness contract so `INBOX.md` is only for issues that still need human judgment, removed audit-only inbox mirroring for deterministic harness bookkeeping, and documented best-practice curation rules that merge or rewrite overlapping guidance instead of appending duplicates. |
 | BP-AUDIT-001 | AUDIT YAML-ONLY / MYSQL-ONLY / REBUILD-FIRST DB GOVERNANCE | platform | Audited the current working tree against the three governance rules, confirmed `.properties` config drift is gone, identified remaining H2 and manager DDL rebuild debt, and split the findings into four follow-up tasks in `tasks.md`. |
 | TEST-CONFIG-003 | KEEP YAML TEST FIXTURES EXPLICIT AND REMOVE HIDDEN SPRING OVERRIDES | tests | `query`, `manager`, and `benchmark` now keep YAML test fixtures as explicit inputs instead of hidden Spring environment mutation; the test-only post-processors and `spring.factories` hooks are gone; focused query/manager/benchmark validation passes under Java 8; and the benchmark stale-resource false positive was eliminated by clean verification. |
 | QUERY-MYSQL-TEST-002 | REMOVE REMAINING H2 TEST FIXTURES FROM QUERY | query | `query` no longer carries the H2 test dependency or H2-backed checked-in fixtures; query tests now use explicit MySQL-backed fixture URLs on the Java 8 path; the query module docs describe MySQL-only checked-in fixtures; and both focused plus full `query` validation passed against the local MySQL test setup. |
@@ -46,6 +47,38 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | BENCH-TEST-002 | EXTERNALIZE PREFLIGHT CONTROLLER TEST FIXTURES | benchmark | `PreflightControllerTest` now loads its probe fixture values from `benchmark/src/test/resources/preflight-controller-test.properties` instead of inline literals, the focused benchmark validation passes, and the broader audit follow-up is tracked in `TEST-CONFIG-001`. |
 | BENCH-CONFIG-001 | EXTERNALIZE BENCHMARK PREFLIGHT DATASOURCE PROBE SETTINGS | benchmark | `BenchmarkPreflightProperties` no longer embeds Kylin/Presto probe defaults in Java, `benchmark.preflight.*` can be overridden from environment-backed config, task-local preflight tests pass, and unrelated benchmark-suite drift is logged in `INBOX-20260402-001`. |
 
+
+### HARNESS-GOV-002: TIGHTEN INBOX ESCALATION AND BEST-PRACTICE CURATION RULES
+
+- **Status**: done
+- **Updated**: 2026-04-04
+- **Module**: platform
+- **Dependencies**: none
+- **Scope**:
+  - Update the harness contract so `INBOX.md` is used only for issues that still need human judgment, approval, prioritization, or scope decisions.
+  - Remove the rule that forces audit-only inbox entries for deterministic task intake, closeout, or harness document edits that the human already requested directly.
+  - Require `docs/operations/best-practices.md` updates to review existing rules first and merge, rewrite, or replace overlapping guidance instead of appending duplicates.
+- **Progress log**:
+  - **2026-04-04 — intake**
+    - Human requested a harness-policy update: if a finding does not require a human decision, stop writing it into `INBOX.md`.
+    - Human also requested that best-practice maintenance prefer adjusting or merging existing guidance when overlap exists, instead of endlessly appending repetitive rules.
+  - **2026-04-04 — implementation**
+    - Files changed: `README.md`, `AGENTS.md`, `INBOX.md`, `docs/operations/human-collaboration.md`, `docs/operations/best-practices.md`, `docs/product/README.md`, `docs/product/backlog.md`, and the task ledger/archive records.
+    - Commands run: `rg`, `sed`, `git diff`, `python3 scripts/task_audit.py --check`.
+    - Result: Reframed the harness contract so inbox usage is reserved for work that still needs human judgment, removed the requirement to create audit-only inbox mirrors for deterministic harness/task bookkeeping, and added explicit best-practice curation rules that require overlap review plus merge-or-rewrite behavior before adding guidance.
+  - **2026-04-04 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: The harness docs had drifted into using `INBOX.md` as a generic audit trail for deterministic bookkeeping, while best-practice maintenance lacked an explicit consolidation rule and therefore encouraged append-only growth.
+    - Cure: Tightened the inbox contract to decision-requiring issues only, aligned the human-collaboration and backlog entrypoints with direct task-based harness requests, and added curation language that requires reviewing and consolidating overlapping best-practice rules before introducing new wording.
+    - Generalization: This task updated harness-governance documents directly; no additional code-level best-practice rule was needed beyond the maintenance protocol now documented in `docs/operations/best-practices.md`.
+  - **2026-04-04 — verification**
+    - Validation status: approved with unrelated audit drift
+    - Evidence: `rg -n "audit-only inbox entries|merge, rewrite, or replace|directly request harness-framework changes|still need human decisions" README.md AGENTS.md INBOX.md docs/operations/human-collaboration.md docs/product/backlog.md docs/product/README.md docs/operations/best-practices.md` confirmed the new inbox-escalation and best-practice-curation wording landed in every intended entrypoint.
+    - Evidence: `python3 scripts/task_audit.py --check` currently reports the pre-existing governance issues `BENCH-UX-007`, `HARNESS-VALIDATION-001`, `MYSQL-ONLY-001`, and `TEST-CONFIG-002` because those archived rows do not yet have matching git commit subjects containing the task id; no new audit failure specific to the harness-rule wording itself was introduced by this task.
+    - Next action: none
+    - Escalation: none
+  - **2026-04-04 — doc-garden**
+    - Updated the repo root/readme entrypoints plus the operations and product docs so the new inbox-escalation and best-practice-curation rules are described consistently wherever humans or agents enter the workflow.
 
 ### JAVA8-REVIEW-001: AUDIT REPO FOR JAVA 8-ONLY DEV VALIDATION CI RUNTIME COMPLIANCE
 

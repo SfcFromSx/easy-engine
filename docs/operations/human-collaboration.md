@@ -9,8 +9,8 @@ This document describes what humans should do in the task-driven foreman workflo
 - Provide credentials, environment variables, and infrastructure.
 - Review diffs, run extra validation, approve merges, and decide whether to push or publish.
 - Resolve Git topology issues such as initializing the root repository or flattening nested repositories.
-- Confirm or reject entries collected in [INBOX.md](/Users/sfc/Documents/projects/engine/INBOX.md) before they become implementation tasks.
-- Explicitly approve harness-framework changes before they move from the inbox into implementation work.
+- Confirm or reject entries collected in [INBOX.md](/Users/sfc/Documents/projects/engine/INBOX.md) when they genuinely require human judgment before they become implementation tasks.
+- Directly request harness-framework changes as tasks when the desired outcome is already decided; use the inbox only for unplanned harness issues that still need human judgment.
 
 ## Avoid During Active Work
 

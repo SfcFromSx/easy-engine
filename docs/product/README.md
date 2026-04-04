@@ -1,6 +1,6 @@
 # Product Docs
 
-Use this section for backlog, roadmap, terminology, and quality tracking. Agent-found issues and suggestions now live in the repo-root [INBOX.md](/Users/sfc/Documents/projects/engine/INBOX.md).
+Use this section for backlog, roadmap, terminology, and quality tracking. Agent-found issues and suggestions that still need human judgment live in the repo-root [INBOX.md](/Users/sfc/Documents/projects/engine/INBOX.md).
 
 ## Core Docs
 

@@ -11,7 +11,7 @@ The foreman reads `tasks.md`, receives a task assignment from the human, does th
 - `benchmark/`: benchmark backend and frontend.
 - `tasks.md`: active task ledger — human-readable, foreman-writable.
 - `tasks-done.md`: completed task archive and done-signal history.
-- `INBOX.md`: repo-root inbox for agent-found issues and suggestions awaiting human review.
+- `INBOX.md`: repo-root inbox for agent-found issues and suggestions that still need human review or judgment.
 - `.agent/config.json`: harness policy, validation commands, mirror policy, and service health checks.
 
 ## Read This First
@@ -44,7 +44,7 @@ Append concrete implementation notes to the task's **Progress log** section in `
 ### 3. Self-Review and Post-mortem
 
 Run a self-review checklist against the implementation (checking style consistency, test coverage, and side-effects). If human code review is required, update the task status to `in_review` and pause.
-For any task correcting a bug or code style issue, append a Post-mortem block (Root Cause, Cure, and Generalization) to the task's **Progress log**. Persistent generalization rules should be exported to `docs/operations/best-practices.md`.
+For any task correcting a bug or code style issue, append a Post-mortem block (Root Cause, Cure, and Generalization) to the task's **Progress log**. Persistent generalization rules should be curated into `docs/operations/best-practices.md`.
 
 ### 4. Validate
 
@@ -109,12 +109,14 @@ If a task is awaiting human approval to proceed, update its status to `in_review
 - Do not edit `.agent/config.json` during non-harness task execution. Harness-policy changes must be their own explicit task.
 - Do not make broad multi-module changes in one task unless the task explicitly says so.
 - Do not remove human review checkpoints from Git workflows.
-- Collect harness, tooling, or infrastructure issues into `INBOX.md` first; do not change infrastructure without explicit human approval. However, generalized coding practices and code style rules derived from post-mortems must be logged in `docs/operations/best-practices.md` instead of `INBOX.md`.
+- Use `INBOX.md` only for issues that still need human judgment, approval, prioritization, or task-shaping. Do not create audit-only inbox entries for deterministic work the human already requested directly. Do not change infrastructure without explicit human approval.
+- Generalized coding practices and code style rules derived from post-mortems belong in `docs/operations/best-practices.md`, not `INBOX.md`.
 - Always read `AGENTS.md` first when picking up a new task to ensure alignment with the latest project contract.
 - Task state lives in `tasks.md` and `tasks-done.md`. Do not create JSON, YAML, or other machine state files for task tracking.
 - If the foreman is uncertain, ask the human before proceeding.
-- When appending a rule to `docs/operations/best-practices.md`, you MUST simultaneously create a "generalization review" task in `tasks.md` to retroactively apply the new rule to existing code, and log a notification in `INBOX.md`.
-- Any modification to core harness documents (e.g., `AGENTS.md`, `tasks.md`, `INBOX.md`, navigation trees) MUST be actively reported to the human via a new entry in `INBOX.md`.
+- Before changing `docs/operations/best-practices.md`, review the existing rules first. If the new lesson overlaps with an existing rule, merge, rewrite, or replace the current wording instead of adding a near-duplicate entry, and record that consolidation in the task log.
+- When a best-practice update introduces new repo-wide cleanup work, create a "generalization review" task in `tasks.md`. Use `INBOX.md` for that follow-up only if the scope or priority still needs human judgment.
+- Core harness document changes (for example `AGENTS.md`, `tasks.md`, `INBOX.md`, navigation trees) must be captured in the active task ledger and reported back to the human, but they do not require a mirror `INBOX.md` entry unless a human decision is still pending.
 
 ## Git Contract
 

@@ -15,7 +15,7 @@ Use these entrypoints:
 - [AGENTS.md](/Users/sfc/Documents/projects/engine/AGENTS.md) for the agent operating contract.
 - [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md) for the active task ledger.
 - [tasks-done.md](/Users/sfc/Documents/projects/engine/tasks-done.md) for the completed task archive.
-- [INBOX.md](/Users/sfc/Documents/projects/engine/INBOX.md) for agent-found issues and suggestions awaiting human decisions.
+- [INBOX.md](/Users/sfc/Documents/projects/engine/INBOX.md) for agent-found issues and suggestions that still need human decisions.
 - [docs/architecture/README.md](/Users/sfc/Documents/projects/engine/docs/architecture/README.md) for architecture docs.
 - [docs/operations/README.md](/Users/sfc/Documents/projects/engine/docs/operations/README.md) for runbooks and local development.
 - [docs/operations/human-collaboration.md](/Users/sfc/Documents/projects/engine/docs/operations/human-collaboration.md) for detailed human collaboration rules.
