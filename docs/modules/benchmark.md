@@ -66,11 +66,11 @@ cd /Users/sfc/Documents/projects/engine/benchmark/frontend && npm run dev
 `bash scripts/init-db.sh <dev|test|pro> [manager] [benchmark]` before booting
 `manager` or `benchmark` so the shared metadata schema and seed data are
 created explicitly. Benchmark runtime settings are now centralized in
-`application-dev.yml`, `application-test.yml`, and `application-pro.yml`. Those
-profile YAMLs are now MySQL-first; H2 stays confined to test-scoped override
-resources used by benchmark regression coverage. Benchmark's backend commands
-must run on a full Java 8 JDK because the JDBC upload integration test compiles
-a fixture jar via `javac`.
+`application-dev.yml`, `application-test.yml`, and `application-pro.yml`, and
+the checked-in benchmark regression fixtures now stay MySQL-only to match the
+runtime profile defaults. Benchmark's backend commands must run on a full Java
+8 JDK because the JDBC upload integration test compiles a fixture jar via
+`javac`.
 
 ## Verify
 

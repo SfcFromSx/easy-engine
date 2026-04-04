@@ -15,6 +15,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | TEST-CONFIG-002 | REPLACE REMAINING TEST PROPERTIES FIXTURES WITH YAML | tests | `query`, `manager`, and `benchmark` test support now load shared fixtures from `test-fixtures.yml` plus test-profile-only Spring environment overrides instead of `application-test.properties`; manager module validation and focused query regressions pass; and no `application-test.properties` files remain under the three module test trees. |
 | TEST-CONFIG-003 | KEEP YAML TEST FIXTURES EXPLICIT AND REMOVE HIDDEN SPRING OVERRIDES | tests | `query`, `manager`, and `benchmark` now keep YAML test fixtures as explicit inputs instead of hidden Spring environment mutation; the test-only post-processors and `spring.factories` hooks are gone; focused query/manager/benchmark validation passes under Java 8; and the benchmark stale-resource false positive was eliminated by clean verification. |
 | QUERY-MYSQL-TEST-002 | REMOVE REMAINING H2 TEST FIXTURES FROM QUERY | query | `query` no longer carries the H2 test dependency or H2-backed checked-in fixtures; query tests now use explicit MySQL-backed fixture URLs on the Java 8 path; the query module docs describe MySQL-only checked-in fixtures; and both focused plus full `query` validation passed against the local MySQL test setup. |
+| BENCH-MYSQL-TEST-002 | REMOVE REMAINING H2 TEST FIXTURES FROM BENCHMARK | benchmark | `benchmark` no longer carries the H2 test dependency or H2-backed checked-in fixtures; benchmark regression tests now use explicit MySQL-backed fixture URLs plus a clean uploaded-driver test directory; and `mvn -q -f benchmark/pom.xml test` plus `npm --prefix benchmark/frontend run build` passed. |
 | DDL-REVIEW-001 | AUDIT DB MIGRATIONS FOR PATCH-STYLE SCHEMA DRIFT | platform | Added a repo-wide rule against patch-style schema drift, converted manager trace-column compatibility to rebuild-based normalization, removed audited `ADD COLUMN` remnants from manager/benchmark fresh-schema paths, and verified the focused Flyway plus manager init-db flows. |
 | JAVA8-REVIEW-001 | AUDIT REPO FOR JAVA 8-ONLY DEV VALIDATION CI RUNTIME COMPLIANCE | platform | Added `scripts/with-java8.sh`, routed harness/init-db/docs through the Java 8 wrapper, confirmed the module POMs and spot-checked direct jars still target Java 8 classfiles, and the repo now fails fast instead of silently running Maven flows on the current Java 17/25 workstation. |
 | CONFIG-REVIEW-001 | AUDIT REPO FOR PROFILE-YAML-ONLY ENV CONFIG COMPLIANCE | platform | `manager`, `query`, and `benchmark` now keep environment-shaped test fixtures inside module `application-test.yml` files instead of `src/test/resources/application-test.properties`; the affected test helpers and Spring integration tests read YAML-backed overrides; manager/query reactor tests and benchmark backend tests pass; and the local-development docs now describe the new fixture location. |
@@ -49,6 +50,44 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | QUERY-BUG-001 | REJECT NON-QUERY REQUESTS AT QUERY BOUNDARY | query | `query` now rejects blank and non-query SQL before cache/datasource work while preserving the compatibility exception payload contract, the request docs are updated, `mvn -q -f query/pom.xml test` passes, and broader compatibility-input review is tracked in `QUERY-REVIEW-002`. |
 | BENCH-TEST-002 | EXTERNALIZE PREFLIGHT CONTROLLER TEST FIXTURES | benchmark | `PreflightControllerTest` now loads its probe fixture values from `benchmark/src/test/resources/preflight-controller-test.properties` instead of inline literals, the focused benchmark validation passes, and the broader audit follow-up is tracked in `TEST-CONFIG-001`. |
 | BENCH-CONFIG-001 | EXTERNALIZE BENCHMARK PREFLIGHT DATASOURCE PROBE SETTINGS | benchmark | `BenchmarkPreflightProperties` no longer embeds Kylin/Presto probe defaults in Java, `benchmark.preflight.*` can be overridden from environment-backed config, task-local preflight tests pass, and unrelated benchmark-suite drift is logged in `INBOX-20260402-001`. |
+
+### BENCH-MYSQL-TEST-002: REMOVE REMAINING H2 TEST FIXTURES FROM BENCHMARK
+
+- **Status**: done
+- **Updated**: 2026-04-04
+- **Module**: benchmark
+- **Dependencies**: none
+- **Scope**:
+  - Remove the remaining H2 test dependency from `benchmark/pom.xml`.
+  - Replace H2 defaults in `benchmark/src/test/resources/test-fixtures.yml` with MySQL-backed explicit fixtures.
+  - Rewrite benchmark JDBC upload, query-service, async-runner, and smoke fixtures that still assume H2 driver classes or H2 JDBC URLs.
+  - Update any benchmark documentation that still describes H2 as an allowed checked-in regression fixture.
+- **Progress log**:
+  - **2026-04-04 — intake**
+    - `BP-AUDIT-001` found benchmark-side H2 residue in `benchmark/pom.xml`, `benchmark/src/test/resources/test-fixtures.yml`, `JdbcDriverUploadIntegrationTest`, `BenchmarkQueryServiceTest`, and `docs/modules/benchmark.md`.
+    - This cleanup is split from query and manager so benchmark-specific fixture rewrites can be verified with the benchmark module test command only.
+  - **2026-04-04 — scope confirmation**
+    - Human confirmed the target state is `MYSQL-only`, not `MySQL-first`: remove the remaining checked-in H2 benchmark fixtures instead of preserving any H2 fallback path in `benchmark` test config.
+    - `INBOX-20260402-017` should therefore be treated as resolved by executing this existing task, not by reopening the direction debate.
+  - **2026-04-04 — implementation**
+    - Files changed: `benchmark/pom.xml`, `benchmark/src/test/resources/test-fixtures.yml`, `benchmark/src/test/java/com/smartbi/benchmark/support/BenchmarkSpringTestOverrides.java`, `benchmark/src/test/java/com/smartbi/benchmark/web/JdbcDriverUploadIntegrationTest.java`, `benchmark/src/test/java/com/smartbi/benchmark/web/BenchmarkQueryServiceTest.java`, `benchmark/src/test/java/com/smartbi/benchmark/run/BenchmarkAsyncRunnerExecutionModeIntegrationTest.java`, `docs/modules/benchmark.md`, and the task ledger/archive records.
+    - Commands run: `rg`, `sed`, `git diff`, `git diff --check`.
+    - Result: Removed the benchmark H2 test dependency, replaced the remaining H2 fixture values with explicit MySQL URLs and driver classes, rewrote the query-service and async-runner tests to use unique MySQL tables instead of H2 in-memory databases, switched the uploaded-driver integration fixture to a MySQL-backed driver jar, and reset the benchmark uploaded-driver test directory before Spring context startup so stale H2 jars no longer break MySQL-only test runs.
+  - **2026-04-04 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: Earlier repo-wide MySQL-only cleanup updated benchmark runtime profiles but left benchmark test fixtures and one uploaded-driver bootstrap path on H2 assumptions, so benchmark regression coverage still depended on in-memory H2 URLs and could also be poisoned by stale H2 upload jars from previous runs.
+    - Cure: Aligned benchmark test fixtures with the checked-in MySQL profile defaults, rewrote the remaining benchmark tests to manage isolated MySQL tables instead of H2 in-memory databases, and made benchmark Spring test overrides clear the uploaded-driver directory before the registry initializes.
+    - Generalization: Existing MySQL-only fixture governance already covers this drift class, so no new `docs/operations/best-practices.md` entry was needed for this task.
+  - **2026-04-04 — verification**
+    - Validation status: approved
+    - Evidence: `bash scripts/with-java8.sh mvn -q -f benchmark/pom.xml test` passed on the Java 8 path after rerunning outside the sandbox so the suite could reach the local MySQL test database. The suite still logged the existing Testcontainers Docker-discovery noise and skipped one Docker-gated test because Docker is unavailable on this workstation, but Maven exited successfully.
+    - Evidence: `npm --prefix benchmark/frontend run build` passed.
+    - Evidence: `git diff --check -- benchmark/pom.xml benchmark/src/test/resources/test-fixtures.yml benchmark/src/test/java/com/smartbi/benchmark/support/BenchmarkSpringTestOverrides.java benchmark/src/test/java/com/smartbi/benchmark/web/JdbcDriverUploadIntegrationTest.java benchmark/src/test/java/com/smartbi/benchmark/web/BenchmarkQueryServiceTest.java benchmark/src/test/java/com/smartbi/benchmark/run/BenchmarkAsyncRunnerExecutionModeIntegrationTest.java docs/modules/benchmark.md tasks.md` passed.
+    - Evidence: `rg -n "jdbc:h2|org\\.h2|com\\.h2database|UploadedH2Driver|uploaded-h2-driver" benchmark/src/test benchmark/pom.xml docs/modules/benchmark.md` returned no matches.
+    - Next action: none
+    - Escalation: none
+  - **2026-04-04 — doc-garden**
+    - Updated `docs/modules/benchmark.md` so the benchmark module docs now describe the checked-in benchmark regression fixtures as MySQL-only instead of allowing test-scoped H2 residue.
 
 ### HARNESS-GOV-002: TIGHTEN INBOX ESCALATION AND BEST-PRACTICE CURATION RULES
 

@@ -4,6 +4,7 @@ import com.smartbi.benchmark.domain.BenchmarkDataSource;
 import com.smartbi.benchmark.jdbc.JdbcDriverRegistry;
 import com.smartbi.benchmark.repo.BenchmarkDataSourceRepository;
 import com.smartbi.benchmark.support.BenchmarkTestFixtures;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -22,17 +23,11 @@ import static org.mockito.Mockito.when;
 
 class BenchmarkQueryServiceTest {
 
-    private static final String H2_DRIVER_CLASS = BenchmarkTestFixtures.get("benchmark.test.query-service.driver-class");
-    private static final String JDBC_URL_PREFIX = BenchmarkTestFixtures.get("benchmark.test.query-service.jdbc-url-prefix");
-    private static final String JDBC_URL_SUFFIX = BenchmarkTestFixtures.get("benchmark.test.query-service.jdbc-url-suffix");
+    private static final String MYSQL_DRIVER_CLASS = BenchmarkTestFixtures.get("benchmark.test.query-service.driver-class");
+    private static final String JDBC_URL = BenchmarkTestFixtures.get("benchmark.test.query-service.jdbc-url");
     private static final String DATASOURCE_NAME = "query-ds";
     private static final String JDBC_USERNAME = BenchmarkTestFixtures.get("benchmark.test.query-service.jdbc-user");
     private static final String JDBC_PASSWORD = BenchmarkTestFixtures.get("benchmark.test.query-service.jdbc-password");
-    private static final String SALES_CREATE_SQL = "CREATE TABLE SALES (ID INT PRIMARY KEY, NAME VARCHAR(32))";
-    private static final String SALES_INSERT_SQL = "INSERT INTO SALES (ID, NAME) VALUES (1, 'alpha')";
-    private static final String SELECT_SQL = "SELECT NAME FROM SALES ORDER BY ID";
-    private static final String UPDATE_SQL = "UPDATE SALES SET NAME='beta' WHERE ID=1";
-    private static final String MISSING_TABLE_SQL = "SELECT * FROM MISSING_TABLE";
     private static final String NAME_COLUMN = "NAME";
     private static final String ALPHA = "alpha";
     private static final String AFFECTED_ROWS_MESSAGE = "Affected rows: 1";
@@ -43,6 +38,11 @@ class BenchmarkQueryServiceTest {
     private BenchmarkQueryService service;
     private BenchmarkDataSource dataSource;
     private String jdbcUrl;
+    private String tableName;
+    private String missingTableName;
+    private String selectSql;
+    private String updateSql;
+    private String missingTableSql;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -50,20 +50,26 @@ class BenchmarkQueryServiceTest {
         driverRegistry = mock(JdbcDriverRegistry.class);
         service = new BenchmarkQueryService(dataSourceRepository, driverRegistry);
 
-        jdbcUrl = JDBC_URL_PREFIX + UUID.randomUUID() + JDBC_URL_SUFFIX;
+        jdbcUrl = JDBC_URL;
+        tableName = "sales_" + UUID.randomUUID().toString().replace("-", "");
+        missingTableName = "missing_" + UUID.randomUUID().toString().replace("-", "");
+        selectSql = "SELECT NAME FROM " + tableName + " ORDER BY ID";
+        updateSql = "UPDATE " + tableName + " SET NAME='beta' WHERE ID=1";
+        missingTableSql = "SELECT * FROM " + missingTableName;
         dataSource = new BenchmarkDataSource();
         dataSource.setId(5L);
         dataSource.setName(DATASOURCE_NAME);
-        dataSource.setDriverClass(H2_DRIVER_CLASS);
+        dataSource.setDriverClass(MYSQL_DRIVER_CLASS);
         dataSource.setJdbcUrl(jdbcUrl);
         dataSource.setJdbcUser(JDBC_USERNAME);
         dataSource.setJdbcPassword(JDBC_PASSWORD);
 
-        Class.forName(H2_DRIVER_CLASS);
+        Class.forName(MYSQL_DRIVER_CLASS);
         try (Connection connection = DriverManager.getConnection(jdbcUrl, JDBC_USERNAME, JDBC_PASSWORD);
              Statement statement = connection.createStatement()) {
-            statement.execute(SALES_CREATE_SQL);
-            statement.execute(SALES_INSERT_SQL);
+            statement.execute("DROP TABLE IF EXISTS " + tableName);
+            statement.execute("CREATE TABLE " + tableName + " (ID INT PRIMARY KEY, NAME VARCHAR(32))");
+            statement.execute("INSERT INTO " + tableName + " (ID, NAME) VALUES (1, 'alpha')");
         }
 
         when(dataSourceRepository.findById(5L)).thenReturn(Optional.of(dataSource));
@@ -71,10 +77,22 @@ class BenchmarkQueryServiceTest {
                 .thenAnswer(invocation -> DriverManager.getConnection(jdbcUrl, JDBC_USERNAME, JDBC_PASSWORD));
     }
 
+    @AfterEach
+    void tearDown() throws Exception {
+        if (tableName == null) {
+            return;
+        }
+        Class.forName(MYSQL_DRIVER_CLASS);
+        try (Connection connection = DriverManager.getConnection(jdbcUrl, JDBC_USERNAME, JDBC_PASSWORD);
+             Statement statement = connection.createStatement()) {
+            statement.execute("DROP TABLE IF EXISTS " + tableName);
+        }
+    }
+
     // Covers BenchmarkQueryService#executeQuery result-set shaping.
     @Test
     void shouldReturnHeadersAndRowsForSelectStatements() {
-        BenchmarkQueryService.QueryResponse response = service.executeQuery(5L, SELECT_SQL);
+        BenchmarkQueryService.QueryResponse response = service.executeQuery(5L, selectSql);
 
         assertEquals(1, response.headers.size());
         assertEquals(NAME_COLUMN, response.headers.get(0));
@@ -86,7 +104,7 @@ class BenchmarkQueryServiceTest {
     // Covers BenchmarkQueryService#executeQuery update-count branch.
     @Test
     void shouldReturnAffectedRowsForMutationStatements() {
-        BenchmarkQueryService.QueryResponse response = service.executeQuery(5L, UPDATE_SQL);
+        BenchmarkQueryService.QueryResponse response = service.executeQuery(5L, updateSql);
 
         assertNull(response.headers);
         assertNull(response.rows);
@@ -96,7 +114,7 @@ class BenchmarkQueryServiceTest {
     // Covers BenchmarkQueryService#executeQuery error handling branch.
     @Test
     void shouldReturnErrorMessageWhenJdbcExecutionFails() {
-        BenchmarkQueryService.QueryResponse response = service.executeQuery(5L, MISSING_TABLE_SQL);
+        BenchmarkQueryService.QueryResponse response = service.executeQuery(5L, missingTableSql);
 
         assertNull(response.headers);
         assertNull(response.rows);

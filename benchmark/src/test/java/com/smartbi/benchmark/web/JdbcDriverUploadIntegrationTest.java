@@ -45,7 +45,7 @@ class JdbcDriverUploadIntegrationTest {
     private static final Path LEGACY_DRIVER_DIR = Paths.get("benchmark/target/test-drivers/uploaded").toAbsolutePath().normalize();
     private static final Path LEGACY_BUILD_DIR = Paths.get("benchmark/target/test-drivers/build").toAbsolutePath().normalize();
     private static final String FILE_FIELD = "file";
-    private static final String UPLOADED_DRIVER_JAR = "uploaded-h2-driver.jar";
+    private static final String UPLOADED_DRIVER_JAR = "uploaded-mysql-driver.jar";
     private static final String JAVA_ARCHIVE_MEDIA_TYPE = "application/java-archive";
     private static final String DRIVERS_UPLOAD_ENDPOINT = "/api/v1/drivers/upload";
     private static final String DRIVERS_ENDPOINT = "/api/v1/drivers";
@@ -54,10 +54,13 @@ class JdbcDriverUploadIntegrationTest {
     private static final String SUCCESS = "SUCCESS";
     private static final String SOURCE_DIR = "src/com/example/uploaded";
     private static final String CLASSES_DIR = "classes";
-    private static final String SOURCE_FILE = "UploadedH2Driver.java";
+    private static final String SOURCE_FILE = "UploadedMySqlDriver.java";
     private static final String DRIVER_CLASS_SOURCE =
             "package com.example.uploaded;\n"
-                    + "public class UploadedH2Driver extends org.h2.Driver {\n"
+                    + "public class UploadedMySqlDriver extends com.mysql.cj.jdbc.Driver {\n"
+                    + "  public UploadedMySqlDriver() throws java.sql.SQLException {\n"
+                    + "    super();\n"
+                    + "  }\n"
                     + "}\n";
     private static final String JAVA_SPECIFICATION_VERSION = "java.specification.version";
     private static final String JAVA_RELEASE_FLAG = "--release";
@@ -68,9 +71,9 @@ class JdbcDriverUploadIntegrationTest {
     private static final String OUTPUT_DIR_FLAG = "-d";
     private static final String JAVA_CLASS_PATH = "java.class.path";
     private static final String COMPILE_ERROR = "Failed to compile uploaded JDBC driver test fixture";
-    private static final String CLASS_ENTRY = "com/example/uploaded/UploadedH2Driver.class";
+    private static final String CLASS_ENTRY = "com/example/uploaded/UploadedMySqlDriver.class";
     private static final String DRIVER_SERVICE_ENTRY = "META-INF/services/java.sql.Driver";
-    private static final String DRIVER_SERVICE_CONTENT = "com.example.uploaded.UploadedH2Driver\n";
+    private static final String DRIVER_SERVICE_CONTENT = "com.example.uploaded.UploadedMySqlDriver\n";
     private static final String JDK_COMPILER_REQUIRED = "JDK compiler is required for JDBC upload integration test";
     private static final String DELETE_ERROR_PREFIX = "Failed to delete ";
 

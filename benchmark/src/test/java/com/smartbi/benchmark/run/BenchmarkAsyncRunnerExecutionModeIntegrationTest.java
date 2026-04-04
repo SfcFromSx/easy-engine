@@ -19,6 +19,7 @@ import com.smartbi.benchmark.repo.BenchmarkTestSetRepository;
 import com.smartbi.benchmark.repo.SqlTemplateRepository;
 import com.smartbi.benchmark.report.BenchmarkRunReportService;
 import com.smartbi.benchmark.support.BenchmarkSpringTestOverrides;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
@@ -94,6 +95,7 @@ class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
     }
 
     private BenchmarkAsyncRunner runner;
+    private String salesTableName;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -115,12 +117,25 @@ class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
                 driverRegistry
         );
 
+        salesTableName = "sales_" + java.util.UUID.randomUUID().toString().replace("-", "");
         Class.forName(targetDriverClass);
         try (Connection connection = DriverManager.getConnection(targetJdbcUrl, targetJdbcUser, targetJdbcPassword);
              Statement statement = connection.createStatement()) {
-            statement.execute("DROP TABLE IF EXISTS SALES");
-            statement.execute("CREATE TABLE SALES (ID INT PRIMARY KEY, NAME VARCHAR(32))");
-            statement.execute("INSERT INTO SALES (ID, NAME) VALUES (1, 'alpha'), (2, 'beta')");
+            statement.execute("DROP TABLE IF EXISTS " + salesTableName);
+            statement.execute("CREATE TABLE " + salesTableName + " (ID INT PRIMARY KEY, NAME VARCHAR(32))");
+            statement.execute("INSERT INTO " + salesTableName + " (ID, NAME) VALUES (1, 'alpha'), (2, 'beta')");
+        }
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        if (salesTableName == null) {
+            return;
+        }
+        Class.forName(targetDriverClass);
+        try (Connection connection = DriverManager.getConnection(targetJdbcUrl, targetJdbcUser, targetJdbcPassword);
+             Statement statement = connection.createStatement()) {
+            statement.execute("DROP TABLE IF EXISTS " + salesTableName);
         }
     }
 
@@ -143,7 +158,7 @@ class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
         statementItem.setTestSetId(testSet.getId());
         statementItem.setSortOrder(1);
         statementItem.setLabel("stmt");
-        statementItem.setSqlText("SELECT NAME FROM SALES ORDER BY ID");
+        statementItem.setSqlText("SELECT NAME FROM " + salesTableName + " ORDER BY ID");
         statementItem.setExecutionMode("STATEMENT");
         testSetItemRepository.save(statementItem);
 
@@ -151,7 +166,7 @@ class BenchmarkAsyncRunnerExecutionModeIntegrationTest {
         preparedItem.setTestSetId(testSet.getId());
         preparedItem.setSortOrder(2);
         preparedItem.setLabel("prep");
-        preparedItem.setSqlText("SELECT NAME FROM SALES WHERE ID = ?");
+        preparedItem.setSqlText("SELECT NAME FROM " + salesTableName + " WHERE ID = ?");
         preparedItem.setExecutionMode("PREPARED_STATEMENT");
         preparedItem.setParamJson("[{\"type\":\"INTEGER\",\"value\":1}]");
         testSetItemRepository.save(preparedItem);
