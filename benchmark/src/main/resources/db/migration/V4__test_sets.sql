@@ -20,5 +20,4 @@ CREATE TABLE benchmark_test_set_item (
 
 CREATE INDEX idx_test_set_item_set ON benchmark_test_set_item (test_set_id, sort_order);
 CREATE INDEX idx_test_set_item_sql_lib ON benchmark_test_set_item (sql_lib_id);
-
-ALTER TABLE benchmark_job ADD COLUMN IF NOT EXISTS test_set_id BIGINT NULL REFERENCES benchmark_test_set(id) ON DELETE SET NULL;
+-- benchmark_job is created with test_set_id in V1 so fresh schemas stay clean.

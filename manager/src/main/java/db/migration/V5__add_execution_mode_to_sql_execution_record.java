@@ -14,10 +14,15 @@ public class V5__add_execution_mode_to_sql_execution_record extends BaseJavaMigr
                 connection,
                 "manager_sql_execution_record",
                 "sql_execution_record");
-        if (tableName == null || MigrationSupport.columnExists(connection, tableName, "execution_mode")) {
+        if (tableName == null) {
             return;
         }
-        MigrationSupport.execute(connection,
-                "ALTER TABLE " + tableName + " ADD COLUMN execution_mode VARCHAR(32)");
+        if (MigrationSupport.columnExists(connection, tableName, "execution_mode")
+                && MigrationSupport.columnExists(connection, tableName, "parameter_payload")
+                && MigrationSupport.columnExists(connection, tableName, "cache_key")
+                && MigrationSupport.indexExists(connection, tableName, "idx_sql_exec_cache_hit_key")) {
+            return;
+        }
+        MigrationSupport.recreateSqlExecutionRecordTable(connection, tableName);
     }
 }

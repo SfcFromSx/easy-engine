@@ -22,8 +22,7 @@ public class V11__DataSources extends BaseJavaMigration {
                 ")");
 
         if (!MigrationSupport.columnExists(connection, "benchmark_job", "data_source_id")) {
-            MigrationSupport.execute(connection,
-                    "ALTER TABLE benchmark_job ADD COLUMN data_source_id BIGINT");
+            throw new IllegalStateException("benchmark_job.data_source_id must already exist in the canonical schema");
         }
 
         if (!hasLegacyJdbcColumns(connection)) {
@@ -46,11 +45,6 @@ public class V11__DataSources extends BaseJavaMigration {
                         "    LIMIT 1" +
                         ") " +
                         "WHERE data_source_id IS NULL");
-
-        dropColumnIfExists(connection, "jdbc_url");
-        dropColumnIfExists(connection, "jdbc_user");
-        dropColumnIfExists(connection, "jdbc_password");
-        dropColumnIfExists(connection, "driver_class");
     }
 
     private boolean hasLegacyJdbcColumns(Connection connection) throws Exception {
@@ -60,11 +54,4 @@ public class V11__DataSources extends BaseJavaMigration {
                 && MigrationSupport.columnExists(connection, "benchmark_job", "driver_class");
     }
 
-    private void dropColumnIfExists(Connection connection, String columnName) throws Exception {
-        if (!MigrationSupport.columnExists(connection, "benchmark_job", columnName)) {
-            return;
-        }
-        MigrationSupport.execute(connection,
-                "ALTER TABLE benchmark_job DROP COLUMN " + columnName);
-    }
 }

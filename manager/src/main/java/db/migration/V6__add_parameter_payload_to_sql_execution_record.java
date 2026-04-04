@@ -17,7 +17,6 @@ public class V6__add_parameter_payload_to_sql_execution_record extends BaseJavaM
         if (tableName == null || MigrationSupport.columnExists(connection, tableName, "parameter_payload")) {
             return;
         }
-        MigrationSupport.execute(connection,
-                "ALTER TABLE " + tableName + " ADD COLUMN parameter_payload MEDIUMTEXT");
+        MigrationSupport.recreateSqlExecutionRecordTable(connection, tableName);
     }
 }

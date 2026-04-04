@@ -44,6 +44,39 @@ final class MigrationSupport {
         }
     }
 
+    static void recreateSqlExecutionRecordTable(Connection connection, String tableName) throws SQLException {
+        execute(connection, "DROP TABLE IF EXISTS " + tableName);
+        execute(connection,
+                "CREATE TABLE " + tableName + " (" +
+                        "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
+                        "received_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+                        "raw_payload MEDIUMTEXT, " +
+                        "datasource_name VARCHAR(256), " +
+                        "datasource_type VARCHAR(64), " +
+                        "original_sql MEDIUMTEXT, " +
+                        "clean_sql MEDIUMTEXT, " +
+                        "param_fingerprint VARCHAR(512), " +
+                        "parameter_payload MEDIUMTEXT, " +
+                        "execution_mode VARCHAR(32), " +
+                        "success BOOLEAN, " +
+                        "cache_hit BOOLEAN, " +
+                        "cache_key VARCHAR(1024), " +
+                        "duration_ms BIGINT, " +
+                        "error_message MEDIUMTEXT, " +
+                        "parse_status VARCHAR(32) NOT NULL, " +
+                        "parse_error MEDIUMTEXT, " +
+                        "signature_json MEDIUMTEXT, " +
+                        "sql_fingerprint VARCHAR(64)" +
+                        ")");
+        execute(connection, "CREATE INDEX idx_sql_exec_received ON " + tableName + " (received_at)");
+        execute(connection, "CREATE INDEX idx_sql_exec_fingerprint ON " + tableName + " (sql_fingerprint)");
+        execute(connection, "CREATE INDEX idx_sql_exec_ds ON " + tableName + " (datasource_name)");
+        execute(connection,
+                "CREATE INDEX idx_sql_exec_cache_hit_key ON "
+                        + tableName
+                        + " (cache_hit, cache_key /*!80000 (191) */)");
+    }
+
     private static boolean matchesTable(DatabaseMetaData metadata, String catalog, String tableName) throws SQLException {
         try (ResultSet resultSet = metadata.getTables(catalog, null, null, new String[]{"TABLE"})) {
             while (resultSet.next()) {

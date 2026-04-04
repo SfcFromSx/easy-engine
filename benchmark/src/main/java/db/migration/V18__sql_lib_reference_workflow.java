@@ -12,23 +12,6 @@ public class V18__sql_lib_reference_workflow extends BaseJavaMigration {
     @Override
     public void migrate(Context context) throws Exception {
         try (Statement statement = context.getConnection().createStatement()) {
-            statement.execute("ALTER TABLE benchmark_sql_template MODIFY COLUMN sql_text MEDIUMTEXT");
-            statement.execute("ALTER TABLE benchmark_sql_template MODIFY COLUMN param_json MEDIUMTEXT");
-            statement.execute("ALTER TABLE benchmark_run MODIFY COLUMN error_sample MEDIUMTEXT");
-            statement.execute("ALTER TABLE benchmark_run MODIFY COLUMN job_snapshot_json MEDIUMTEXT");
-            statement.execute("ALTER TABLE benchmark_run MODIFY COLUMN evaluation_json MEDIUMTEXT");
-            statement.execute("ALTER TABLE benchmark_test_set_item MODIFY COLUMN sql_text MEDIUMTEXT");
-            statement.execute("ALTER TABLE benchmark_test_set_item MODIFY COLUMN param_json MEDIUMTEXT");
-            statement.execute("ALTER TABLE benchmark_data_source MODIFY COLUMN jdbc_url MEDIUMTEXT");
-            if (!MigrationSupport.columnExists(context.getConnection(), "benchmark_sql_template", "source_filename")) {
-                statement.execute("ALTER TABLE benchmark_sql_template ADD COLUMN source_filename VARCHAR(512) NULL");
-            }
-            if (!MigrationSupport.columnExists(context.getConnection(), "benchmark_sql_template", "uploaded_at")) {
-                statement.execute("ALTER TABLE benchmark_sql_template ADD COLUMN uploaded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP");
-            }
-            if (!MigrationSupport.columnExists(context.getConnection(), "benchmark_test_set_item", "sql_lib_id")) {
-                statement.execute("ALTER TABLE benchmark_test_set_item ADD COLUMN sql_lib_id BIGINT NULL");
-            }
             if (!MigrationSupport.indexExists(context.getConnection(), "benchmark_test_set_item", "idx_test_set_item_sql_lib")) {
                 statement.execute("CREATE INDEX idx_test_set_item_sql_lib ON benchmark_test_set_item (sql_lib_id)");
             }

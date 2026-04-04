@@ -1,12 +1,5 @@
-ALTER TABLE benchmark_sql_template
-    ADD COLUMN IF NOT EXISTS execution_mode VARCHAR(32) NOT NULL DEFAULT 'STATEMENT';
-ALTER TABLE benchmark_sql_template
-    ADD COLUMN IF NOT EXISTS param_json TEXT;
-
-ALTER TABLE benchmark_test_set_item
-    ADD COLUMN IF NOT EXISTS execution_mode VARCHAR(32) NOT NULL DEFAULT 'STATEMENT';
-ALTER TABLE benchmark_test_set_item
-    ADD COLUMN IF NOT EXISTS param_json TEXT;
+-- benchmark_sql_template and benchmark_test_set_item are created with prepared-statement columns
+-- in V1/V4 so fresh schemas stay clean.
 
 UPDATE benchmark_job
 SET jdbc_url = regexp_replace(
