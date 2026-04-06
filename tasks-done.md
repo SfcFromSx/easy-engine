@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| MGR-DDL-REBUILD-002 | REPLACE PATCH-STYLE COLUMN UPGRADES IN MANAGER MIGRATIONS | manager | Replaced manager `V11` column-modify compatibility DDL with rebuild/copy-forward SQL for legacy pattern, acceleration, and datasource tables, added legacy data-preservation assertions, and passed focused plus full manager validation/build. |
 | HARNESS-GOV-002 | TIGHTEN INBOX ESCALATION AND BEST-PRACTICE CURATION RULES | platform | Tightened the harness contract so `INBOX.md` is only for issues that still need human judgment, removed audit-only inbox mirroring for deterministic harness bookkeeping, and documented best-practice curation rules that merge or rewrite overlapping guidance instead of appending duplicates. |
 | BP-AUDIT-001 | AUDIT YAML-ONLY / MYSQL-ONLY / REBUILD-FIRST DB GOVERNANCE | platform | Audited the current working tree against the three governance rules, confirmed `.properties` config drift is gone, identified remaining H2 and manager DDL rebuild debt, and split the findings into four follow-up tasks in `tasks.md`. |
 | MYSQL-ONLY-001 | REMOVE H2 FROM CHECKED-IN REPO TEST AND MIGRATION PATHS | platform | Removed H2 from the checked-in repo surface, switched query/manager/benchmark test harnesses to MySQL-backed fixtures, removed H2 Maven test dependencies, and passed focused query, manager migration, benchmark, and `init-db` verification on the MySQL-only path. |
@@ -51,6 +52,39 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 | QUERY-BUG-001 | REJECT NON-QUERY REQUESTS AT QUERY BOUNDARY | query | `query` now rejects blank and non-query SQL before cache/datasource work while preserving the compatibility exception payload contract, the request docs are updated, `mvn -q -f query/pom.xml test` passes, and broader compatibility-input review is tracked in `QUERY-REVIEW-002`. |
 | BENCH-TEST-002 | EXTERNALIZE PREFLIGHT CONTROLLER TEST FIXTURES | benchmark | `PreflightControllerTest` now loads its probe fixture values from `benchmark/src/test/resources/preflight-controller-test.properties` instead of inline literals, the focused benchmark validation passes, and the broader audit follow-up is tracked in `TEST-CONFIG-001`. |
 | BENCH-CONFIG-001 | EXTERNALIZE BENCHMARK PREFLIGHT DATASOURCE PROBE SETTINGS | benchmark | `BenchmarkPreflightProperties` no longer embeds Kylin/Presto probe defaults in Java, `benchmark.preflight.*` can be overridden from environment-backed config, task-local preflight tests pass, and unrelated benchmark-suite drift is logged in `INBOX-20260402-001`. |
+
+### MGR-DDL-REBUILD-002: REPLACE PATCH-STYLE COLUMN UPGRADES IN MANAGER MIGRATIONS
+
+- **Status**: done
+- **Updated**: 2026-04-06
+- **Module**: manager
+- **Dependencies**: none
+- **Scope**:
+  - Keep `manager/src/main/resources/db/migration/V2__engine_core.sql` and `manager/src/main/resources/db/migration/V7__datasource_config.sql` as the canonical final table definitions.
+  - Replace `manager/src/main/resources/db/migration/V11__upgrade_text_to_mediumtext.sql` with an explicit rebuild-or-copy-forward compatibility path instead of `ALTER TABLE ... MODIFY COLUMN`.
+  - Preserve only the minimum legacy-upgrade behavior needed for existing schemas; do not add fresh-schema structural drift back into later migrations.
+  - Leave `V9__prefix_manager_tables` alone unless the rebuild work proves it must change for compatibility.
+- **Progress log**:
+  - **2026-04-04 — intake**
+    - `BP-AUDIT-001` confirmed that audited `ADD COLUMN` drift is already gone, but manager still keeps one structure-shaping compatibility migration in `V11__upgrade_text_to_mediumtext.sql`.
+    - The follow-up task is therefore narrowly scoped to replacing that residual column-patch chain with a rebuild-first migration path and re-verifying manager Flyway upgrade coverage.
+  - **2026-04-06 — implementation**
+    - Files changed: `manager/src/main/resources/db/migration/V11__upgrade_text_to_mediumtext.sql`, `manager/src/test/resources/db/manager-v8-legacy-flyway-baseline.sql`, `manager/src/test/java/com/smartbi/engine/migration/ManagerFlywayHistoryRenameIntegrationTest.java`, and the task ledger/archive records.
+    - Commands run: `rg`, `sed`, `git diff`, `git diff --check`, `bash scripts/with-java8.sh mvn -q -pl analyze,manager -am -DfailIfNoTests=false -Dtest=ManagerDashboardBootstrapIntegrationTest,ManagerFlywayHistoryRenameIntegrationTest,TraceFlywayExecutionModeIntegrationTest,DatasourceConfigFlywayIntegrationTest test -Dspring.mvc.pathmatch.matching-strategy=ant_path_matcher`, `bash scripts/with-java8.sh mvn -q -pl analyze,manager -am test -Dspring.mvc.pathmatch.matching-strategy=ant_path_matcher`, `npm --prefix manager/frontend run build`.
+    - Result: Replaced the `V11` patch-style `MODIFY COLUMN` chain with schema-scoped MySQL rebuild/copy-forward logic for the remaining legacy `TEXT` tables, kept `manager_sql_execution_record` out of the migration so the earlier trace-table rebuild chain remains authoritative, and extended the legacy V8 fixture plus upgrade test to prove both `MEDIUMTEXT` normalization and seeded row preservation.
+  - **2026-04-06 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Root Cause: After the canonical manager create-table migrations were already rewritten to the final `MEDIUMTEXT` shapes, `V11` still carried a late patch-style `MODIFY COLUMN` cleanup chain, so fresh schemas kept inheriting structural drift and legacy-upgrade coverage did not prove that non-empty rows survived the compatibility step.
+    - Cure: Replaced `V11` with explicit rebuild-or-no-op SQL that only touches the remaining legacy `TEXT` tables when their target columns are not already `mediumtext`, and added seeded legacy acceleration/pattern rows plus upgrade assertions that verify both column types and copied data after migration.
+    - Generalization: The existing rebuild-first database rule in `docs/operations/best-practices.md` already covers this class of drift, so no new best-practice entry was needed for this task.
+  - **2026-04-06 — verification**
+    - Validation status: approved
+    - Evidence: `bash scripts/with-java8.sh mvn -q -pl analyze,manager -am -DfailIfNoTests=false -Dtest=ManagerDashboardBootstrapIntegrationTest,ManagerFlywayHistoryRenameIntegrationTest,TraceFlywayExecutionModeIntegrationTest,DatasourceConfigFlywayIntegrationTest test -Dspring.mvc.pathmatch.matching-strategy=ant_path_matcher` passed, covering the fresh bootstrap path, the V4 baseline path, and the V8 legacy prefix-plus-copy-forward path.
+    - Evidence: `bash scripts/with-java8.sh mvn -q -pl analyze,manager -am test -Dspring.mvc.pathmatch.matching-strategy=ant_path_matcher` passed.
+    - Evidence: `npm --prefix manager/frontend run build` passed.
+    - Evidence: `git diff --check` passed.
+    - Next action: none
+    - Escalation: none
 
 ### BENCH-MYSQL-TEST-002: REMOVE REMAINING H2 TEST FIXTURES FROM BENCHMARK
 

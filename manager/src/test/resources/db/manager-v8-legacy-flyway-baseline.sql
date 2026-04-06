@@ -68,6 +68,32 @@ CREATE TABLE IF NOT EXISTS acceleration_table (
     recommendation_note TEXT
 );
 
+INSERT INTO acceleration_table (
+    id,
+    created_at,
+    updated_at,
+    name,
+    schema_name,
+    ddl_text,
+    refresh_sql,
+    cron_expr,
+    status,
+    source,
+    recommendation_note
+) VALUES (
+    7,
+    '2026-04-04 08:00:00',
+    '2026-04-04 09:00:00',
+    'daily_sales_rollup',
+    'analytics',
+    'CREATE TABLE analytics.daily_sales_rollup AS SELECT * FROM sales_daily',
+    'REFRESH TABLE analytics.daily_sales_rollup',
+    '0 0 * * *',
+    'ACTIVE',
+    'MANUAL',
+    'legacy recommendation note that must survive V11 rebuild'
+);
+
 CREATE TABLE IF NOT EXISTS sql_pattern_stats (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     sql_fingerprint VARCHAR(64) NOT NULL,
@@ -76,6 +102,24 @@ CREATE TABLE IF NOT EXISTS sql_pattern_stats (
     last_seen_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     avg_duration_ms DOUBLE,
     signature_json TEXT
+);
+
+INSERT INTO sql_pattern_stats (
+    id,
+    sql_fingerprint,
+    clean_sql_sample,
+    execution_count,
+    last_seen_at,
+    avg_duration_ms,
+    signature_json
+) VALUES (
+    5,
+    'legacy-fingerprint',
+    'SELECT customer_id, total_amount FROM sales WHERE ds = ?',
+    12,
+    '2026-04-04 10:15:00',
+    42.5,
+    '{\"dimensions\":[\"customer_id\"],\"metrics\":[\"total_amount\"]}'
 );
 
 CREATE TABLE IF NOT EXISTS query_datasource_config (

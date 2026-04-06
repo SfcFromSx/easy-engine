@@ -69,6 +69,58 @@ class ManagerFlywayHistoryRenameIntegrationTest {
         assertEquals(Long.valueOf(2L), jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM manager_query_datasource_config",
                 Long.class));
+        assertMediumText("manager_sql_pattern_stats", "clean_sql_sample");
+        assertMediumText("manager_sql_pattern_stats", "signature_json");
+        assertMediumText("manager_acceleration_table", "ddl_text");
+        assertMediumText("manager_acceleration_table", "refresh_sql");
+        assertMediumText("manager_acceleration_table", "recommendation_note");
+        assertMediumText("manager_query_datasource_config", "jdbc_url");
+        assertEquals("SELECT customer_id, total_amount FROM sales WHERE ds = ?",
+                jdbcTemplate.queryForObject(
+                        "SELECT clean_sql_sample FROM manager_sql_pattern_stats WHERE sql_fingerprint = ?",
+                        String.class,
+                        "legacy-fingerprint"));
+        assertEquals("{\"dimensions\":[\"customer_id\"],\"metrics\":[\"total_amount\"]}",
+                jdbcTemplate.queryForObject(
+                        "SELECT signature_json FROM manager_sql_pattern_stats WHERE sql_fingerprint = ?",
+                        String.class,
+                        "legacy-fingerprint"));
+        assertEquals("CREATE TABLE analytics.daily_sales_rollup AS SELECT * FROM sales_daily",
+                jdbcTemplate.queryForObject(
+                        "SELECT ddl_text FROM manager_acceleration_table WHERE name = ?",
+                        String.class,
+                        "daily_sales_rollup"));
+        assertEquals("REFRESH TABLE analytics.daily_sales_rollup",
+                jdbcTemplate.queryForObject(
+                        "SELECT refresh_sql FROM manager_acceleration_table WHERE name = ?",
+                        String.class,
+                        "daily_sales_rollup"));
+        assertEquals("legacy recommendation note that must survive V11 rebuild",
+                jdbcTemplate.queryForObject(
+                        "SELECT recommendation_note FROM manager_acceleration_table WHERE name = ?",
+                        String.class,
+                        "daily_sales_rollup"));
+        assertEquals("jdbc:kylin://localhost:17070/learn_kylin",
+                jdbcTemplate.queryForObject(
+                        "SELECT jdbc_url FROM manager_query_datasource_config WHERE name = ?",
+                        String.class,
+                        "default"));
+        assertEquals("jdbc:trino://localhost:18080/tpch/tiny",
+                jdbcTemplate.queryForObject(
+                        "SELECT jdbc_url FROM manager_query_datasource_config WHERE name = ?",
+                        String.class,
+                        "trino_local"));
+    }
+
+    private void assertMediumText(String tableName, String columnName) {
+        assertEquals("mediumtext", jdbcTemplate.queryForObject(
+                "SELECT LOWER(data_type) FROM INFORMATION_SCHEMA.COLUMNS "
+                        + "WHERE LOWER(table_schema) = LOWER(DATABASE()) "
+                        + "AND LOWER(table_name) = LOWER(?) "
+                        + "AND LOWER(column_name) = LOWER(?)",
+                String.class,
+                tableName,
+                columnName));
     }
 
     private static String legacyFlywayJdbcUrl() {
