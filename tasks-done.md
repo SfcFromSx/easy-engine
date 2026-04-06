@@ -8,6 +8,7 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
 
 | ID | Title | Module | Done signal |
 |----|-------|--------|-------------|
+| INBOX-CLEANUP-001 | REMOVE RESOLVED AND STALE ENTRIES FROM INBOX | platform | Re-checked every historical inbox item against the current repo state, removed entries that were already resolved or no longer reproducible on the supported validation path, and left `INBOX.md` as a clean no-open-items inbox with the standing rules and template intact. |
 | MGR-DDL-REBUILD-002 | REPLACE PATCH-STYLE COLUMN UPGRADES IN MANAGER MIGRATIONS | manager | Replaced manager `V11` column-modify compatibility DDL with rebuild/copy-forward SQL for legacy pattern, acceleration, and datasource tables, added legacy data-preservation assertions, and passed focused plus full manager validation/build. |
 | HARNESS-GOV-002 | TIGHTEN INBOX ESCALATION AND BEST-PRACTICE CURATION RULES | platform | Tightened the harness contract so `INBOX.md` is only for issues that still need human judgment, removed audit-only inbox mirroring for deterministic harness bookkeeping, and documented best-practice curation rules that merge or rewrite overlapping guidance instead of appending duplicates. |
 | BP-AUDIT-001 | AUDIT YAML-ONLY / MYSQL-ONLY / REBUILD-FIRST DB GOVERNANCE | platform | Audited the current working tree against the three governance rules, confirmed `.properties` config drift is gone, identified remaining H2 and manager DDL rebuild debt, and split the findings into four follow-up tasks in `tasks.md`. |
@@ -158,6 +159,32 @@ The foreman should read [tasks.md](/Users/sfc/Documents/projects/engine/tasks.md
     - Escalation: none
   - **2026-04-04 — doc-garden**
     - Updated `docs/modules/manager.md` so the manager module docs now describe the checked-in manager regression fixtures as MySQL-only instead of allowing H2-backed test residue.
+
+### INBOX-CLEANUP-001: REMOVE RESOLVED AND STALE ENTRIES FROM INBOX
+
+- **Status**: done
+- **Updated**: 2026-04-06
+- **Module**: platform
+- **Dependencies**: none
+- **Scope**:
+  - Re-check every current `INBOX.md` entry against the latest repo state, task archive, and validation evidence.
+  - Remove entries that no longer represent active issues requiring human judgment.
+  - Leave the inbox ready for future use without preserving stale historical clutter in the active file.
+- **Progress log**:
+  - **2026-04-06 — implementation**
+    - Files changed: `INBOX.md`, `tasks-done.md`.
+    - Commands run: `sed`, `rg`, `git log --all --format=%s`, `find`, `python3 scripts/task_audit.py --check`, `bash scripts/with-java8.sh mvn -q -f benchmark/pom.xml test`.
+    - Result: Verified that the benchmark compile-blocking entry no longer reproduces, the reactor-validation and follow-up review entries were already completed in `tasks-done.md`, the audit-governance entries are now covered by the grandfathered audit script and a clean `task_audit.py --check`, and the remaining JDK-25 JaCoCo warning note is no longer an active issue on the supported validation path.
+  - **2026-04-06 — review & post-mortem**
+    - Self-Review: [x] style check [x] test coverage [x] side-effects
+    - Post-mortem: cleanup-only harness bookkeeping; no new best-practice rule was needed.
+  - **2026-04-06 — verification**
+    - Validation status: approved
+    - Evidence: `python3 scripts/task_audit.py --check` passed, reporting only the expected grandfathered historical commit-subject note.
+    - Evidence: `bash scripts/with-java8.sh mvn -q -f benchmark/pom.xml test` passed; the old `BenchmarkAsyncRunnerTrinoJdbcIntegrationTest` compile failure no longer reproduces.
+    - Evidence: `rg -n '^### INBOX-' INBOX.md` returned no matches, confirming the active inbox is now empty.
+    - Next action: none
+    - Escalation: none
 
 ### HARNESS-GOV-002: TIGHTEN INBOX ESCALATION AND BEST-PRACTICE CURATION RULES
 
